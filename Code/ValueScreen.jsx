@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
   filterOption: { padding: 10, borderBottomWidth: 1, borderBottomColor: '#E0E0E0' },
   filterTextOption: { fontSize: 14 },
   itemContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', borderRadius: 10, padding: 10, marginBottom: 10, elevation: 3 },
-  icon: { width: 50, height: 50, borderRadius: 5, paddingRight: 10 },
+  icon: { width: 50, height: 50, borderRadius: 5, marginRight: 10 },
   infoContainer: { flex: 1 },
   name: {
     fontSize: 16, fontFamily: 'Lato-Bold'

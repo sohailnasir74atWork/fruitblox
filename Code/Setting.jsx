@@ -10,11 +10,11 @@ export default function SettingsScreen() {
       return 'https://placeholder-link-for-development.com'; // Development placeholder link
     } else {
       return Platform.OS === 'ios'
-        ? 'https://apps.apple.com/us/app/your-ios-app-id' // Replace with your iOS app store link
-        : 'https://play.google.com/store/apps/details?id=com.bloxfruitevalues'; // Replace with your Android package link
+        ? 'https://apps.apple.com/us/app/app-name/id6737775801' // Replace with actual iOS app store link
+        : 'https://play.google.com/store/apps/details?id=com.bloxfruitevalues'; // Android package link
     }
   };
-
+  
   // Function to share the app
   const handleShareApp = async () => {
     try {
