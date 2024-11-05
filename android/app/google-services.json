@@ -1,0 +1,49 @@
+{
+  "project_info": {
+    "project_number": "409137828081",
+    "firebase_url": "https://fruiteblocks-default-rtdb.firebaseio.com",
+    "project_id": "fruiteblocks",
+    "storage_bucket": "fruiteblocks.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:409137828081:android:60f507dffca82febf39950",
+        "android_client_info": {
+          "package_name": "com.fruitbloxvalues"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDUXkQcecnhrNmeagvtRsKmDBmwz4AsRC0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:409137828081:android:58aa854b8a656784f39950",
+        "android_client_info": {
+          "package_name": "com.bloxfruitevalues"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDUXkQcecnhrNmeagvtRsKmDBmwz4AsRC0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
