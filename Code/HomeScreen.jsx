@@ -277,7 +277,7 @@ export default function HomeScreen({ route }) {
                   <Text style={styles.itemText}>${item.Value.toLocaleString()}</Text>
                   <Text style={styles.itemText}>{item.Name}</Text>
                   {item.Type.toUpperCase() !== 'PREMIUM' && (
-            <TouchableOpacity style={styles.switchValue} onPress={() => toggleItemValueMode(index, 'has')}>
+            <TouchableOpacity style={styles.switchValue} onPress={() => toggleItemValueMode(index, 'want')}>
               <Icon name="repeat-outline" size={14} />
               <Text style={styles.switchValueText}>Physical</Text>
             </TouchableOpacity>
