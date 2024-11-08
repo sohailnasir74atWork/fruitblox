@@ -79,9 +79,9 @@ const TimerScreen = ({ route }) => {
       <FlatList
       showsVerticalScrollIndicator={false}
         data={[
-          { header: 'Normal', timer: normalTimer },
+          { header: 'Normal', timer: mirageTimer },
           ...normalStock, // First 3 items as Normal stock
-          { header: 'Mirage', timer: mirageTimer },
+          { header: 'Mirage', timer: normalTimer },
           ...mirageStock, // Remaining items as Mirage stock
         ]}
         keyExtractor={(item, index) => item.name || `header-${index}`}

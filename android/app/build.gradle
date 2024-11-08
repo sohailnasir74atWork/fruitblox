@@ -60,7 +60,7 @@ react {
 /**
  * Set this to true to Run Proguard on Release builds to minify the Java bytecode.
  */
-def enableProguardInReleaseBuilds = false
+def enableProguardInReleaseBuilds = true
 
 /**
  * The preferred build flavor of JavaScriptCore (JSC)
@@ -91,7 +91,7 @@ android {
     signingConfigs {
         release {
             storeFile file('solanalab.keystore')
-            storePassword 'android'
+            storePassword '798702'
             keyAlias 'solanalabdev'
             keyPassword '798702'
         }

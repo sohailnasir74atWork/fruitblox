@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StatusBar, useColorScheme, ActivityIndicator, Animated, Platform, Alert } from 'react-native';
+import { View, Text, StatusBar, useColorScheme, ActivityIndicator, Animated, Platform, Alert, Dimensions } from 'react-native';
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { getDatabase, ref, onValue } from 'firebase/database';
+import { getDatabase, ref, onValue, get } from 'firebase/database';
 import { initializeApp } from 'firebase/app';
 import mobileAds from 'react-native-google-mobile-ads';
 import HomeScreen from './Code/HomeScreen';
@@ -11,6 +11,8 @@ import ValueScreen from './Code/ValueScreen';
 import TimerScreen from './Code/TimerScreen';
 import SettingsScreen from './Code/Setting';
 import SplashScreen from './Code/SplashScreen';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
 
 const firebaseConfig = {
   apiKey: "API_KEY",
@@ -73,26 +75,26 @@ export default function App() {
     const fetchData = async () => {
       try {
         const dataRef = ref(database, 'xlsData');
-        onValue(dataRef, (snapshot) => {
-          setData(snapshot.val());
-        });
-
+        const snapshot = await get(dataRef);
+        setData(snapshot.val());
+    
+        // For other data as well
         const dataRef2 = ref(database, 'calcData/test');
-        onValue(dataRef2, (snapshot) => {
-          setNormalStock(snapshot.val() || []);
-        });
-
+        const snapshot2 = await get(dataRef2);
+        setNormalStock(snapshot2.val() || []);
+    
         const dataRef3 = ref(database, 'calcData/mirage');
-        onValue(dataRef3, (snapshot) => {
-          setMirageStock(snapshot.val() || []);
-          setIsAppReady(true);
-        });
+        const snapshot3 = await get(dataRef3);
+        setMirageStock(snapshot3.val() || []);
+        setIsAppReady(true);
+
       } catch (error) {
         console.error('Error fetching data from Firebase:', error);
         Alert.alert('Data Error', 'Failed to load data. Please check your internet connection.');
-        setIsAppReady(true); // Ensure app proceeds even if data fails to load
+        setIsAppReady(true);
       }
     };
+    
 
     fetchData();
 
@@ -124,6 +126,7 @@ export default function App() {
   }
 
   return (
+    <SafeAreaView style={{ flex: 1, width:'100%' }}>
     <Animated.View style={{ flex: 1, opacity, transform: [{ translateX }] }}>
       <NavigationContainer theme={scheme === 'dark' ? MyDarkTheme : MyLightTheme}>
         <StatusBar
@@ -170,5 +173,6 @@ export default function App() {
         </Tab.Navigator>
       </NavigationContainer>
     </Animated.View>
+    </SafeAreaView>
   );
 }
