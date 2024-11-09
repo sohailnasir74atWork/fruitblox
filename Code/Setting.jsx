@@ -14,7 +14,7 @@ export default function SettingsScreen() {
         : 'https://play.google.com/store/apps/details?id=com.bloxfruitevalues'; // Android package link
     }
   };
-  
+
   // Function to share the app
   const handleShareApp = async () => {
     try {
@@ -42,6 +42,18 @@ export default function SettingsScreen() {
     );
   };
 
+  // Function to open the app store for ratings
+  const handleRateApp = () => {
+    const appLink = getAppDownloadLink();
+    const storeLink = Platform.OS === 'ios'
+      ? `itms-apps://itunes.apple.com/app/idYOUR_APP_ID?action=write-review` // Replace YOUR_APP_ID
+      : `market://details?id=com.bloxfruitevalues`; // Your app's package name for Android
+
+    Linking.openURL(storeLink).catch(() =>
+      Alert.alert('Error', 'Unable to open the app store. Please try again later.')
+    );
+  };
+
   return (
     <View style={styles.container}>
       {/* Share App Option */}
@@ -55,6 +67,12 @@ export default function SettingsScreen() {
         <Icon name="chatbox-ellipses-outline" size={24} color="#333" />
         <Text style={styles.optionText}>Give Suggestions</Text>
       </TouchableOpacity>
+
+      {/* Rate Us Option */}
+      <TouchableOpacity style={styles.option} onPress={handleRateApp}>
+        <Icon name="star-outline" size={24} color="#333" />
+        <Text style={styles.optionText}>Rate Us</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -65,7 +83,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     backgroundColor: '#F5F5F5',
-    fontFamily:'Lato-regular'
+    fontFamily: 'Lato-regular'
   },
   option: {
     flexDirection: 'row',
@@ -79,6 +97,6 @@ const styles = StyleSheet.create({
   optionText: {
     fontSize: 18,
     marginLeft: 10,
-    fontFamily:'Lato-Regular'
+    fontFamily: 'Lato-Regular'
   }
 });
