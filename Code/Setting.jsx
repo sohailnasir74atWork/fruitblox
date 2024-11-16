@@ -6,13 +6,9 @@ import Icon from 'react-native-vector-icons/Ionicons';
 export default function SettingsScreen() {
   // Function to get the app download link based on the environment and platform
   const getAppDownloadLink = () => {
-    if (__DEV__) {
-      return 'https://placeholder-link-for-development.com'; // Development placeholder link
-    } else {
-      return Platform.OS === 'ios'
-        ? 'https://apps.apple.com/us/app/app-name/id6737775801' // Replace with actual iOS app store link
-        : 'https://play.google.com/store/apps/details?id=com.bloxfruitevalues'; // Android package link
-    }
+    return Platform.OS === 'ios'
+      ? 'https://apps.apple.com/us/app/app-name/id6737775801' // Replace with actual iOS app store link
+      : 'https://play.google.com/store/apps/details?id=com.bloxfruitevalues'; // Android package link
   };
 
   // Function to share the app
@@ -54,24 +50,47 @@ export default function SettingsScreen() {
     );
   };
 
+  // Function to open Facebook page
+  const handleOpenFacebook = () => {
+    const facebookUrl = 'https://www.facebook.com/share/g/15V1JErjbY/';
+    Linking.openURL(facebookUrl).catch(() =>
+      Alert.alert('Error', 'Unable to open Facebook. Please try again later.')
+    );
+  };
+
+  // Function to open the website
+  const handleOpenWebsite = () => {
+    const websiteUrl = 'https://bloxfruitscalc.com/';
+    Linking.openURL(websiteUrl).catch(() =>
+      Alert.alert('Error', 'Unable to open the website. Please try again later.')
+    );
+  };
+
   return (
     <View style={styles.container}>
-      {/* Share App Option */}
       <TouchableOpacity style={styles.option} onPress={handleShareApp}>
         <Icon name="share-social-outline" size={24} color="#333" />
         <Text style={styles.optionText}>Share App</Text>
       </TouchableOpacity>
 
-      {/* Get Suggestions Option */}
       <TouchableOpacity style={styles.option} onPress={handleGetSuggestions}>
         <Icon name="chatbox-ellipses-outline" size={24} color="#333" />
         <Text style={styles.optionText}>Give Suggestions</Text>
       </TouchableOpacity>
 
-      {/* Rate Us Option */}
       <TouchableOpacity style={styles.option} onPress={handleRateApp}>
         <Icon name="star-outline" size={24} color="#333" />
         <Text style={styles.optionText}>Rate Us</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.option} onPress={handleOpenFacebook}>
+        <Icon name="logo-facebook" size={24} color="#333" />
+        <Text style={styles.optionText}>Visit Facebook Page</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.option} onPress={handleOpenWebsite}>
+        <Icon name="globe-outline" size={24} color="#333" />
+        <Text style={styles.optionText}>Visit Website</Text>
       </TouchableOpacity>
     </View>
   );
@@ -83,7 +102,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     backgroundColor: '#F5F5F5',
-    fontFamily: 'Lato-regular'
+    fontFamily: 'Lato-regular',
   },
   option: {
     flexDirection: 'row',
@@ -97,6 +116,6 @@ const styles = StyleSheet.create({
   optionText: {
     fontSize: 18,
     marginLeft: 10,
-    fontFamily: 'Lato-Regular'
-  }
+    fontFamily: 'Lato-Regular',
+  },
 });

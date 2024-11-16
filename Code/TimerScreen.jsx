@@ -2,14 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, Image } from 'react-native';
 import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
 import getAdUnitId from './ads';
+import { useGlobalState } from './GlobelStats';
 
 
 const bannerAdUnitId = getAdUnitId('banner');
 
-const TimerScreen = ({ route }) => {
+const TimerScreen = () => {
   const [normalTimer, setNormalTimer] = useState('');
   const [mirageTimer, setMirageTimer] = useState('');
-  const { normalStock = [], mirageStock = [] } = route.params;
+  const { normalStock, mirageStock } = useGlobalState();
 
   const formatName = (name) => {
     let formattedName = name.replace(/^\+/, '');
@@ -80,9 +81,9 @@ const TimerScreen = ({ route }) => {
       showsVerticalScrollIndicator={false}
         data={[
           { header: 'Normal', timer: mirageTimer },
-          ...normalStock, // First 3 items as Normal stock
+          ...normalStock, 
           { header: 'Mirage', timer: normalTimer },
-          ...mirageStock, // Remaining items as Mirage stock
+          ...mirageStock, 
         ]}
         keyExtractor={(item, index) => item.name || `header-${index}`}
         renderItem={({ item }) =>
@@ -106,7 +107,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 20, fontFamily:'Lato-Bold', },
   timer: { fontSize: 16 },
   time: { fontSize: 20, fontWeight:'bold' },
-  itemContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', borderRadius: 10, padding: 10, marginBottom: 10, elevation: 3 },
+  itemContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', borderRadius: 10, padding: 10, marginBottom: 10, elevation: 1 },
   icon: { width: 50, height: 50, borderRadius: 5, marginRight: 10 },
   name: { fontSize: 16, fontFamily:'Lato-Bold', flex: 1 },
   price: { fontSize: 14, fontFamily:'Lato-ragular', marginLeft: 10, backgroundColor:'green', paddingVertical:3, paddingHorizontal:5, borderRadius:5, color:'white' },

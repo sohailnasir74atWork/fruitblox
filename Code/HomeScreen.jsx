@@ -3,35 +3,47 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Modal, FlatList, 
 import Icon from 'react-native-vector-icons/Ionicons';
 import { InterstitialAd, AdEventType, TestIds, BannerAd, BannerAdSize } from 'react-native-google-mobile-ads';
 import getAdUnitId from './ads';
+import ViewShot, { captureRef } from 'react-native-view-shot';
+import RNFS from 'react-native-fs';  
+import Share from 'react-native-share'; 
+import { useGlobalState } from './GlobelStats';
 
 const bannerAdUnitId = getAdUnitId('banner');
 const interstitialAdUnitId = getAdUnitId('interstitial');
-
-
 const interstitial = InterstitialAd.createForAdRequest(interstitialAdUnitId, {
   requestNonPersonalizedAdsOnly: true,
 });
 
-
-export default function HomeScreen({ route }) {
-  const { data } = route.params;
-  const fruitRecords = Object.values(data);
-
+export default function HomeScreen() {
+  const { data } = useGlobalState();
   const initialItems = [null, null];
   const [hasItems, setHasItems] = useState(initialItems);
+  const [fruitRecords, setFruiteRecord] = useState([]);
   const [wantsItems, setWantsItems] = useState(initialItems);
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
   const [selectedSection, setSelectedSection] = useState(null);
   const [searchText, setSearchText] = useState('');
-  const [interactionCount, setInteractionCount] = useState(0);
   const [hasTotal, setHasTotal] = useState({ price: 0, value: 0 });
   const [wantsTotal, setWantsTotal] = useState({ price: 0, value: 0 });
   const [isAdLoaded, setIsAdLoaded] = useState(false);
   const [isShowingAd, setIsShowingAd] = useState(false);
-  const [isConnected, setIsConnected] = useState(true); // Track network status
-  const [adShown, setAdShown] = useState(false); // State to track if ad was shown
-
-
+  const [adShown, setAdShown] = useState(false); 
+  const [loading, setLoading] = useState(true); 
+const [dataAvailable, setDataAvailable] = useState(false); 
+  const viewRef = useRef();
+  useEffect(() => {
+    if (data && Object.keys(data).length > 0) {
+      setDataAvailable(true);
+      const fruitRecords = Object.values(data); 
+      setFruiteRecord(fruitRecords); 
+    } else {
+      setDataAvailable(false);
+      setFruiteRecord([]); 
+    }
+    setLoading(false);
+  }, [data]);
+  
+  
   useEffect(() => {
     try {
       interstitial.load();
@@ -39,23 +51,20 @@ export default function HomeScreen({ route }) {
       const onAdLoaded = () => {
         setIsAdLoaded(true);
       };
-
       const onAdClosed = () => {
         setIsAdLoaded(false);
         setIsShowingAd(false);
         try {
-          interstitial.load(); // Reload the ad after it’s closed
+          interstitial.load();
         } catch (error) {
           console.error('Error loading interstitial ad:', error);
         }
       };
-
       const onAdError = (error) => {
         setIsAdLoaded(false);
         setIsShowingAd(false);
         console.error('Ad Error:', error);
       };
-
       const adLoadedListener = interstitial.addAdEventListener(AdEventType.LOADED, onAdLoaded);
       const adClosedListener = interstitial.addAdEventListener(AdEventType.CLOSED, onAdClosed);
       const adErrorListener = interstitial.addAdEventListener(AdEventType.ERROR, onAdError);
@@ -83,15 +92,12 @@ export default function HomeScreen({ route }) {
   };
 
   const openDrawer = (section) => {
-  
-    // Show ad only if the section is "wants" and ad hasn't been shown yet
+
     if (section === 'wants' && !adShown) {
       showInterstitialAd();
-      setAdShown(true); // Mark the ad as shown
-      return; // Exit early to prevent drawer from opening immediately
+      setAdShown(true); 
+      return; 
     }
-  
-    // Open the drawer for the specified section
     setSelectedSection(section);
     setIsDrawerVisible(true);
   };
@@ -101,17 +107,14 @@ export default function HomeScreen({ route }) {
   };
 
 
-  const toggleItemValueMode = (index, section) => {
+    const toggleItemValueMode = (index, section) => {
     const items = section === 'has' ? [...hasItems] : [...wantsItems];
     const item = items[index];
 
     if (item) {
       updateTotal(item, section, false);
-
       item.usePermanent = !item.usePermanent;
-
       updateTotal(item, section, true);
-
       section === 'has' ? setHasItems(items) : setWantsItems(items);
     }
   };
@@ -120,10 +123,9 @@ export default function HomeScreen({ route }) {
     const priceChange = add
       ? (item.usePermanent ? item.Permanent : item.Value)
       : -(item.usePermanent ? item.Permanent : item.Value);
-  
-    // Use 0 if Biliprice is not a valid number
+
     const valueChange = isNew ? (add ? (isNaN(item.Biliprice) ? 0 : item.Biliprice) : -(isNaN(item.Biliprice) ? 0 : item.Biliprice)) : 0;
-  
+
     if (section === 'has') {
       setHasTotal((prev) => ({
         price: prev.price + priceChange,
@@ -136,7 +138,7 @@ export default function HomeScreen({ route }) {
       }));
     }
   };
-  
+
 
   const formatName = (name) => {
     let formattedName = name.replace(/^\+/, '');
@@ -147,13 +149,11 @@ export default function HomeScreen({ route }) {
     const newItem = { ...item, usePermanent: false };
     const updateItems = selectedSection === 'has' ? [...hasItems] : [...wantsItems];
     const nextEmptyIndex = updateItems.indexOf(null);
-
     if (nextEmptyIndex !== -1) {
       updateItems[nextEmptyIndex] = newItem;
     } else {
       updateItems.push(newItem);
     }
-
     if (selectedSection === 'has') {
       setHasItems(updateItems);
       updateTotal(newItem, 'has', true, true);
@@ -162,10 +162,10 @@ export default function HomeScreen({ route }) {
       updateTotal(newItem, 'wants', true, true);
     }
     closeDrawer();
-  
+
   };
 
-  const removeItem = (index, isHas) => {
+    const removeItem = (index, isHas) => {
     const section = isHas ? 'has' : 'wants';
     const items = isHas ? hasItems : wantsItems;
     const updatedItems = [...items];
@@ -176,7 +176,6 @@ export default function HomeScreen({ route }) {
       const filteredItems = updatedItems.filter((item, i) => item !== null || i < 2);
       if (isHas) setHasItems(filteredItems);
       else setWantsItems(filteredItems);
-
       updateTotal(item, section, false, true);
     }
   };
@@ -190,110 +189,163 @@ export default function HomeScreen({ route }) {
   const neutral = profitLoss === 0;
 
 
+  const captureAndSave = async () => {
+    try {
+      const uri = await captureRef(viewRef, {
+        format: 'png',
+        quality: 0.8,
+      });
+
+
+      const downloadDest = Platform.OS === 'android'
+        ? `${RNFS.ExternalDirectoryPath}/screenshot.png`
+        : `${RNFS.DocumentDirectoryPath}/screenshot.png`; 
+
+      await RNFS.copyFile(uri, downloadDest);
+
+
+      return downloadDest; 
+    } catch (error) {
+      console.log('Error capturing screenshot:', error);
+    }
+  };
+
+  const shareScreenshot = async () => {
+    const filePath = await captureAndSave(); 
+
+    if (filePath) {
+      const shareOptions = {
+        title: 'Share Screenshot',
+        url: `file://${filePath}`,
+        type: 'image/png',
+      };
+
+      Share.open(shareOptions)
+        .then((res) => console.log('Share Response:', res))
+        .catch((err) => console.log('Share Error:', err));
+    }
+  };
+
+
   return (
     <View style={styles.container}>
-      <ScrollView style={{ marginBottom: 50 }} showsVerticalScrollIndicator={false}>
-        <View style={styles.summaryContainer}>
-          <View style={[styles.summaryBox, styles.hasBox]}>
-            <Text style={styles.summaryText}>Has</Text>
-            <View style={{ width: '90%', backgroundColor: '#e0e0e0', height: 1, alignSelf: 'center' }} />
-            <Text style={styles.priceValue}>Price: ${hasTotal.price.toLocaleString()}</Text>
-            <Text style={styles.priceValue}>Value: ${hasTotal.value.toLocaleString()}</Text>
-          </View>
-          <View style={[styles.summaryBox, styles.wantsBox]}>
-            <Text style={styles.summaryText}>Wants</Text>
-            <View style={{ width: '90%', backgroundColor: '#e0e0e0', height: 1, alignSelf: 'center' }} />
-            <Text style={styles.priceValue}>Price: ${wantsTotal.price.toLocaleString()}</Text>
-            <Text style={styles.priceValue}>Value: ${wantsTotal.value.toLocaleString()}</Text>
-          </View>
-        </View>
-
-        <View style={styles.profitLossBox}>
-          <Text style={[styles.profitLossText]}>
-            {isProfit ? 'Profit' : 'Loss'}:
-          </Text>
-          <Text style={[styles.profitLossValue, { color: isProfit ? 'green' : 'red' }]}>
-            ${Math.abs(profitLoss).toLocaleString()}
-          </Text>
-          {!neutral && <Icon
-            name={isProfit ? 'arrow-up-outline' : 'arrow-down-outline'}
-            size={20}
-            color={isProfit ? 'green' : 'red'}
-            style={styles.icon}
-          />}
-        </View>
-
-        <Text style={styles.sectionTitle}>Has</Text>
-        <View style={styles.itemRow}>
-          <TouchableOpacity onPress={() => openDrawer('has')} style={styles.addItemBlock}>
-            <Icon name="add-outline" size={40} color="white" />
-          </TouchableOpacity>
-          {hasItems?.map((item, index) => (
-            <View key={index} style={styles.itemBlock}>
-              {item ? (
-                <>
-                  <Image
-                    source={{ uri: `https://bloxfruitscalc.com/wp-content/uploads/2024/09/${formatName(item.Name)}_Icon.webp` }}
-                    style={styles.itemImageOverlay}
-                  />
-                  <Text style={styles.itemText}>${item.usePermanent ? item.Permanent.toLocaleString() : item.Value.toLocaleString()}</Text>
-                  <Text style={styles.itemText}>{item.Name}</Text>
-                  {item.Type.toUpperCase() !== 'PREMIUM' && (
-            <TouchableOpacity style={styles.switchValue} onPress={() => toggleItemValueMode(index, 'has')}>
-              <Icon name="repeat-outline" size={14} />
-              <Text style={styles.switchValueText}>Physical</Text>
-            </TouchableOpacity>
-          )}
-
-
-                  <TouchableOpacity onPress={() => removeItem(index, true)} style={styles.removeButton}>
-                    <Icon name="close-outline" size={14} color="white" />
-                  </TouchableOpacity>
-                </>
-              ) : (
-                <Text style={styles.itemPlaceholder}>Empty</Text>
-              )}
+      {loading ? (
+      <View style={styles.loaderContainer}>
+        <Text style={styles.loaderText}>Loading...</Text>
+      </View>
+    ) : !dataAvailable ? (
+      <View style={styles.noDataContainer}>
+        <Text style={styles.noDataText}>Data Not Available! Check Internet Connection</Text>
+      </View>
+    ) : (
+        <ScrollView style={{ marginBottom: 50 }} showsVerticalScrollIndicator={false}>
+        <ViewShot ref={viewRef} style={styles.screenshotView}>
+          <View style={styles.summaryContainer}>
+            <View style={[styles.summaryBox, styles.hasBox]}>
+              <Text style={styles.summaryText}>Has</Text>
+              <View style={{ width: '90%', backgroundColor: '#e0e0e0', height: 1, alignSelf: 'center' }} />
+              <Text style={styles.priceValue}>Price: ${hasTotal.price.toLocaleString()}</Text>
+              <Text style={styles.priceValue}>Value: ${hasTotal.value.toLocaleString()}</Text>
             </View>
-          ))}
-        </View>
-
-        <View style={styles.divider}>
-          <Icon name="swap-vertical-outline" size={24} color="white" />
-        </View>
-
-        <Text style={styles.sectionTitle}>Wants</Text>
-        <View style={styles.itemRow}>
-          <TouchableOpacity onPress={() => openDrawer('wants')} style={styles.addItemBlock}>
-            <Icon name="add-outline" size={40} color="white" />
-          </TouchableOpacity>
-          {wantsItems?.map((item, index) => (
-            <View key={index} style={styles.itemBlock}>
-              {item ? (
-                <>
-                  <Image
-                    source={{ uri: `https://bloxfruitscalc.com/wp-content/uploads/2024/09/${formatName(item.Name)}_Icon.webp` }}
-                    style={styles.itemImageOverlay}
-                  />
-                  <Text style={styles.itemText}>${item.Value.toLocaleString()}</Text>
-                  <Text style={styles.itemText}>{item.Name}</Text>
-                  {item.Type.toUpperCase() !== 'PREMIUM' && (
-            <TouchableOpacity style={styles.switchValue} onPress={() => toggleItemValueMode(index, 'want')}>
-              <Icon name="repeat-outline" size={14} />
-              <Text style={styles.switchValueText}>Physical</Text>
-            </TouchableOpacity>
-          )}
-                  <TouchableOpacity onPress={() => removeItem(index, false)} style={styles.removeButton}>
-                    <Icon name="close-outline" size={14} color="white" />
-                  </TouchableOpacity>
-                </>
-
-              ) : (
-                <Text style={styles.itemPlaceholder}>Empty</Text>
-              )}
+            <View style={[styles.summaryBox, styles.wantsBox]}>
+              <Text style={styles.summaryText}>Wants</Text>
+              <View style={{ width: '90%', backgroundColor: '#e0e0e0', height: 1, alignSelf: 'center' }} />
+              <Text style={styles.priceValue}>Price: ${wantsTotal.price.toLocaleString()}</Text>
+              <Text style={styles.priceValue}>Value: ${wantsTotal.value.toLocaleString()}</Text>
             </View>
-          ))}
-        </View>
-      </ScrollView>
+          </View>
+          <View style={styles.profitLossBox}>
+            <Text style={[styles.profitLossText]}>
+              {isProfit ? 'Profit' : 'Loss'}:
+            </Text>
+            <Text style={[styles.profitLossValue, { color: isProfit ? 'green' : 'red' }]}>
+              ${Math.abs(profitLoss).toLocaleString()}
+            </Text>
+            {!neutral && <Icon
+              name={isProfit ? 'arrow-up-outline' : 'arrow-down-outline'}
+              size={20}
+              color={isProfit ? 'green' : 'red'}
+              style={styles.icon}
+            />}
+          </View>
+
+          <Text style={styles.sectionTitle}>Has</Text>
+          <View style={styles.itemRow}>
+            <TouchableOpacity onPress={() => openDrawer('has')} style={styles.addItemBlock}>
+              <Icon name="add-outline" size={40} color="white" />
+              <Text style={styles.itemText}>Add Item</Text>
+            </TouchableOpacity>
+            {hasItems?.map((item, index) => (
+              <View key={index} style={styles.itemBlock}>
+                {item ? (
+                  <>
+                    <Image
+                      source={{ uri: `https://bloxfruitscalc.com/wp-content/uploads/2024/09/${formatName(item.Name)}_Icon.webp` }}
+                      style={styles.itemImageOverlay}
+                    />
+                    <Text style={styles.itemText}>${item.usePermanent ? item.Permanent.toLocaleString() : item.Value.toLocaleString()}</Text>
+                    <Text style={styles.itemText}>{item.Name}</Text>
+                    {item.Type.toUpperCase() !== 'PREMIUM' && (
+                      <TouchableOpacity style={styles.switchValue} onPress={() => toggleItemValueMode(index, 'has')}>
+                        <Icon name="repeat-outline" size={14} />
+                        <Text style={styles.switchValueText}>Physical</Text>
+                      </TouchableOpacity>
+                    )}
+
+
+                    <TouchableOpacity onPress={() => removeItem(index, true)} style={styles.removeButton}>
+                      <Icon name="close-outline" size={14} color="white" />
+                    </TouchableOpacity>
+                  </>
+                ) : (
+                  <Text style={styles.itemPlaceholder}>Empty</Text>
+                )}
+              </View>
+            ))}
+          </View>
+
+          <View style={styles.divider}>
+            <Icon name="swap-vertical-outline" size={24} color="white" />
+          </View>
+
+          <Text style={styles.sectionTitle}>Wants</Text>
+          <View style={styles.itemRow}>
+            <TouchableOpacity onPress={() => openDrawer('wants')} style={styles.addItemBlock}>
+              <Icon name="add-outline" size={40} color="white" />
+              <Text style={styles.itemText}>Add Item</Text>
+            </TouchableOpacity>
+            {wantsItems?.map((item, index) => (
+              <View key={index} style={styles.itemBlock}>
+                {item ? (
+                  <>
+                    <Image
+                      source={{ uri: `https://bloxfruitscalc.com/wp-content/uploads/2024/09/${formatName(item.Name)}_Icon.webp` }}
+                      style={styles.itemImageOverlay}
+                    />
+                    <Text style={styles.itemText}>${item.Value.toLocaleString()}</Text>
+                    <Text style={styles.itemText}>{item.Name}</Text>
+                    {item.Type.toUpperCase() !== 'PREMIUM' && (
+                      <TouchableOpacity style={styles.switchValue} onPress={() => toggleItemValueMode(index, 'want')}>
+                        <Icon name="repeat-outline" size={14} />
+                        <Text style={styles.switchValueText}>Physical</Text>
+                      </TouchableOpacity>
+                    )}
+                    <TouchableOpacity onPress={() => removeItem(index, false)} style={styles.removeButton}>
+                      <Icon name="close-outline" size={18} color="white" />
+                    </TouchableOpacity>
+                  </>
+
+                ) : (
+                  <Text style={styles.itemPlaceholder}>Empty</Text>
+                )}
+              </View>
+            ))}
+          </View>
+          </ViewShot>
+        </ScrollView>)}
+      <TouchableOpacity onPress={shareScreenshot} style={styles.float}> 
+        <Icon name="download" size={28} color='#4E5465'/>
+      </TouchableOpacity>
       <View style={styles.containerBannerAd}>
         <BannerAd
           unitId={bannerAdUnitId}
@@ -303,9 +355,6 @@ export default function HomeScreen({ route }) {
           }}
         />
       </View>
-
-
-
       <Modal
         visible={isDrawerVisible}
         transparent={true}
@@ -314,6 +363,7 @@ export default function HomeScreen({ route }) {
       >
         <TouchableOpacity style={styles.modalOverlay} onPress={closeDrawer} />
         <View style={styles.drawerContainer}>
+          <Text style={styles.titleText}>You can search fruite and select it</Text>
           <View style={{
             flexDirection: 'row', justifyContent: 'space-between', marginVertical: 10,
           }}>
@@ -403,7 +453,7 @@ const styles = StyleSheet.create({
   },
   addItemBlock: {
     width: '32%',
-    height: 100,
+    height: 110,
     backgroundColor: '#3E8BFC',
     justifyContent: 'center',
     alignItems: 'center',
@@ -412,7 +462,7 @@ const styles = StyleSheet.create({
   },
   itemBlock: {
     width: '32%',
-    height: 100,
+    height: 110,
     backgroundColor: '#4E5465',
     justifyContent: 'center',
     alignItems: 'center',
@@ -467,27 +517,29 @@ const styles = StyleSheet.create({
   profitLossText: { fontSize: 18, fontFamily: 'Lato-Bold' },
   profitLossValue: { fontSize: 18, marginLeft: 5, fontFamily: 'Lato-Bold' },
   modalOverlay: {
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent red
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', 
     flex: 1,
   },
   searchInput: {
-    width: '80%',
+    width: '78%',
     borderColor: 'grey',
     borderWidth: 1,
     borderRadius: 5,
-    height: 40,
-    borderColor: '#333',       // Border color for visibility
-    borderWidth: 1,            // Set border width
-    borderRadius: 5,           // Rounded corners
-    paddingHorizontal: 10,     // Padding inside the TextInput
-    backgroundColor: '#fff',   // Background color
-    color: '#000',             //
+    height: 48,
+    borderColor: '#333',       
+    borderWidth: 1,          
+    borderRadius: 5,          
+    paddingHorizontal: 10,    
+    backgroundColor: '#fff',  
+    color: '#000',            
   },
   closeButton: {
     backgroundColor: 'red',
     padding: 10,
     borderRadius: 5,
-    width: '18%'
+    width: '22%',
+    alignItems:'center',
+    justifyContent:'center'
   },
   closeButtonText: {
     color: 'white',
@@ -512,11 +564,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingVertical: 0,
     paddingHorizontal: 10,
-    borderRadius: 20
+    borderRadius: 20,
+    margin:5,
+    alignItems:'center'
   },
   switchValueText: {
     fontSize: 12,
-    paddingHorizontal: 3,
+    padding: 3,
     fontFamily: 'Lato-Regular'
 
   },
@@ -528,7 +582,47 @@ const styles = StyleSheet.create({
     bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
-    alignSelf:'center'
+    alignSelf: 'center'
   },
-
+  screenshotView: {
+    padding: 10,
+     flex:1,
+     backgroundColor:'white',
+     paddingVertical:20
+  },
+  float:{
+    position:'absolute',
+    bottom:50,
+    right:0,
+    top:-43,
+    width:40,
+    zIndex:1
+    
+  },
+  titleText:{
+    fontFamily:'Lato-Regular',
+    fontSize:12
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f9f9f9',
+  },
+  loaderText: {
+    fontSize: 18,
+    fontFamily: 'Lato-Bold',
+  },
+  noDataContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f9f9f9',
+  },
+  noDataText: {
+    fontSize: 18,
+    color: 'gray',
+    fontFamily: 'Lato-Bold',
+  },
+  
 });
