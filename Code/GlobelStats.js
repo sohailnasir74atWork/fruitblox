@@ -35,24 +35,25 @@ export const GlobalStateProvider = ({ children }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const fetchFromFirebase = async (path) => {
-          const dataRef = ref(database, path);
-          const snapshot = await get(dataRef);
-          return snapshot.val() || [];
-        };
+        const rootRef = ref(database);
+        const snapshot = await get(rootRef);
 
-        const [xlsData, normalStock, mirageStock] = await Promise.all([
-          fetchFromFirebase('xlsData'),
-          fetchFromFirebase('calcData/test'),
-          fetchFromFirebase('calcData/mirage'),
-        ]);
+        if (snapshot.exists()) {
+          const firebaseData = snapshot.val();
+          const xlsData = firebaseData.xlsData || [];
+          const normalStock = firebaseData.calcData?.test || [];
+          const mirageStock = firebaseData.calcData?.mirage || [];
 
-        setState({
-          data: xlsData,
-          normalStock,
-          mirageStock,
-          isAppReady: true,
-        });
+          setState({
+            data: xlsData,
+            normalStock,
+            mirageStock,
+            isAppReady: true,
+          });
+        } else {
+          console.warn('No data available in Firebase');
+          setState((prevState) => ({ ...prevState, isAppReady: true }));
+        }
       } catch (error) {
         console.error('Error fetching data from Firebase:', error);
         setState((prevState) => ({ ...prevState, isAppReady: true })); // Ensure the app is marked ready even on error

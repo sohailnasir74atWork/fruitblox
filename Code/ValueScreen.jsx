@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, TextInput, Image, FlatList, TouchableWithoutFeedback, ActivityIndicator } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import debounce from 'lodash.debounce';
@@ -12,33 +12,38 @@ const ValueScreen = () => {
   const [searchText, setSearchText] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('ALL');
   const [filterDropdownVisible, setFilterDropdownVisible] = useState(false);
+  const [filteredData, setFilteredData] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   const { data } = useGlobalState();
   const valuesData = useMemo(() => (data ? Object.values(data) : []), [data]);
   const filters = ['ALL', 'COMMON', 'UNCOMMON', 'RARE', 'LEGENDARY', 'MYTHICAL', 'GAME PASS'];
+
   const displayedFilter = selectedFilter === 'PREMIUM' ? 'GAME PASS' : selectedFilter;
 
   const formatName = (name) => name.replace(/^\+/, '').replace(/\s+/g, '-');
-console.log('ffff')
+
   const handleFilterChange = (filter) => {
     setSelectedFilter(filter === 'GAME PASS' ? 'PREMIUM' : filter);
     setFilterDropdownVisible(false);
   };
 
-  const handleSearchChange = debounce((text) => setSearchText(text), 300);
+  const handleSearchChange = debounce((text) => {
+    setSearchText(text);
+  }, 300);
 
-  const filteredData = useMemo(() => {
-    return valuesData.filter((item) => {
-      const itemType = item.Type.toUpperCase() === 'PREMIUM' ? 'GAME PASS' : item.Type.toUpperCase();
-      const matchesSearch = item.Name.toLowerCase().includes(searchText.toLowerCase());
-      const matchesFilter = selectedFilter === 'ALL' || itemType === selectedFilter;
-      return matchesSearch && matchesFilter;
+  useEffect(() => {
+    setLoading(true);
+    const filtered = valuesData.filter((item) => {
+      const itemType = item.Type.toUpperCase() === 'GAME PASS' ? 'PREMIUM' : item.Type.toUpperCase();
+      return (
+        item.Name.toLowerCase().includes(searchText.toLowerCase()) &&
+        (selectedFilter === 'ALL' || itemType === selectedFilter)
+      );
     });
-  }, [valuesData, searchText, selectedFilter]);
-  
-  // useEffect(() => {
-  //   applyFilter();
-  // }, [searchText, selectedFilter, applyFilter]);
-
+    setFilteredData(filtered);
+    setLoading(false);
+  }, [searchText, selectedFilter]);
   const closeDropdown = () => {
     if (filterDropdownVisible) setFilterDropdownVisible(false);
   };
@@ -126,15 +131,15 @@ console.log('ffff')
 
         {filterDropdownVisible && renderFilterOptions()}
 
-       
-  <FlatList
-    data={filteredData}
-    keyExtractor={(item) => item.Name}
-    renderItem={renderItem}
-    showsVerticalScrollIndicator={false}
-    removeClippedSubviews
-    contentContainerStyle={styles.listContent}
-  />
+
+        <FlatList
+          data={filteredData}
+          keyExtractor={(item) => item.Name}
+          renderItem={renderItem}
+          showsVerticalScrollIndicator={false}
+          removeClippedSubviews
+          contentContainerStyle={styles.listContent}
+        />
       </View>
     </TouchableWithoutFeedback>
   );
