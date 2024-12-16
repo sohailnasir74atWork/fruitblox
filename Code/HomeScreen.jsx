@@ -18,7 +18,7 @@ export default function HomeScreen() {
   const { data } = useGlobalState();
   const initialItems = [null, null];
   const [hasItems, setHasItems] = useState(initialItems);
-  const [fruitRecords, setFruiteRecord] = useState([]);
+  const [fruitRecords, setFruitRecords] = useState([]);
   const [wantsItems, setWantsItems] = useState(initialItems);
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
   const [selectedSection, setSelectedSection] = useState(null);
@@ -27,80 +27,76 @@ export default function HomeScreen() {
   const [wantsTotal, setWantsTotal] = useState({ price: 0, value: 0 });
   const [isAdLoaded, setIsAdLoaded] = useState(false);
   const [isShowingAd, setIsShowingAd] = useState(false);
-  const [adShown, setAdShown] = useState(false); 
-  const [loading, setLoading] = useState(true); 
-const [dataAvailable, setDataAvailable] = useState(false); 
+  const [hasAdBeenShown, setHasAdBeenShown] = useState(false);
+    const [loading, setLoading] = useState(true); 
   const viewRef = useRef();
   useEffect(() => {
     if (data && Object.keys(data).length > 0) {
-      setDataAvailable(true);
-      const fruitRecords = Object.values(data); 
-      setFruiteRecord(fruitRecords); 
+      setFruitRecords(Object.values(data));
+      setLoading(false)
     } else {
-      setDataAvailable(false);
-      setFruiteRecord([]); 
+      setFruitRecords([]);
     }
-    setLoading(false);
   }, [data]);
-  
-  
+
+  // Interstitial ad logic
   useEffect(() => {
-    try {
-      interstitial.load();
+    interstitial.load();
 
-      const onAdLoaded = () => {
-        setIsAdLoaded(true);
-      };
-      const onAdClosed = () => {
-        setIsAdLoaded(false);
-        setIsShowingAd(false);
-        try {
-          interstitial.load();
-        } catch (error) {
-          console.error('Error loading interstitial ad:', error);
-        }
-      };
-      const onAdError = (error) => {
-        setIsAdLoaded(false);
-        setIsShowingAd(false);
-        console.error('Ad Error:', error);
-      };
-      const adLoadedListener = interstitial.addAdEventListener(AdEventType.LOADED, onAdLoaded);
-      const adClosedListener = interstitial.addAdEventListener(AdEventType.CLOSED, onAdClosed);
-      const adErrorListener = interstitial.addAdEventListener(AdEventType.ERROR, onAdError);
+    const onAdLoaded = () => setIsAdLoaded(true);
+    const onAdClosed = () => {
+      setIsAdLoaded(false);
+      setIsShowingAd(false);
+      interstitial.load(); // Reload ad for the next use
+    };
+    const onAdError = (error) => {
+      setIsAdLoaded(false);
+      setIsShowingAd(false);
+      console.error('Ad Error:', error);
+    };
 
-      return () => {
-        adLoadedListener();
-        adClosedListener();
-        adErrorListener();
-      };
-    } catch (error) {
-      console.error('Error initializing interstitial ad:', error);
-    }
+    const loadedListener = interstitial.addAdEventListener(AdEventType.LOADED, onAdLoaded);
+    const closedListener = interstitial.addAdEventListener(AdEventType.CLOSED, onAdClosed);
+    const errorListener = interstitial.addAdEventListener(AdEventType.ERROR, onAdError);
+
+    return () => {
+      loadedListener();
+      closedListener();
+      errorListener();
+    };
   }, []);
 
-  const showInterstitialAd = () => {
+  const showInterstitialAd = (callback) => {
     if (isAdLoaded && !isShowingAd) {
+      setIsShowingAd(true);
       try {
-        setIsShowingAd(true);
         interstitial.show();
+        interstitial.addAdEventListener(AdEventType.CLOSED, callback);
       } catch (error) {
         console.error('Error showing interstitial ad:', error);
         setIsShowingAd(false);
+        callback(); // Proceed with fallback in case of error
       }
+    } else {
+      callback(); // If ad is not loaded, proceed immediately
     }
   };
-
+  
   const openDrawer = (section) => {
-
-    if (section === 'wants' && !adShown) {
-      showInterstitialAd();
-      setAdShown(true); 
-      return; 
+    // Show ad only if it's the "wants" section and the ad hasn't been shown yet
+    if (section === 'wants' && !hasAdBeenShown) {
+      showInterstitialAd(() => {
+        setHasAdBeenShown(true); // Mark the ad as shown
+        setSelectedSection(section);
+        setIsDrawerVisible(true);
+      });
+    } else {
+      // Open drawer without showing the ad
+      setSelectedSection(section);
+      setIsDrawerVisible(true);
     }
-    setSelectedSection(section);
-    setIsDrawerVisible(true);
   };
+  
 
   const closeDrawer = () => {
     setIsDrawerVisible(false);
@@ -190,7 +186,9 @@ const [dataAvailable, setDataAvailable] = useState(false);
 
 
   const captureAndSave = async () => {
+
     try {
+      
       const uri = await captureRef(viewRef, {
         format: 'png',
         quality: 0.8,
@@ -232,10 +230,6 @@ const [dataAvailable, setDataAvailable] = useState(false);
       {loading ? (
       <View style={styles.loaderContainer}>
         <Text style={styles.loaderText}>Loading...</Text>
-      </View>
-    ) : !dataAvailable ? (
-      <View style={styles.noDataContainer}>
-        <Text style={styles.noDataText}>Data Not Available! Check Internet Connection</Text>
       </View>
     ) : (
         <ScrollView style={{ marginBottom: 50 }} showsVerticalScrollIndicator={false}>

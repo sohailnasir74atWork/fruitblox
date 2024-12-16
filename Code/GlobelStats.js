@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { getDatabase, ref, get } from 'firebase/database';
-import { initializeApp } from 'firebase/app';
+import { initializeApp, getApps } from 'firebase/app';
 
 // Firebase configuration
 const firebaseConfig = {
@@ -14,7 +14,8 @@ const firebaseConfig = {
   measurementId: "G-C3T24PS3SF"
 };
 
-const app = initializeApp(firebaseConfig);
+// Initialize Firebase (ensuring it's not initialized multiple times)
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 const database = getDatabase(app);
 
 // Create a context for global state
@@ -24,38 +25,47 @@ const GlobalStateContext = createContext();
 export const useGlobalState = () => useContext(GlobalStateContext);
 
 export const GlobalStateProvider = ({ children }) => {
-  const [data, setData] = useState(null);
-  const [normalStock, setNormalStock] = useState([]);
-  const [mirageStock, setMirageStock] = useState([]);
-  const [isAppReady, setIsAppReady] = useState(false);
+  const [state, setState] = useState({
+    data: null,
+    normalStock: [],
+    mirageStock: [],
+    isAppReady: false,
+  });
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const dataRef = ref(database, 'xlsData');
-        const snapshot = await get(dataRef);
-        setData(snapshot.val());
+        const fetchFromFirebase = async (path) => {
+          const dataRef = ref(database, path);
+          const snapshot = await get(dataRef);
+          return snapshot.val() || [];
+        };
 
-        const dataRef2 = ref(database, 'calcData/test');
-        const snapshot2 = await get(dataRef2);
-        setNormalStock(snapshot2.val() || []);
+        const [xlsData, normalStock, mirageStock] = await Promise.all([
+          fetchFromFirebase('xlsData'),
+          fetchFromFirebase('calcData/test'),
+          fetchFromFirebase('calcData/mirage'),
+        ]);
 
-        const dataRef3 = ref(database, 'calcData/mirage');
-        const snapshot3 = await get(dataRef3);
-        setMirageStock(snapshot3.val() || []);
-
-        setIsAppReady(true);
+        setState({
+          data: xlsData,
+          normalStock,
+          mirageStock,
+          isAppReady: true,
+        });
       } catch (error) {
         console.error('Error fetching data from Firebase:', error);
-        setIsAppReady(true);
+        setState((prevState) => ({ ...prevState, isAppReady: true })); // Ensure the app is marked ready even on error
       }
     };
 
     fetchData();
   }, []);
 
+  const contextValue = useMemo(() => state, [state]);
+
   return (
-    <GlobalStateContext.Provider value={{ data, normalStock, mirageStock, isAppReady }}>
+    <GlobalStateContext.Provider value={contextValue}>
       {children}
     </GlobalStateContext.Provider>
   );
