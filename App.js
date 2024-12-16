@@ -7,7 +7,6 @@ import HomeScreen from './Code/HomeScreen';
 import ValueScreen from './Code/ValueScreen';
 import TimerScreen from './Code/TimerScreen';
 import SettingsScreen from './Code/Setting';
-import SplashScreen from './Code/SplashScreen';
 import UpcomingFeaturesScreen from './Code/Trader';
 import { GlobalStateProvider } from './Code/GlobelStats'; 
 
@@ -17,37 +16,22 @@ const MyLightTheme = {
   ...DefaultTheme,
   colors: {
     ...DefaultTheme.colors,
-    background: 'white',
-    text: 'black',
+    background: '#4E5465',
+    text: 'white',
   },
 };
 
 function App() {
-  const [showSplash, setShowSplash] = useState(true);
-  const opacity = useRef(new Animated.Value(0)).current;
 
-  const handleSplashAnimationEnd = () => {
-    setShowSplash(false);
-      Animated.parallel([
-        Animated.timing(opacity, {
-          toValue: 1,
-          duration: 500,
-          useNativeDriver: true,
-        }),
-      ]).start();
-  };
-
-  if (showSplash) {
-    return <SplashScreen onAnimationEnd={handleSplashAnimationEnd} />;
-  }
+ 
 
   return (
     <SafeAreaView style={{ flex: 1, width: '100%' }}>
-      <Animated.View style={{ flex: 1, opacity }}>
+      <Animated.View style={{ flex: 1 }}>
         <NavigationContainer theme={MyLightTheme}>
           <StatusBar
             barStyle={'light-content'}
-            {...(Platform.OS === 'android' && { backgroundColor: 'white' })}
+            {...(Platform.OS === 'android' && { backgroundColor: '#4E5465' })}
           />
           <Tab.Navigator
             screenOptions={({ route }) => ({
@@ -74,19 +58,19 @@ function App() {
                 }
                 return <Icon name={iconName} size={size} color={color} />;
               },
-              tabBarActiveTintColor: '#3E8BFC',
-              tabBarInactiveTintColor: 'gray',
+              tabBarActiveTintColor: '#17202a',
+              tabBarInactiveTintColor: '#17202a',        
               headerTitleStyle: { fontFamily: 'Lato-Bold', fontSize: 24 },
               headerStyle: {
-                backgroundColor: 'white',
+                backgroundColor: '#4E5465',
               },
-              headerTintColor: 'black',
+              headerTintColor: 'white',
             })}
           >
             <Tab.Screen name="Calculator" component={HomeScreen} />
             <Tab.Screen name="Values" component={ValueScreen} />
             <Tab.Screen name="Stock" component={TimerScreen} />
-            <Tab.Screen name="Market" component={UpcomingFeaturesScreen} />
+            {/* <Tab.Screen name="Market" component={UpcomingFeaturesScreen} /> */}
             <Tab.Screen name="Setting" component={SettingsScreen} />
           </Tab.Navigator>
         </NavigationContainer>

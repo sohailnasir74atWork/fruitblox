@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, FlatList, Image } from 'react-native';
 import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
 import getAdUnitId from './ads';
 import { useGlobalState } from './GlobelStats';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import BannerAdWrapper from './bannerAds';
 
 
 const bannerAdUnitId = getAdUnitId('banner');
@@ -65,18 +67,11 @@ const TimerScreen = () => {
 
   return (
     <View style={styles.container}>
+      <GestureHandlerRootView>
       <Text style={styles.description}>
   Live Blox Fruits stock from Normal and Mirage dealers. Normal Stock updates every 4 hours, Mirage Stock every 2 hours, providing accurate, real-time data.
 </Text>
-<View style={styles.containerBannerAd}>
-      <BannerAd
-        unitId={bannerAdUnitId}
-        size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
-        requestOptions={{
-          requestNonPersonalizedAdsOnly: true,
-        }}
-      />
-    </View>
+
       <FlatList
       showsVerticalScrollIndicator={false}
         data={[
@@ -97,29 +92,29 @@ const TimerScreen = () => {
           )
         }
       />
-    </View>
+    </GestureHandlerRootView>
+    <BannerAdWrapper/></View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 10 , backgroundColor: '#F5F5F5' },
+  container: { flex: 1, paddingHorizontal: 10 , backgroundColor: '#4E5465' },
   header: { fontSize: 24, fontFamily:'Lato-Bold', marginBottom: 10 },
-  title: { fontSize: 20, fontFamily:'Lato-Bold', },
-  timer: { fontSize: 16 },
-  time: { fontSize: 20, fontWeight:'bold' },
-  itemContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', borderRadius: 10, padding: 10, marginBottom: 10, elevation: 1 },
+  title: { fontSize: 20, fontFamily:'Lato-Bold', color:'white' },
+  timer: { fontSize: 16 , color:'white'},
+  time: { fontSize: 20, fontWeight:'bold', color:'white' },
+  itemContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#17202a', borderRadius: 10, padding: 10, marginBottom: 10, elevation: 1 },
   icon: { width: 50, height: 50, borderRadius: 5, marginRight: 10 },
-  name: { fontSize: 16, fontFamily:'Lato-Bold', flex: 1 },
+  name: { fontSize: 16, fontFamily:'Lato-Bold', flex: 1, color:'white' },
   price: { fontSize: 14, fontFamily:'Lato-ragular', marginLeft: 10, backgroundColor:'green', paddingVertical:3, paddingHorizontal:5, borderRadius:5, color:'white' },
   robux: { fontSize: 14, fontFamily:'Lato-ragular', marginLeft: 10, backgroundColor:'green', paddingVertical:3, paddingHorizontal:5, borderRadius:5, color:'white'  },
   flex:{flexDirection:'row', alignItems:'center', justifyContent:'space-between', marginVertical:20},
   description: {
     fontSize: 14, fontFamily:'Lato-ragular',
     lineHeight: 18,
-    color: '#333',
     marginVertical: 10,
     fontFamily: 'Lato-Regular',
-
+color:'white'
   },
   containerBannerAd: {
     justifyContent:'center',

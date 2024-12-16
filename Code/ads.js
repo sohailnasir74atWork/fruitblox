@@ -12,8 +12,8 @@ const adUnits = {
     interstitial: TestIds.INTERSTITIAL,
   },
   android: {
-    banner: 'ca-app-pub-5740215782746766/5225162749',       
-    interstitial: 'ca-app-pub-5740215782746766/1206026687', 
+    banner: 'ca-app-pub-3701208411582706/4133745803',       
+    interstitial: 'ca-app-pub-3701208411582706/2820664136', 
   },
   ios: {
     banner: 'ca-app-pub-5740215782746766/4522455164',      

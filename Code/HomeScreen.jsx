@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Modal, FlatList, TextInput, Image, Alert } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Modal, FlatList, TextInput, Image, Alert, ActivityIndicator } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { InterstitialAd, AdEventType, TestIds, BannerAd, BannerAdSize } from 'react-native-google-mobile-ads';
 import getAdUnitId from './ads';
@@ -7,15 +7,16 @@ import ViewShot, { captureRef } from 'react-native-view-shot';
 import RNFS from 'react-native-fs';  
 import Share from 'react-native-share'; 
 import { useGlobalState } from './GlobelStats';
+import BannerAdWrapper from './bannerAds';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
-const bannerAdUnitId = getAdUnitId('banner');
 const interstitialAdUnitId = getAdUnitId('interstitial');
 const interstitial = InterstitialAd.createForAdRequest(interstitialAdUnitId, {
   requestNonPersonalizedAdsOnly: true,
 });
 
 export default function HomeScreen() {
-  const { data } = useGlobalState();
+  const { data, isPro } = useGlobalState();
   const initialItems = [null, null];
   const [hasItems, setHasItems] = useState(initialItems);
   const [fruitRecords, setFruiteRecord] = useState([]);
@@ -29,6 +30,8 @@ export default function HomeScreen() {
   const [isShowingAd, setIsShowingAd] = useState(false);
   const [adShown, setAdShown] = useState(false); 
   const [loading, setLoading] = useState(true); 
+  const pendingAction = useRef(null); // To track actions after the ad is closed
+
 const [dataAvailable, setDataAvailable] = useState(false); 
   const viewRef = useRef();
   useEffect(() => {
@@ -45,42 +48,45 @@ const [dataAvailable, setDataAvailable] = useState(false);
   
   
   useEffect(() => {
-    try {
-      interstitial.load();
+    interstitial.load();
 
-      const onAdLoaded = () => {
-        setIsAdLoaded(true);
-      };
-      const onAdClosed = () => {
-        setIsAdLoaded(false);
-        setIsShowingAd(false);
-        try {
-          interstitial.load();
-        } catch (error) {
-          console.error('Error loading interstitial ad:', error);
-        }
-      };
-      const onAdError = (error) => {
-        setIsAdLoaded(false);
-        setIsShowingAd(false);
-        console.error('Ad Error:', error);
-      };
-      const adLoadedListener = interstitial.addAdEventListener(AdEventType.LOADED, onAdLoaded);
-      const adClosedListener = interstitial.addAdEventListener(AdEventType.CLOSED, onAdClosed);
-      const adErrorListener = interstitial.addAdEventListener(AdEventType.ERROR, onAdError);
+    const handleAdLoaded = () => setIsAdLoaded(true);
+    const handleAdClosed = () => {
+      setIsAdLoaded(false);
+      setIsShowingAd(false);
+      interstitial.load(); // Preload next ad
 
-      return () => {
-        adLoadedListener();
-        adClosedListener();
-        adErrorListener();
-      };
-    } catch (error) {
-      console.error('Error initializing interstitial ad:', error);
-    }
+      // Execute the pending action if any
+      if (pendingAction.current) {
+        pendingAction.current();
+        pendingAction.current = null; // Clear the pending action
+      }
+    };
+    const handleAdError = (error) => {
+      console.error('Ad Error:', error);
+      setIsAdLoaded(false);
+      setIsShowingAd(false);
+
+      // If an ad error occurs, execute the pending action immediately
+      if (pendingAction.current) {
+        pendingAction.current();
+        pendingAction.current = null;
+      }
+    };
+
+    const adLoadedListener = interstitial.addAdEventListener(AdEventType.LOADED, handleAdLoaded);
+    const adClosedListener = interstitial.addAdEventListener(AdEventType.CLOSED, handleAdClosed);
+    const adErrorListener = interstitial.addAdEventListener(AdEventType.ERROR, handleAdError);
+
+    return () => {
+      adLoadedListener();
+      adClosedListener();
+      adErrorListener();
+    };
   }, []);
 
-  const showInterstitialAd = () => {
-    if (isAdLoaded && !isShowingAd) {
+  const showInterstitialAd = useCallback(() => {
+    if (isAdLoaded) {
       try {
         setIsShowingAd(true);
         interstitial.show();
@@ -89,18 +95,17 @@ const [dataAvailable, setDataAvailable] = useState(false);
         setIsShowingAd(false);
       }
     }
-  };
+  }, [isAdLoaded, isShowingAd]);
 
-  const openDrawer = (section) => {
-
-    if (section === 'wants' && !adShown) {
+  const openDrawer = useCallback((section) => {
+    if (section === 'wants' && !adShown && !isPro) {
       showInterstitialAd();
-      setAdShown(true); 
-      return; 
+      setAdShown(true);
     }
     setSelectedSection(section);
     setIsDrawerVisible(true);
-  };
+  }, [adShown, showInterstitialAd]);
+  
 
   const closeDrawer = () => {
     setIsDrawerVisible(false);
@@ -180,9 +185,12 @@ const [dataAvailable, setDataAvailable] = useState(false);
     }
   };
 
-  const filteredData = fruitRecords.filter((item) =>
-    item.Name.toLowerCase().includes(searchText.toLowerCase())
-  );
+  const filteredData = useMemo(() => {
+    return fruitRecords.filter((item) =>
+      item.Name.toLowerCase().includes(searchText.toLowerCase())
+    );
+  }, [fruitRecords, searchText]);
+  
 
   const profitLoss = wantsTotal.price - hasTotal.price;
   const isProfit = profitLoss >= 0;
@@ -206,11 +214,12 @@ const [dataAvailable, setDataAvailable] = useState(false);
 
       return downloadDest; 
     } catch (error) {
-      console.log('Error capturing screenshot:', error);
+      // console.log('Error capturing screenshot:', error);
     }
   };
 
   const shareScreenshot = async () => {
+
     const filePath = await captureAndSave(); 
 
     if (filePath) {
@@ -225,9 +234,25 @@ const [dataAvailable, setDataAvailable] = useState(false);
         .catch((err) => console.log('Share Error:', err));
     }
   };
-
+  const handleShare = useCallback(() => {
+    if (isAdLoaded) {
+      // Set the shareScreenshot function as the pending action
+      pendingAction.current = shareScreenshot;
+      showInterstitialAd();
+    } else {
+      // If no ad is loaded, directly execute the share function
+      shareScreenshot();
+    }
+  }, [isAdLoaded, showInterstitialAd, shareScreenshot]);
+  const handleSharewoAds = useCallback(() => {
+   
+      // If no ad is loaded, directly execute the share function
+      shareScreenshot();
+    
+  }, []);
 
   return (
+    <GestureHandlerRootView>
     <View style={styles.container}>
       {loading ? (
       <View style={styles.loaderContainer}>
@@ -235,10 +260,11 @@ const [dataAvailable, setDataAvailable] = useState(false);
       </View>
     ) : !dataAvailable ? (
       <View style={styles.noDataContainer}>
-        <Text style={styles.noDataText}>Data Not Available! Check Internet Connection</Text>
+<ActivityIndicator size="large"/>
+<Text style={styles.noDataText}>Loading...</Text>
       </View>
     ) : (
-        <ScrollView style={{ marginBottom: 50 }} showsVerticalScrollIndicator={false}>
+        <ScrollView showsVerticalScrollIndicator={false}>
         <ViewShot ref={viewRef} style={styles.screenshotView}>
           <View style={styles.summaryContainer}>
             <View style={[styles.summaryBox, styles.hasBox]}>
@@ -258,13 +284,13 @@ const [dataAvailable, setDataAvailable] = useState(false);
             <Text style={[styles.profitLossText]}>
               {isProfit ? 'Profit' : 'Loss'}:
             </Text>
-            <Text style={[styles.profitLossValue, { color: isProfit ? 'green' : 'red' }]}>
+            <Text style={[styles.profitLossValue, { color: isProfit ? '#34C759' : '#E74C3C' }]}>
               ${Math.abs(profitLoss).toLocaleString()}
             </Text>
             {!neutral && <Icon
               name={isProfit ? 'arrow-up-outline' : 'arrow-down-outline'}
               size={20}
-              color={isProfit ? 'green' : 'red'}
+              color={isProfit ? '#34C759' : '#E74C3C'}
               style={styles.icon}
             />}
           </View>
@@ -343,18 +369,12 @@ const [dataAvailable, setDataAvailable] = useState(false);
           </View>
           </ViewShot>
         </ScrollView>)}
-      <TouchableOpacity onPress={shareScreenshot} style={styles.float}> 
-        <Icon name="download" size={28} color='#4E5465'/>
+      <TouchableOpacity onPress={isPro ?  handleSharewoAds :handleShare} style={styles.float}> 
+        <Icon name="arrow-redo-circle" size={40} color='#E74C3C'/>
       </TouchableOpacity>
-      <View style={styles.containerBannerAd}>
-        <BannerAd
-          unitId={bannerAdUnitId}
-          size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
-          requestOptions={{
-            requestNonPersonalizedAdsOnly: true,
-          }}
-        />
-      </View>
+      
+     <BannerAdWrapper/>
+     
       <Modal
         visible={isDrawerVisible}
         transparent={true}
@@ -399,13 +419,13 @@ const [dataAvailable, setDataAvailable] = useState(false);
         </View>
       </Modal>
     </View>
+    </GestureHandlerRootView>
   );
 }
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: '#4E5465',
   },
 
   summaryContainer: {
@@ -422,7 +442,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#34C759',
   },
   wantsBox: {
-    backgroundColor: '#FF3B30',
+    backgroundColor: '#E74C3C',
   },
   summaryText: {
     fontSize: 20,
@@ -442,6 +462,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     marginVertical: 10,
     fontFamily: 'Lato-Bold',
+    color:'white'
 
   },
   itemRow: {
@@ -463,7 +484,7 @@ const styles = StyleSheet.create({
   itemBlock: {
     width: '32%',
     height: 110,
-    backgroundColor: '#4E5465',
+    backgroundColor: '#17202a',
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 10,
@@ -476,14 +497,15 @@ const styles = StyleSheet.create({
     fontFamily: 'Lato-Bold',
   },
   itemPlaceholder: {
-    color: '#CCC',
+    color: 'white',
     textAlign: 'center',
+    fontFamily:'Lato-Regular'
   },
   removeButton: {
     position: 'absolute',
     top: 5,
     right: 5,
-    backgroundColor: '#FF3B30',
+    backgroundColor: '#E74C3C',
     borderRadius: 50,
     padding: 2,
   },
@@ -496,10 +518,11 @@ const styles = StyleSheet.create({
     padding: 5,
   },
   drawerContainer: {
-    backgroundColor: 'white',
+    backgroundColor: '#4E5465',
     borderTopLeftRadius: 10,
     borderTopRightRadius: 10,
-    padding: 20,
+    paddingTop: 20,
+    paddingHorizontal:10,
     height: 400,
     overflow: 'hidden',
     position: 'absolute',
@@ -514,7 +537,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Lato-Bold'
   },
   profitLossBox: { flexDirection: 'row', justifyContent: 'center', marginVertical: 10, alignItems: 'center' },
-  profitLossText: { fontSize: 18, fontFamily: 'Lato-Bold' },
+  profitLossText: { fontSize: 18, fontFamily: 'Lato-Bold', color:'white' },
   profitLossValue: { fontSize: 18, marginLeft: 5, fontFamily: 'Lato-Bold' },
   modalOverlay: {
     backgroundColor: 'rgba(0, 0, 0, 0.5)', 
@@ -534,7 +557,7 @@ const styles = StyleSheet.create({
     color: '#000',            
   },
   closeButton: {
-    backgroundColor: 'red',
+    backgroundColor: '#E74C3C',
     padding: 10,
     borderRadius: 5,
     width: '22%',
@@ -587,21 +610,22 @@ const styles = StyleSheet.create({
   screenshotView: {
     padding: 10,
      flex:1,
-     backgroundColor:'white',
-     paddingVertical:20
+     paddingVertical:20,
+     backgroundColor:'#4E5465'
   },
   float:{
     position:'absolute',
-    bottom:50,
-    right:0,
-    top:-43,
+    bottom:80,
+    right:5,
+    // top:,
     width:40,
     zIndex:1
     
   },
   titleText:{
     fontFamily:'Lato-Regular',
-    fontSize:12
+    fontSize:12,
+    color:'white'
   },
   loaderContainer: {
     flex: 1,
@@ -617,7 +641,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f9f9f9',
   },
   noDataText: {
     fontSize: 18,
