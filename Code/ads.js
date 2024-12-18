@@ -1,10 +1,6 @@
-// AdConfig.js
+import { TestIds } from 'react-native-google-mobile-ads';
 
-import { Platform } from 'react-native';
-import {  TestIds } from 'react-native-google-mobile-ads';
-
-const developmentMode = false
-
+const developmentMode = true;
 
 const adUnits = {
   test: {
@@ -12,20 +8,16 @@ const adUnits = {
     interstitial: TestIds.INTERSTITIAL,
   },
   android: {
-    banner: 'ca-app-pub-3701208411582706/4133745803',       
-    interstitial: 'ca-app-pub-3701208411582706/2820664136', 
+    banner: 'ca-app-pub-5740215782746766/5225162749',
+    interstitial: 'ca-app-pub-5740215782746766/1206026687',
   },
-  ios: {
-    banner: 'ca-app-pub-5740215782746766/4522455164',      
-    interstitial: 'ca-app-pub-5740215782746766/3209373499', 
-  }
 };
 
 const getAdUnitId = (type) => {
-  const os = Platform.OS;
   if (developmentMode) 
     return adUnits.test[type];
-  return adUnits[os][type]; 
+  
+  return adUnits.android[type]; // Ensure 'android' is explicitly used for production
 };
 
 export default getAdUnitId;
