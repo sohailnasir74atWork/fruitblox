@@ -1,6 +1,6 @@
-import React, { useState, useRef } from 'react';
-import { View, StatusBar, Platform, Animated, SafeAreaView } from 'react-native';
-import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, StatusBar, Platform, Animated, SafeAreaView, Appearance } from 'react-native';
+import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/Ionicons';
 import HomeScreen from './Code/HomeScreen';
@@ -19,35 +19,54 @@ const MyLightTheme = {
     ...DefaultTheme.colors,
     background: 'white',
     text: 'black',
+    primary: '#3E8BFC',
+  },
+};
+
+const MyDarkTheme = {
+  ...DarkTheme,
+  colors: {
+    ...DarkTheme.colors,
+    background: '#121212',
+    text: 'white',
+    primary: '#BB86FC',
   },
 };
 
 function App() {
   const [showSplash, setShowSplash] = useState(true);
+  const [theme, setTheme] = useState(Appearance.getColorScheme());
   const opacity = useRef(new Animated.Value(0)).current;
 
   const handleSplashAnimationEnd = () => {
     setShowSplash(false);
-      Animated.parallel([
-        Animated.timing(opacity, {
-          toValue: 1,
-          duration: 500,
-          useNativeDriver: true,
-        }),
-      ]).start();
+    Animated.timing(opacity, {
+      toValue: 1,
+      duration: 500,
+      useNativeDriver: true,
+    }).start();
   };
+
+  useEffect(() => {
+    const subscription = Appearance.addChangeListener(({ colorScheme }) => {
+      setTheme(colorScheme);
+    });
+    return () => subscription.remove();
+  }, []);
+
+  const selectedTheme = theme === 'dark' ? MyDarkTheme : MyLightTheme;
 
   if (showSplash) {
     return <SplashScreen onAnimationEnd={handleSplashAnimationEnd} />;
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, width: '100%' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: selectedTheme.colors.background }}>
       <Animated.View style={{ flex: 1, opacity }}>
-        <NavigationContainer theme={MyLightTheme}>
+        <NavigationContainer theme={selectedTheme}>
           <StatusBar
-            barStyle={'light-content'}
-            {...(Platform.OS === 'android' && { backgroundColor: 'white' })}
+            barStyle={theme === 'dark' ? 'light-content' : 'dark-content'}
+            {...(Platform.OS === 'android' && { backgroundColor: selectedTheme.colors.background })}
           />
           <Tab.Navigator
             screenOptions={({ route }) => ({
@@ -74,20 +93,30 @@ function App() {
                 }
                 return <Icon name={iconName} size={size} color={color} />;
               },
-              tabBarActiveTintColor: '#3E8BFC',
-              tabBarInactiveTintColor: 'gray',
+              tabBarActiveTintColor: selectedTheme.colors.primary,
+              tabBarInactiveTintColor: theme === 'dark' ? '#888' : 'gray',
               headerTitleStyle: { fontFamily: 'Lato-Bold', fontSize: 24 },
               headerStyle: {
-                backgroundColor: 'white',
+                backgroundColor: selectedTheme.colors.background,
               },
-              headerTintColor: 'black',
+              headerTintColor: selectedTheme.colors.text,
             })}
           >
-            <Tab.Screen name="Calculator" component={HomeScreen} />
-            <Tab.Screen name="Values" component={ValueScreen} />
-            <Tab.Screen name="Stock" component={TimerScreen} />
-            <Tab.Screen name="Market" component={UpcomingFeaturesScreen} />
-            <Tab.Screen name="Setting" component={SettingsScreen} />
+            <Tab.Screen name="Calculator">
+    {() => <HomeScreen selectedTheme={selectedTheme} />}
+  </Tab.Screen>
+  <Tab.Screen name="Values">
+    {() => <ValueScreen selectedTheme={selectedTheme} />}
+  </Tab.Screen>
+  <Tab.Screen name="Stock">
+    {() => <TimerScreen selectedTheme={selectedTheme} />}
+  </Tab.Screen>
+  {/* <Tab.Screen name="Market">
+    {() => <UpcomingFeaturesScreen selectedTheme={selectedTheme} />}
+  </Tab.Screen> */}
+  <Tab.Screen name="Setting">
+    {() => <SettingsScreen selectedTheme={selectedTheme} />}
+  </Tab.Screen>
           </Tab.Navigator>
         </NavigationContainer>
       </Animated.View>

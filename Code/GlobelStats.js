@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { getDatabase, ref, get } from 'firebase/database';
 import { initializeApp, getApps } from 'firebase/app';
+import { MMKV } from 'react-native-mmkv';
 
 // Firebase configuration
 const firebaseConfig = {
@@ -14,9 +15,12 @@ const firebaseConfig = {
   measurementId: "G-C3T24PS3SF"
 };
 
-// Initialize Firebase (ensuring it's not initialized multiple times)
+// Initialize Firebase
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 const database = getDatabase(app);
+
+// MMKV Storage Instance
+const storage = new MMKV();
 
 // Create a context for global state
 const GlobalStateContext = createContext();
@@ -32,6 +36,51 @@ export const GlobalStateProvider = ({ children }) => {
     isAppReady: false,
   });
 
+  // Load selected fruits from MMKV
+  const [selectedFruits, setSelectedFruits] = useState(() => {
+    const storedFruits = storage.getString('selectedFruits');
+    return storedFruits ? JSON.parse(storedFruits) : [];
+  });
+
+  // Load reminder states from MMKV
+  const [isReminderEnabled, setIsReminderEnabled] = useState(() => {
+    const storedReminder = storage.getBoolean('isReminderEnabled');
+    return typeof storedReminder === 'boolean' ? storedReminder : false;
+  });
+
+  const [isSelectedReminderEnabled, setIsSelectedReminderEnabled] = useState(() => {
+    const storedSelectedReminder = storage.getBoolean('isSelectedReminderEnabled');
+    return typeof storedSelectedReminder === 'boolean' ? storedSelectedReminder : false;
+  });
+
+  // Sync `selectedFruits` with MMKV
+  useEffect(() => {
+    try {
+      storage.set('selectedFruits', JSON.stringify(selectedFruits));
+    } catch (error) {
+      console.error('Error saving selectedFruits to MMKV:', error);
+    }
+  }, [selectedFruits]);
+
+  // Sync `isReminderEnabled` with MMKV
+  useEffect(() => {
+    try {
+      storage.set('isReminderEnabled', Boolean(isReminderEnabled));
+    } catch (error) {
+      console.error('Error saving isReminderEnabled to MMKV:', error);
+    }
+  }, [isReminderEnabled]);
+
+  // Sync `isSelectedReminderEnabled` with MMKV
+  useEffect(() => {
+    try {
+      storage.set('isSelectedReminderEnabled', Boolean(isSelectedReminderEnabled));
+    } catch (error) {
+      console.error('Error saving isSelectedReminderEnabled to MMKV:', error);
+    }
+  }, [isSelectedReminderEnabled]);
+
+  // Fetch data from Firebase
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -56,14 +105,25 @@ export const GlobalStateProvider = ({ children }) => {
         }
       } catch (error) {
         console.error('Error fetching data from Firebase:', error);
-        setState((prevState) => ({ ...prevState, isAppReady: true })); // Ensure the app is marked ready even on error
+        setState((prevState) => ({ ...prevState, isAppReady: true }));
       }
     };
 
     fetchData();
   }, []);
 
-  const contextValue = useMemo(() => state, [state]);
+  const contextValue = useMemo(
+    () => ({
+      ...state,
+      selectedFruits,
+      setSelectedFruits,
+      isReminderEnabled,
+      setIsReminderEnabled,
+      isSelectedReminderEnabled,
+      setIsSelectedReminderEnabled,
+    }),
+    [state, selectedFruits, isReminderEnabled, isSelectedReminderEnabled]
+  );
 
   return (
     <GlobalStateContext.Provider value={contextValue}>

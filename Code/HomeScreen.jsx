@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Modal, FlatList, TextInput, Image, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Modal, FlatList, TextInput, Image, Alert, useColorScheme } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { InterstitialAd, AdEventType, TestIds, BannerAd, BannerAdSize } from 'react-native-google-mobile-ads';
 import getAdUnitId from './ads';
@@ -14,7 +14,7 @@ const interstitial = InterstitialAd.createForAdRequest(interstitialAdUnitId, {
   requestNonPersonalizedAdsOnly: true,
 });
 
-export default function HomeScreen() {
+export default function HomeScreen({selectedTheme}) {
   const { data } = useGlobalState();
   const initialItems = [null, null];
   const [hasItems, setHasItems] = useState(initialItems);
@@ -38,6 +38,10 @@ export default function HomeScreen() {
       setFruitRecords([]);
     }
   }, [data]);
+  const colorScheme = useColorScheme(); // Returns 'light' or 'dark'
+
+  const isDarkMode = colorScheme === 'dark';
+
 
   // Interstitial ad logic
   useEffect(() => {
@@ -249,7 +253,7 @@ export default function HomeScreen() {
             </View>
           </View>
           <View style={styles.profitLossBox}>
-            <Text style={[styles.profitLossText]}>
+            <Text style={[styles.profitLossText, {color:selectedTheme.colors.text}]}>
               {isProfit ? 'Profit' : 'Loss'}:
             </Text>
             <Text style={[styles.profitLossValue, { color: isProfit ? 'green' : 'red' }]}>
@@ -356,8 +360,8 @@ export default function HomeScreen() {
         onRequestClose={closeDrawer}
       >
         <TouchableOpacity style={styles.modalOverlay} onPress={closeDrawer} />
-        <View style={styles.drawerContainer}>
-          <Text style={styles.titleText}>You can search fruite and select it</Text>
+        <View style={[styles.drawerContainer, {backgroundColor: isDarkMode ? '#3B404C' : 'white'}]}>
+          <Text style={[styles.titleText, {color:selectedTheme.colors.text}]}>You can search fruite and select it</Text>
           <View style={{
             flexDirection: 'row', justifyContent: 'space-between', marginVertical: 10,
           }}>
@@ -398,8 +402,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    backgroundColor: '#f9f9f9',
+    // padding: 20,
   },
 
   summaryContainer: {
@@ -490,10 +493,10 @@ const styles = StyleSheet.create({
     padding: 5,
   },
   drawerContainer: {
-    backgroundColor: 'white',
     borderTopLeftRadius: 10,
     borderTopRightRadius: 10,
-    padding: 20,
+    paddingHorizontal: 10,
+    paddingTop:20,
     height: 400,
     overflow: 'hidden',
     position: 'absolute',
@@ -581,7 +584,6 @@ const styles = StyleSheet.create({
   screenshotView: {
     padding: 10,
      flex:1,
-     backgroundColor:'white',
      paddingVertical:20
   },
   float:{
@@ -590,7 +592,9 @@ const styles = StyleSheet.create({
     right:0,
     top:-43,
     width:40,
-    zIndex:1
+    zIndex:1,
+    backgroundColor:'red',
+    height:40
     
   },
   titleText:{
@@ -601,7 +605,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f9f9f9',
   },
   loaderText: {
     fontSize: 18,

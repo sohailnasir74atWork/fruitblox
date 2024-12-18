@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Linking, Alert, Platform } fr
 import Share from 'react-native-share';
 import Icon from 'react-native-vector-icons/Ionicons';
 
-export default function SettingsScreen() {
+export default function SettingsScreen({selectedTheme}) {
   // Function to get the app download link based on the environment and platform
   const getAppDownloadLink = () => {
     return Platform.OS === 'ios'
@@ -69,28 +69,28 @@ export default function SettingsScreen() {
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.option} onPress={handleShareApp}>
-        <Icon name="share-social-outline" size={24} color="#333" />
-        <Text style={styles.optionText}>Share App</Text>
+        <Icon name="share-social-outline" size={24} color='white' />
+        <Text style={[styles.optionText, {color:'white'}]}>Share App</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.option} onPress={handleGetSuggestions}>
-        <Icon name="chatbox-ellipses-outline" size={24} color="#333" />
-        <Text style={styles.optionText}>Give Suggestions</Text>
+        <Icon name="chatbox-ellipses-outline" size={24} color='white' />
+        <Text style={[styles.optionText, {color:'white'}]}>Give Suggestions</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.option} onPress={handleRateApp}>
-        <Icon name="star-outline" size={24} color="#333" />
-        <Text style={styles.optionText}>Rate Us</Text>
+        <Icon name="star-outline" size={24} color='white' />
+        <Text style={[styles.optionText, {color:'white'}]}>Rate Us</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.option} onPress={handleOpenFacebook}>
-        <Icon name="logo-facebook" size={24} color="#333" />
-        <Text style={styles.optionText}>Visit Facebook Page</Text>
+        <Icon name="logo-facebook" size={24} color='white' />
+        <Text style={[styles.optionText, {color:'white'}]}>Visit Facebook Page</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.option} onPress={handleOpenWebsite}>
-        <Icon name="globe-outline" size={24} color="#333" />
-        <Text style={styles.optionText}>Visit Website</Text>
+        <Icon name="globe-outline" size={24} color='white' />
+        <Text style={[styles.optionText, {color:'white'}]}>Visit Website</Text>
       </TouchableOpacity>
     </View>
   );
@@ -101,7 +101,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#F5F5F5',
     fontFamily: 'Lato-regular',
   },
   option: {
@@ -109,7 +108,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 15,
     marginBottom: 20,
-    backgroundColor: '#FFF',
+    backgroundColor: '#4E5465',
     borderRadius: 10,
     elevation: 2,
   },
