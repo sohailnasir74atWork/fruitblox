@@ -35,7 +35,7 @@ const SignInDrawer = ({ visible, onClose, selectedTheme }) => {
         });
     }, [])
     
-
+    
 
     async function signInWithGoogle() {
         // Check if your device supports Google Play

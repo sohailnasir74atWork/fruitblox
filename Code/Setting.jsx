@@ -14,6 +14,7 @@ import Share from 'react-native-share';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useGlobalState } from './GlobelStats';
 import { logoutUser } from './Firebase/UserLogics';
+import config from './Helper/Environment';
 export default function SettingsScreen({ selectedTheme }) {
   const { user } = useGlobalState();
   const colorScheme = useColorScheme(); // Returns 'light' or 'dark'
@@ -21,8 +22,8 @@ export default function SettingsScreen({ selectedTheme }) {
 
   const getAppDownloadLink = () => {
     return Platform.OS === 'ios'
-      ? 'https://apps.apple.com/us/app/app-name/id6737775801'
-      : 'https://play.google.com/store/apps/details?id=com.bloxfruitevalues';
+      ? config.IOsShareLink
+      : config.andriodShareLink;
   };
 
   const handleShareApp = async () => {
@@ -40,7 +41,7 @@ export default function SettingsScreen({ selectedTheme }) {
   };
 
   const handleGetSuggestions = () => {
-    const email = 'thesolanalabs@gmail.com';
+    const email = config.supportEmail;
     const subject = 'App Feedback and Suggestions (Blox Fruits Values)';
     const body = 'Hi team, I would like to share the following suggestions:\n\n';
     const mailtoUrl = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(
@@ -54,8 +55,8 @@ export default function SettingsScreen({ selectedTheme }) {
   const handleRateApp = () => {
     const storeLink =
       Platform.OS === 'ios'
-        ? `itms-apps://itunes.apple.com/app/idYOUR_APP_ID?action=write-review`
-        : `market://details?id=com.bloxfruitevalues`;
+        ? config.IOsShareLink
+        : config.andriodShareLink;
     Linking.openURL(storeLink).catch(() =>
       Alert.alert('Error', 'Unable to open the app store. Please try again later.')
     );
@@ -69,7 +70,7 @@ export default function SettingsScreen({ selectedTheme }) {
   };
 
   const handleOpenWebsite = () => {
-    const websiteUrl = 'https://bloxfruitscalc.com/';
+    const websiteUrl = config.webSite;
     Linking.openURL(websiteUrl).catch(() =>
       Alert.alert('Error', 'Unable to open the website. Please try again later.')
     );

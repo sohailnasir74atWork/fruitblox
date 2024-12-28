@@ -2,6 +2,7 @@
 
 import { Platform } from 'react-native';
 import {  TestIds } from 'react-native-google-mobile-ads';
+import config from './Helper/Environment';
 
 const developmentMode = false
 
@@ -12,12 +13,12 @@ const adUnits = {
     interstitial: TestIds.INTERSTITIAL,
   },
   android: {
-    banner: 'ca-app-pub-5740215782746766/5225162749',       
-    interstitial: 'ca-app-pub-5740215782746766/1206026687', 
+    banner: config.andriodBanner,       
+    interstitial: config.andriodIntestial, 
   },
   ios: {
-    banner: 'ca-app-pub-5740215782746766/4522455164',      
-    interstitial: 'ca-app-pub-5740215782746766/3209373499', 
+    banner: config.IOsBanner,      
+    interstitial: config.IOsIntestial, 
   }
 };
 

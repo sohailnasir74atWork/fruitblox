@@ -8,9 +8,9 @@ import ValueScreen from './Code/ValueScreen';
 import TimerScreen from './Code/TimerScreen';
 import SettingsScreen from './Code/Setting';
 import UpcomingFeaturesScreen from './Code/Trader';
-import { GlobalStateProvider, useGlobalState } from './Code/GlobelStats';
+import { GlobalStateProvider } from './Code/GlobelStats';
 import NotificationHandler from './Code/Firebase/FrontendNotificationHandling';
-import requestPermission from './Code/helper/PermissionCheck';
+import requestPermission from './Code/Helper/PermissionCheck';
 
 const Tab = createBottomTabNavigator();
 
