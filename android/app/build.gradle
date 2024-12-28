@@ -1,7 +1,6 @@
 apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
-apply plugin: "com.google.gms.google-services"
 apply from: file("../../node_modules/react-native-vector-icons/fonts.gradle")
 
 
@@ -85,8 +84,8 @@ android {
         applicationId "com.bloxfruitevalues"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 3
-        versionName "1.2"
+        versionCode 4
+        versionName "1.3"
     }
     signingConfigs {
         release {
@@ -114,11 +113,15 @@ dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
 
+
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")
         implementation(platform("com.google.firebase:firebase-bom:33.5.1"))
         implementation("com.google.firebase:firebase-analytics")
+        implementation("com.google.firebase:firebase-messaging")
+        
     } else {
         implementation jscFlavor
     }
 }
+apply plugin: 'com.google.gms.google-services'

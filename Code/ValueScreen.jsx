@@ -19,7 +19,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 const bannerAdUnitId = getAdUnitId('banner');
 
-const ValueScreen = ({selectedTheme}) => {
+const ValueScreen = ({ selectedTheme }) => {
   const [searchText, setSearchText] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('ALL');
   const [filterDropdownVisible, setFilterDropdownVisible] = useState(false);
@@ -61,11 +61,11 @@ const ValueScreen = ({selectedTheme}) => {
   const renderItem = React.useCallback(({ item }) => (
     <View style={styles.itemContainer}>
       <View style={styles.imageContainer}>
-      <Image
-  source={{ uri: `https://bloxfruitscalc.com/wp-content/uploads/2024/09/${formatName(item.Name)}_Icon.webp` }}
-  style={styles.icon}
-  resizeMode="cover"
-/>
+        <Image
+          source={{ uri: `https://bloxfruitscalc.com/wp-content/uploads/2024/09/${formatName(item.Name)}_Icon.webp` }}
+          style={styles.icon}
+          resizeMode="cover"
+        />
 
         <View>
           <Text style={styles.name}>{item.Name}</Text>
@@ -78,7 +78,7 @@ const ValueScreen = ({selectedTheme}) => {
         <Text style={styles.robuxPrice}>Robux Price: ${item.Robuxprice}</Text>
       </View>
       <View style={styles.statusContainer}>
-        <Text style={[styles.status, { backgroundColor: item.Stability === 'Stable' ? '#34C759' : '#FF3B30' }]}>
+        <Text style={[styles.status, { backgroundColor: item.Stability === 'Stable' ? '#29AB87' : '#FF3B30' }]}>
           {item.Stability}
         </Text>
       </View>
@@ -86,95 +86,101 @@ const ValueScreen = ({selectedTheme}) => {
   ));
 
   return (
-    <TouchableWithoutFeedback onPress={closeDrawer}>
+    <>
+        <GestureHandlerRootView>
+
 
       <View style={styles.container}>
-        <GestureHandlerRootView>
-        <Text style={[styles.description, {color:selectedTheme.colors.text}]}>
-          Live Blox Fruits values updated hourly. Find accurate item values here and visit the trade feed for fruits or game passes.
-        </Text>
-        <View style={styles.searchFilterContainer}>
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search"
-            placeholderTextColor="#888"
-            onChangeText={handleSearchChange}
-          />
-          <TouchableOpacity
-            style={styles.filterDropdown}
-            onPress={() => setFilterDropdownVisible(!filterDropdownVisible)}
-          >
-            <Text style={styles.filterText}>{displayedFilter}</Text>
-            <Icon name="chevron-down-outline" size={18} color="#333" />
-          </TouchableOpacity>
-        </View>
-
-
-        {filterDropdownVisible && (
-          <View style={styles.filterDropdownContainer}>
-            {filters.map((filter) => (
-              <TouchableOpacity
-                key={filter}
-                style={[
-                  styles.filterOption,
-                  { backgroundColor: selectedFilter === filter ? '#34C759' : '#F2F2F2' },
-                ]}
-                onPress={() => handleFilterChange(filter)}
-              >
-                <Text
-                  style={[
-                    styles.filterTextOption,
-                    { color: selectedFilter === filter ? '#FFF' : '#333' },
-                  ]}
-                >
-                  {filter}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
-
-        {loading ? (
-          <ActivityIndicator size="large" color="#34C759" style={styles.loadingIndicator} />
-        ) : (
-          <View>
-            <FlatList
-              data={filteredData}
-              keyExtractor={(item) => item.Name}
-              renderItem={renderItem}
-              showsVerticalScrollIndicator={false}
-              removeClippedSubviews={true}
-              style={styles.flateListContainer}
-              // numColumns={1} // Specify 2 items per row
-              // columnWrapperStyle={styles.row} // Optional: Style for rows
+          <Text style={[styles.description, { color: selectedTheme.colors.text }]}>
+            Live Blox Fruits values updated hourly. Find accurate item values here and visit the trade feed for fruits or game passes.
+          </Text>
+          <View style={styles.searchFilterContainer}>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search"
+              placeholderTextColor="#888"
+              onChangeText={handleSearchChange}
             />
-
-
+            <TouchableOpacity
+              style={styles.filterDropdown}
+              onPress={() => setFilterDropdownVisible(!filterDropdownVisible)}
+            >
+              <Text style={styles.filterText}>{displayedFilter}</Text>
+              <Icon name="chevron-down-outline" size={18} color="#333" />
+            </TouchableOpacity>
           </View>
 
-        )}
+
+          {filterDropdownVisible && (
+            <View style={styles.filterDropdownContainer}>
+              {filters.map((filter) => (
+                <TouchableOpacity
+                  key={filter}
+                  style={[
+                    styles.filterOption,
+                    { backgroundColor: selectedFilter === filter ? '#34C759' : '#F2F2F2' },
+                  ]}
+                  onPress={() => handleFilterChange(filter)}
+                >
+                  <Text
+                    style={[
+                      styles.filterTextOption,
+                      { color: selectedFilter === filter ? '#FFF' : '#333' },
+                    ]}
+                  >
+                    {filter}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+
+          {loading ? (
+            <ActivityIndicator size="large" color="#34C759" style={styles.loadingIndicator} />
+          ) : (
+            <View style={{ flex: 1 }}>
+              <FlatList
+                data={filteredData}
+                keyExtractor={(item) => item.Name}
+                renderItem={renderItem}
+                showsVerticalScrollIndicator={false}
+                removeClippedSubviews={true}
+                numColumns={2} // Specify 2 items per row
+                columnWrapperStyle={styles.columnWrapper} // Apply row styling
+              />
+
+
+
+            </View>
+
+          )}
+      </View>
+
       </GestureHandlerRootView>
-      <View style={styles.containerBannerAd}>
+      <View style={{ alignSelf:'center'}}>
         <BannerAd
           unitId={bannerAdUnitId}
           size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
-          requestOptions={{ requestNonPersonalizedAdsOnly: true }}
+          requestOptions={{
+            requestNonPersonalizedAdsOnly: true,
+          }}
         />
-      </View>
-      </View>
-      </TouchableWithoutFeedback>
+        </View>
+    </>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, paddingHorizontal: 8,  marginHorizontal: 2 },
+  container: {  paddingHorizontal: 8, marginHorizontal: 2, flex:1 },
   searchFilterContainer: { flexDirection: 'row', marginBottom: 10, alignItems: 'center' },
   searchInput: { flex: 1, backgroundColor: '#E0E0E0', padding: 10, borderRadius: 10, marginRight: 10, height: 48 },
   filterDropdown: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#E0E0E0', padding: 10, borderRadius: 10, height: 48 },
-  filterDropdownContainer: { position: 'absolute', top: 80, right: 10, width: 120, backgroundColor: '#FFF', borderRadius: 8, elevation: 1, zIndex: 1 },
+  filterDropdownContainer: { position: 'absolute', top: 80, right: 10, width: 120, backgroundColor: '#FFF', borderRadius: 8, 
+     zIndex: 1 },
   filterOption: { padding: 10, borderBottomWidth: 1, borderBottomColor: '#E0E0E0' },
   filterTextOption: { fontSize: 14 },
-  itemContainer: { alignItems: 'flex-start', backgroundColor: '#4E5465', borderRadius: 10, padding: 10, elevation: 1, width: '100%', marginVertical:5 },
+  itemContainer: { alignItems: 'flex-start', backgroundColor: '#4E5465', borderRadius: 10, padding: 10, 
+     width: '100%', marginVertical: 5 },
   icon: { width: 50, height: 50, borderRadius: 5, marginRight: 10 },
   infoContainer: { flex: 1 },
   name: {
@@ -198,7 +204,7 @@ const styles = StyleSheet.create({
   },
   filterText: { fontSize: 16, fontFamily: 'Lato-Regular', marginRight: 5 },
   description: {
-    fontSize: 14, lineHeight: 18,  marginVertical: 10, fontFamily: 'Lato-Regular',
+    fontSize: 14, lineHeight: 18, marginVertical: 10, fontFamily: 'Lato-Regular',
   },
   loadingIndicator: { marginVertical: 20, alignSelf: 'center' },
   containerBannerAd: {
@@ -211,7 +217,7 @@ const styles = StyleSheet.create({
   , flateListContainer: {
     // margin: 10,
     // marginVertical:10,
-    marginBottom:120
+    marginBottom: 120
   },
   row: {
     justifyContent: 'space-between', // Space items evenly in a row
@@ -227,7 +233,22 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: 'lightgrey',
     marginVertical: 5
-  }
+  },
+  columnWrapper: {
+    justifyContent: 'space-between', // Distribute items evenly in each row
+    marginBottom: 10, // Add space between rows  
+    flex:1  
+  },
+  itemContainer: {
+    alignItems: 'flex-start',
+    backgroundColor: '#4E5465',
+    borderRadius: 10,
+    padding: 10,
+    
+    
+    width: '49%', // Take up roughly half of the screen width for 2 columns
+  },
+
 });
 
 export default ValueScreen;

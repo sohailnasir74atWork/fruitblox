@@ -7,6 +7,7 @@ import ViewShot, { captureRef } from 'react-native-view-shot';
 import RNFS from 'react-native-fs';  
 import Share from 'react-native-share'; 
 import { useGlobalState } from './GlobelStats';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 const bannerAdUnitId = getAdUnitId('banner');
 const interstitialAdUnitId = getAdUnitId('interstitial');
@@ -208,45 +209,60 @@ export default function HomeScreen({selectedTheme}) {
 
       return downloadDest; 
     } catch (error) {
-      console.log('Error capturing screenshot:', error);
+      // console.log('Error capturing screenshot:', error);
     }
   };
 
   const shareScreenshot = async () => {
-    const filePath = await captureAndSave(); 
-
-    if (filePath) {
-      const shareOptions = {
-        title: 'Share Screenshot',
-        url: `file://${filePath}`,
-        type: 'image/png',
-      };
-
-      Share.open(shareOptions)
-        .then((res) => console.log('Share Response:', res))
-        .catch((err) => console.log('Share Error:', err));
+      showInterstitialAd(() => {
+        proceedWithScreenshotShare();
+      });
+  };
+  
+  const proceedWithScreenshotShare = async () => {
+    try {
+      const filePath = await captureAndSave();
+  
+      if (filePath) {
+        const shareOptions = {
+          title: 'Share Screenshot',
+          url: `file://${filePath}`,
+          type: 'image/png',
+        };
+  
+        Share.open(shareOptions)
+          .then((res) => console.log('Share Response:', res))
+          .catch((err) => console.log('Share Error:', err));
+      }
+    } catch (error) {
+      // console.log('Error sharing screenshot:', error);
     }
   };
+  
+  const styles = getStyles(isDarkMode);
 
 
   return (
+    <>
+    <GestureHandlerRootView>
     <View style={styles.container}>
+
       {loading ? (
       <View style={styles.loaderContainer}>
-        <Text style={styles.loaderText}>Loading...</Text>
+        <Text style={[styles.loaderText, {color:selectedTheme.colors.text}]}>Loading...</Text>
       </View>
     ) : (
-        <ScrollView style={{ marginBottom: 50 }} showsVerticalScrollIndicator={false}>
+        <ScrollView showsVerticalScrollIndicator={false}>
         <ViewShot ref={viewRef} style={styles.screenshotView}>
           <View style={styles.summaryContainer}>
             <View style={[styles.summaryBox, styles.hasBox]}>
-              <Text style={styles.summaryText}>Has</Text>
+              <Text style={[styles.summaryText]}>You</Text>
               <View style={{ width: '90%', backgroundColor: '#e0e0e0', height: 1, alignSelf: 'center' }} />
               <Text style={styles.priceValue}>Price: ${hasTotal.price.toLocaleString()}</Text>
               <Text style={styles.priceValue}>Value: ${hasTotal.value.toLocaleString()}</Text>
             </View>
             <View style={[styles.summaryBox, styles.wantsBox]}>
-              <Text style={styles.summaryText}>Wants</Text>
+              <Text style={styles.summaryText}>Them</Text>
               <View style={{ width: '90%', backgroundColor: '#e0e0e0', height: 1, alignSelf: 'center' }} />
               <Text style={styles.priceValue}>Price: ${wantsTotal.price.toLocaleString()}</Text>
               <Text style={styles.priceValue}>Value: ${wantsTotal.value.toLocaleString()}</Text>
@@ -262,15 +278,15 @@ export default function HomeScreen({selectedTheme}) {
             {!neutral && <Icon
               name={isProfit ? 'arrow-up-outline' : 'arrow-down-outline'}
               size={20}
-              color={isProfit ? 'green' : 'red'}
+              color={isProfit ? '#29AB87' : 'red'}
               style={styles.icon}
             />}
           </View>
 
-          <Text style={styles.sectionTitle}>Has</Text>
+          <Text style={[styles.sectionTitle, {color:selectedTheme.colors.text}]}>You</Text>
           <View style={styles.itemRow}>
             <TouchableOpacity onPress={() => openDrawer('has')} style={styles.addItemBlock}>
-              <Icon name="add-outline" size={40} color="white" />
+              <Icon name="add-circle" size={40} color="white" />
               <Text style={styles.itemText}>Add Item</Text>
             </TouchableOpacity>
             {hasItems?.map((item, index) => (
@@ -303,13 +319,13 @@ export default function HomeScreen({selectedTheme}) {
           </View>
 
           <View style={styles.divider}>
-            <Icon name="swap-vertical-outline" size={24} color="white" />
+            <Icon name="git-commit" size={24} color="white" />
           </View>
 
-          <Text style={styles.sectionTitle}>Wants</Text>
+          <Text style={[styles.sectionTitle, {color:selectedTheme.colors.text}]}>Them</Text>
           <View style={styles.itemRow}>
             <TouchableOpacity onPress={() => openDrawer('wants')} style={styles.addItemBlock}>
-              <Icon name="add-outline" size={40} color="white" />
+              <Icon name="add-circle" size={40} color="white" />
               <Text style={styles.itemText}>Add Item</Text>
             </TouchableOpacity>
             {wantsItems?.map((item, index) => (
@@ -342,17 +358,10 @@ export default function HomeScreen({selectedTheme}) {
           </ViewShot>
         </ScrollView>)}
       <TouchableOpacity onPress={shareScreenshot} style={styles.float}> 
-        <Icon name="download" size={28} color='#4E5465'/>
+        
+        <Icon name="arrow-down-circle" size={60} color='#29AB87'/>
       </TouchableOpacity>
-      <View style={styles.containerBannerAd}>
-        <BannerAd
-          unitId={bannerAdUnitId}
-          size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
-          requestOptions={{
-            requestNonPersonalizedAdsOnly: true,
-          }}
-        />
-      </View>
+    
       <Modal
         visible={isDrawerVisible}
         transparent={true}
@@ -397,12 +406,24 @@ export default function HomeScreen({selectedTheme}) {
         </View>
       </Modal>
     </View>
+    </GestureHandlerRootView>
+    <View style={{ alignSelf:'center'}}>
+        <BannerAd
+          unitId={bannerAdUnitId}
+          size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+          requestOptions={{
+            requestNonPersonalizedAdsOnly: true,
+          }}
+        />
+        </View>
+    </>
   );
 }
-const styles = StyleSheet.create({
+const getStyles = (isDarkMode) =>
+StyleSheet.create({
   container: {
     flex: 1,
-    // padding: 20,
+    backgroundColor: isDarkMode ? '#121212' : '#f2f2f7',
   },
 
   summaryContainer: {
@@ -416,7 +437,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   hasBox: {
-    backgroundColor: '#34C759',
+    backgroundColor: '#29AB87',
   },
   wantsBox: {
     backgroundColor: '#FF3B30',
@@ -489,7 +510,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#4E5465',
     margin: 'auto',
-    borderRadius: '50%',
+    borderRadius: 24,
     padding: 5,
   },
   drawerContainer: {
@@ -574,13 +595,7 @@ const styles = StyleSheet.create({
   captureButton: { backgroundColor: '#3E8BFC', padding: 10, borderRadius: 8, alignItems: 'center', marginTop: 20, alignSelf: 'center' },
   captureButtonText: { color: 'white', fontFamily: 'Lato-Bold', fontSize: 16 },
   captureView: { backgroundColor: '#fff', padding: 10, borderRadius: 10 },
-  containerBannerAd: {
-    position: 'absolute',
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-    alignSelf: 'center'
-  },
+ 
   screenshotView: {
     padding: 10,
      flex:1,
@@ -588,13 +603,12 @@ const styles = StyleSheet.create({
   },
   float:{
     position:'absolute',
-    bottom:50,
-    right:0,
-    top:-43,
-    width:40,
+    right:5,
+    bottom:0,
+    // width:40,
     zIndex:1,
-    backgroundColor:'red',
-    height:40
+    // height:40,
+    // backgroundColor:'red'
     
   },
   titleText:{

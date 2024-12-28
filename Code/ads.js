@@ -3,7 +3,7 @@
 import { Platform } from 'react-native';
 import {  TestIds } from 'react-native-google-mobile-ads';
 
-const developmentMode = true
+const developmentMode = false
 
 
 const adUnits = {
