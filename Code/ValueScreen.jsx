@@ -147,7 +147,7 @@ const ValueScreen = ({ selectedTheme }) => {
   showsVerticalScrollIndicator={false}
   removeClippedSubviews={true}
   numColumns={!config.isNoman ? 1 : 2} // Specify the number of columns
-  columnWrapperStyle={!config.isNoman ?null  : styles.columnWrapper} // Apply row styling only for multiple columns
+  columnWrapperStyle={!config.isNoman ? null  : styles.columnWrapper} // Apply row styling only for multiple columns
 />
 
 

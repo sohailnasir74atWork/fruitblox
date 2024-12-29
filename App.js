@@ -11,6 +11,7 @@ import UpcomingFeaturesScreen from './Code/Trader';
 import { GlobalStateProvider } from './Code/GlobelStats';
 import NotificationHandler from './Code/Firebase/FrontendNotificationHandling';
 import requestPermission from './Code/Helper/PermissionCheck';
+import config from './Code/Helper/Environment';
 
 const Tab = createBottomTabNavigator();
 
@@ -78,19 +79,19 @@ function App() {
                 let iconName;
                 switch (route.name) {
                   case 'Calculator':
-                    iconName = focused ? 'home' : 'home-outline';
+                    iconName = focused ? (config.isNoman ? 'home': 'calculator') : (config.isNoman ? 'home-outline': 'calculator-outline');
                     break;
                   case 'Values':
-                    iconName = focused ? 'trending-up' : 'trending-up-outline';
+                    iconName = focused ? (config.isNoman ? 'trending-up': 'pricetags') : (config.isNoman ? 'trending-up-outline': 'pricetags-outline');
                     break;
                   case 'Stock':
-                    iconName = focused ? 'newspaper' : 'newspaper-outline';
+                    iconName = focused ? (config.isNoman ? 'newspaper': 'notifications') : (config.isNoman ? 'newspaper-outline': 'notifications-outline');
                     break;
                   case 'Chat':
-                    iconName = focused ? 'chatbubble-ellipses' : 'chatbubble-ellipses-outline';
+                    iconName = focused ? (config.isNoman ? 'chatbubble-ellipses': 'chatbubbles') : (config.isNoman ? 'chatbubble-ellipses-outline': 'chatbubbles-outline');
                     break;
                   case 'Setting':
-                    iconName = focused ? 'cog' : 'cog-outline';
+                    iconName = focused ? (config.isNoman ? 'settings': 'cog') : (config.isNoman ? 'settings-outline': 'cog-outline');
                     break;
                   default:
                     iconName = 'alert-circle-outline';
