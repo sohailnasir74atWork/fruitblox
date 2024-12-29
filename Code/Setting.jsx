@@ -30,15 +30,15 @@ export default function SettingsScreen({ selectedTheme }) {
     try {
       const appLink = getAppDownloadLink();
       const shareOptions = {
-        message: `Explore the ultimate Blox Fruits value calculator! Learn about Blox Fruits, check values, and make smarter trades. Download now: ${appLink}.`,
-        url: appLink,
+        message: `Explore the ultimate Blox Fruits value calculator! Learn about Blox Fruits, check values, and make smarter trades. Download now: ${appLink}`,
         title: 'Share App',
       };
       await Share.open(shareOptions);
     } catch (error) {
-      // console.log('Share error:', error);
+      // console.error('Share error:', error);
     }
   };
+  
 
   const handleGetSuggestions = () => {
     const email = config.supportEmail;
