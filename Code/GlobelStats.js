@@ -43,7 +43,7 @@ export const GlobalStateProvider = ({ children }) => {
 
   // Helper: Get user reference dynamically
   const getUserRef = (key) => ref(database, `users/${userId}/${key}`);
- // Reset user-specific state
+  // Reset user-specific state
   const resetUserState = () => {
     setSelectedFruits(null);
     setIsReminderEnabled(null);
@@ -58,19 +58,19 @@ export const GlobalStateProvider = ({ children }) => {
     try {
       const tokenRef = ref(database, `users/${currentUserId}/fcmToken`);
       const invalidTokenRef = ref(database, `users/${currentUserId}/isTokenInvalid`);
-  
+
       // Reset the invalid token flag when a new token is saved
       await Promise.all([
         set(tokenRef, token),
         set(invalidTokenRef, false),
       ]);
-  
+
       // console.log('FCM token saved and invalid flag reset successfully:', token);
     } catch (error) {
       console.error('Error saving FCM token to database:', error);
     }
   };
-  
+
   // Register for notifications
   const registerForNotifications = async (currentUserId) => {
     try {
@@ -78,10 +78,10 @@ export const GlobalStateProvider = ({ children }) => {
       const enabled =
         authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
         authStatus === messaging.AuthorizationStatus.PROVISIONAL;
-  
+
       if (enabled) {
         const token = await messaging().getToken();
-  
+
         if (currentUserId) {
           await saveTokenToDatabase(token, currentUserId);
         } else {
@@ -96,7 +96,7 @@ export const GlobalStateProvider = ({ children }) => {
       setTimeout(() => registerForNotifications(currentUserId), 5000);
     }
   };
-  
+
   useEffect(() => {
     const unsubscribe = auth().onAuthStateChanged(async (loggedInUser) => {
       if (loggedInUser) {
@@ -109,11 +109,11 @@ export const GlobalStateProvider = ({ children }) => {
         resetUserState();
       }
     });
-  
+
     return () => unsubscribe(); // Clean up listener on unmount
   }, []);
-  
-  
+
+
   // Handle FCM token refresh
   useEffect(() => {
     const handleTokenRefresh = async (newToken) => {
@@ -127,16 +127,16 @@ export const GlobalStateProvider = ({ children }) => {
         console.error('Error updating refreshed FCM token:', error);
       }
     };
-  
+
     const unsubscribe = messaging().onTokenRefresh(handleTokenRefresh);
-  
+
     return () => unsubscribe();
   }, [userId]);
-  
-  
 
- 
-  
+
+
+
+
   // Load user-specific data
   useEffect(() => {
     if (!userId) {
@@ -244,7 +244,7 @@ export const GlobalStateProvider = ({ children }) => {
     }),
     [state, selectedFruits, isReminderEnabled, isSelectedReminderEnabled, user, isFetchingUserData]
   );
-  
+
 
   return (
     <GlobalStateContext.Provider value={contextValue}>
