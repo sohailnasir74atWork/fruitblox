@@ -1,33 +1,35 @@
-const isNoman = true; // Toggle this to switch configurations
+const isNoman = false; // Toggle this to switch configurations
 
 const config = {
-appName: isNoman ? 'Noman App' : 'Waqas App',
-andriodBanner: isNoman ? 'ca-app-pub-5740215782746766/5225162749' : 'ca-app-pub-5740215782746766/5225162749', 
-andriodIntestial:isNoman ? 'ca-app-pub-5740215782746766/1206026687' : 'ca-app-pub-5740215782746766/1206026687',
-IOsIntestial:isNoman ? 'ca-app-pub-5740215782746766/3209373499' : '',
-IOsBanner: isNoman ? 'ca-app-pub-5740215782746766/4522455164' : '', 
+  appName: isNoman ? 'Noman App' : 'Waqas App',
+  andriodBanner: isNoman ? 'ca-app-pub-5740215782746766/5225162749' : 'ca-app-pub-5740215782746766/5225162749',
+  andriodIntestial: isNoman ? 'ca-app-pub-5740215782746766/1206026687' : 'ca-app-pub-5740215782746766/1206026687',
+  IOsIntestial: isNoman ? 'ca-app-pub-5740215782746766/3209373499' : '',
+  IOsBanner: isNoman ? 'ca-app-pub-5740215782746766/4522455164' : '',
 
-supportEmail: isNoman ? 'thesolanalabs@gmail.com' : 'mindfusionio.help@gmail.com',
-andriodShareLink: isNoman ? 'https://play.google.com/store/apps/details?id=com.bloxfruitevalues' : 'https://play.google.com/store/apps/details?id=com.bloxfruitstock',
-IOsShareLink: isNoman ? 'https://apps.apple.com/us/app/app-name/id6737775801' : '',
-IOsShareLink: isNoman ? 'https://apps.apple.com/us/app/app-name/id6737775801' : '',
-webSite: isNoman ? 'https://bloxfruitscalc.com/' : 'https://bloxfruitvalue.today',
+  supportEmail: isNoman ? 'thesolanalabs@gmail.com' : 'mindfusionio.help@gmail.com',
+  andriodShareLink: isNoman ? 'https://play.google.com/store/apps/details?id=com.bloxfruitevalues' : 'https://play.google.com/store/apps/details?id=com.bloxfruitstock',
+  IOsShareLink: isNoman ? 'https://apps.apple.com/us/app/app-name/id6737775801' : '',
+  IOsShareLink: isNoman ? 'https://apps.apple.com/us/app/app-name/id6737775801' : '',
+  webSite: isNoman ? 'https://bloxfruitscalc.com/' : 'https://bloxfruitvalue.today',
 
+  isNoman: isNoman ? true : false,
 
 
   colors: isNoman
     ? {
-        primary: '#3498db',
-        secondary: '#2ecc71',
-        background: '#ecf0f1',
-        text: '#2c3e50', 
-      }
+      primary: '#4E5465', // Muted grayish blue
+      secondary: '#3E8BFC', // Bright action blue
+      hasBlockGreen: '#29AB87', // Vibrant success green
+      wantBlockRed: '#FF3B30', // Vivid warning red
+    }
     : {
-        primary: '#e74c3c',
-        secondary: '#9b59b6', 
-        background: '#f5f5f5',
-        text: '#333333',
-      },
+      primary: '#697565', // Deep navy blue
+      secondary: '#457B9D', // Muted teal
+      hasBlockGreen: '#B8860B', // Light mint green
+      wantBlockRed: '#E63946', // Warm, soft red
+    },
+
 };
 
 export default config;

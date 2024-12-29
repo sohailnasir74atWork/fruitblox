@@ -8,6 +8,7 @@ import { GestureHandlerRootView, ScrollView } from 'react-native-gesture-handler
 import { AdEventType, BannerAd, BannerAdSize, InterstitialAd } from 'react-native-google-mobile-ads';
 import getAdUnitId from './ads';
 import notifee from '@notifee/react-native';
+import config from './Helper/Environment';
 
 const bannerAdUnitId = getAdUnitId('banner');
 const interstitialAdUnitId = getAdUnitId('interstitial');
@@ -40,17 +41,18 @@ const TimerScreen = ({ selectedTheme }) => {
   }, [data]);
 
   const openDrawer = () => {
-    if(!hasAdBeenShown)
-   { showInterstitialAd(() => {
-      setHasAdBeenShown(true); // Mark the ad as shown
-      setDrawerVisible(true);
-    });}
+    if (!hasAdBeenShown) {
+      showInterstitialAd(() => {
+        setHasAdBeenShown(true); // Mark the ad as shown
+        setDrawerVisible(true);
+      });
+    }
     else {
       setDrawerVisible(true);
 
     }
-    
-    }
+
+  }
   const closeDrawer = () => setDrawerVisible(false);
   const closeDrawerSignin = () => setisSigninDrawerVisible(false);
 
@@ -71,7 +73,7 @@ const TimerScreen = ({ selectedTheme }) => {
     try {
       // First, request notification permissions
       const { authorizationStatus } = await notifee.requestPermission();
-  
+
       if (authorizationStatus === 0) {
         // Permission denied, show popup with redirection to app settings
         Alert.alert(
@@ -87,7 +89,7 @@ const TimerScreen = ({ selectedTheme }) => {
         );
         return; // Exit early if permission is denied
       }
-  
+
       // If permission is granted, check if the user is logged in
       if (user?.uid == null) {
         // Show the sign-in drawer if the user is not logged in
@@ -101,12 +103,12 @@ const TimerScreen = ({ selectedTheme }) => {
       Alert.alert('Error', 'Something went wrong while processing your request.');
     }
   };
-  
+
   const toggleSwitch2 = async () => {
     try {
       // Request notification permissions first
       const { authorizationStatus } = await notifee.requestPermission();
-  
+
       if (authorizationStatus === 0) {
         // Permission denied, show popup with redirection to app settings
         Alert.alert(
@@ -122,7 +124,7 @@ const TimerScreen = ({ selectedTheme }) => {
         );
         return; // Exit early if permission is denied
       }
-  
+
       // Check user authentication after permissions are granted
       if (user?.uid == null) {
         // Show the sign-in drawer if the user is not logged in
@@ -136,7 +138,7 @@ const TimerScreen = ({ selectedTheme }) => {
       Alert.alert('Error', 'Something went wrong while processing your request.');
     }
   };
-  
+
 
   // Format time utility
   const formatTime = (seconds) => {
@@ -175,9 +177,9 @@ const TimerScreen = ({ selectedTheme }) => {
       setMirageTimer(formatTime(mirageSecondsLeft));
     };
 
-    updateTimers(); 
+    updateTimers();
 
-    const timerId = setInterval(updateTimers, 1000); 
+    const timerId = setInterval(updateTimers, 1000);
     return () => clearInterval(timerId);
   }, [isReminderEnabled, isSelectedReminderEnabled, selectedFruits, normalStock, mirageStock]);
 
@@ -280,22 +282,22 @@ const TimerScreen = ({ selectedTheme }) => {
             <Text style={[styles.description, { color: selectedTheme.colors.text }]}>
               Stay updated on the latest fruits stock
             </Text>
-
+<View style={!config.isNoman && styles.reminderContainer}>
             <View style={styles.row}>
-              <Text style={styles.title}>Get Stock Updates</Text>
+              <Text style={styles.title}>Stock Updates</Text>
               <View style={styles.rightSide}>
                 <Switch value={isReminderEnabled} onValueChange={toggleSwitch} />
                 <Icon
                   name={isReminderEnabled ? "notifications" : "notifications-outline"}
                   size={24}
-                  color={isReminderEnabled ? '#29AB87' : 'white'}
+                  color={isReminderEnabled ? config.colors.hasBlockGreen : 'white'}
                   style={styles.iconNew}
                 />
               </View>
             </View>
 
             <View style={styles.row}>
-              <Text style={styles.title}>Get Matching Fruit Updates</Text>
+              <Text style={[styles.title]}>Selected Fruit Updates</Text>
               <View style={styles.rightSide}>
                 <Switch value={isSelectedReminderEnabled} onValueChange={toggleSwitch2} />
                 <TouchableOpacity
@@ -307,7 +309,7 @@ const TimerScreen = ({ selectedTheme }) => {
                 </TouchableOpacity>
               </View>
             </View>
-
+            </View>
             <View style={styles.listContentSelected}>
               {selectedFruits?.map((item) => (
                 <View key={item.Name} style={styles.selectedContainer}>
@@ -321,15 +323,15 @@ const TimerScreen = ({ selectedTheme }) => {
                   />
                   <Text style={styles.fruitText}>{item.Name}</Text>
                   <TouchableOpacity onPress={() => handleRemoveFruit(item)}>
-                    <Icon name="close-circle" size={24} color="#FF3B30" style={styles.closeIcon} />
+                    <Icon name="close-circle" size={24} color={config.colors.wantBlockRed} style={styles.closeIcon} />
                   </TouchableOpacity>
                 </View>
               ))}
             </View>
 
-            <View style={styles.listContent}>
+            <View>
               {listData?.map((item) => (
-                <View key={item.id} style={styles.listItem}>
+                <View key={item.id}>
                   {renderItem({ item })}
                 </View>
               ))}
@@ -351,7 +353,7 @@ const TimerScreen = ({ selectedTheme }) => {
           </ScrollView>
         </View>
 
-      </GestureHandlerRootView> 
+      </GestureHandlerRootView>
       <View style={{ alignSelf: 'center' }}>
         <BannerAd
           unitId={bannerAdUnitId}
@@ -361,106 +363,109 @@ const TimerScreen = ({ selectedTheme }) => {
           }}
         />
       </View>
-      </>
+    </>
 
 
 
   );
 };
 const getStyles = (isDarkMode) =>
-StyleSheet.create({
-  container: { flex: 1, paddingHorizontal: 10, backgroundColor: isDarkMode ? '#121212' : '#f2f2f7',
-  },
-  description: { fontSize: 14, marginVertical: 10, fontFamily: 'Lato-Regular' },
-  headerContainer: { flexDirection: 'row', justifyContent: 'space-between', marginVertical: 10, },
-  title: { fontSize: 20, fontFamily: 'Lato-Bold' },
-  timer: { fontSize: 16 },
-  time: { fontSize: 20, fontWeight: 'bold' },
-  itemContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#4E5465',
-    borderRadius: 5,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
+  StyleSheet.create({
+    container: {
+      flex: 1, paddingHorizontal: 10, backgroundColor: isDarkMode ? '#121212' : '#f2f2f7',
+    },
+    description: { fontSize: 14, marginVertical: 10, fontFamily: 'Lato-Regular' },
+    headerContainer: { flexDirection: !config.isNoman ? 'coulmn' : 'row', justifyContent: 'space-between', marginVertical: 10, },
+    title: { fontSize: 20, fontFamily: 'Lato-Bold' },
+    timer: { fontSize: 16 },
+    time: { fontSize: 20, fontWeight: 'bold' },
+    itemContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: config.colors.primary,
 
-    marginBottom: 1,
-  },
+      borderRadius: 5,
+      paddingHorizontal: 10,
+      paddingVertical: 8,
 
-  icon: { width: 50, height: 50, borderRadius: 5, marginRight: 10 },
-  name: { fontSize: 16, flex: 1, color: 'white', fontFamily: 'Lato-Bold' },
-  price: { fontSize: 14, backgroundColor: '#29AB87', padding: 5, borderRadius: 5, color: 'white' },
-  robux: { fontSize: 14, backgroundColor: '#29AB87', padding: 5, borderRadius: 5, color: 'white', marginLeft: 10 },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 1,
-    backgroundColor: '#4E5465',
-    borderRadius: 5,
-    padding: 10,
-    paddingVertical: 20
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: 'white'
-  },
-  rightSide: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  iconNew: {
-    marginLeft: 10,
-  },
-  secondRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    backgroundColor: 'white',
-    padding: 10,
-    borderRadius: 8,
-    elevation: 2,
-  },
-  peopleIcon: {
-    marginRight: 15,
-  },
-  selectedContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#4E5465',
-    borderRadius: 20,
-    paddingVertical: 1,
-    paddingHorizontal: 5,
-    marginVertical: 2,
-    marginRight: 5, // Add spacing between items
-  },
-  selectedContainericon: {
-    // flexDirection: 'column',
-    alignItems: 'center',
-    backgroundColor: '#4E5465',
-    borderRadius: 20,
-  },
-  listContentSelected: {
-    flexDirection: 'row',
-    flexWrap: "wrap",
-    marginVertical: 10,
-  }
-  , fruitText: {
-    fontSize: 10,
-    color: 'white',
-    textAlign: 'center',
-    paddingHorizontal: 5,
-    alignItems: 'center'
-  },
-  iconselected: {
-    width: 30,
-    height: 30
-  },
-  listContent:{
-    
-  }
+      marginBottom: !config.isNoman ? 10 : 1,
+      ...(!config.isNoman && {
+        borderWidth: 5,
+        borderColor: config.colors.hasBlockGreen,
+      }),
+    },
 
-});
+    icon: { width: 50, height: 50, borderRadius: 5, marginRight: 10 },
+    name: { fontSize: 16, flex: 1, color: 'white', fontFamily: 'Lato-Bold' },
+    price: { fontSize: 14, backgroundColor: config.colors.hasBlockGreen, padding: 5, borderRadius: 5, color: 'white' },
+    robux: { fontSize: 14, backgroundColor: config.colors.hasBlockGreen, padding: 5, borderRadius: 5, color: 'white', marginLeft: 10 },
+    row: {
+      flexDirection: !config.isNoman ? 'column' : 'row',
+      width: !config.isNoman ? '49%' : '100%',
+      justifyContent: !config.isNoman ? 'center' : 'space-between',
+      alignItems: 'center',
+      marginBottom: 1,
+      backgroundColor: config.colors.primary,
+      borderRadius: 5,
+      padding: 10,
+      paddingVertical: 20,
+      ...(!config.isNoman && {
+        borderWidth: 5,
+        borderColor: config.colors.hasBlockGreen,
+      }),
+    },
+    title: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: 'white'
+    },
+    rightSide: {
+      flexDirection: 'row',
+      alignItems: 'center', 
+      marginTop: !config.isNoman ? 20 : 0   },
+    iconNew: {
+      marginLeft: 10,
+    },
+    peopleIcon: {
+      marginRight: 15,
+    },
+    selectedContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: config.colors.primary,
+      borderRadius: 20,
+      paddingVertical: 1,
+      paddingHorizontal: 5,
+      marginVertical: 2,
+      marginRight: 5, // Add spacing between items
+    },
+    selectedContainericon: {
+      // flexDirection: 'column',
+      alignItems: 'center',
+      backgroundColor: config.colors.primary,
+      borderRadius: 20,
+    },
+    listContentSelected: {
+      flexDirection: 'row',
+      flexWrap: "wrap",
+      marginVertical: 10,
+      
+    }
+    , fruitText: {
+      fontSize: 10,
+      color: 'white',
+      textAlign: 'center',
+      paddingHorizontal: 5,
+      alignItems: 'center'
+    },
+    iconselected: {
+      width: 30,
+      height: 30
+    },
+    reminderContainer:{
+      flexDirection:'row',
+       justifyContent:'space-between'
+    }
+  });
 
 export default TimerScreen;

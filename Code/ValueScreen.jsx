@@ -16,6 +16,7 @@ import { BannerAd, BannerAdSize } from 'react-native-google-mobile-ads';
 import getAdUnitId from './ads';
 import { useGlobalState } from './GlobelStats';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import config from './Helper/Environment';
 
 const bannerAdUnitId = getAdUnitId('banner');
 
@@ -78,7 +79,7 @@ const ValueScreen = ({ selectedTheme }) => {
         <Text style={styles.robuxPrice}>Robux Price: ${item.Robuxprice}</Text>
       </View>
       <View style={styles.statusContainer}>
-        <Text style={[styles.status, { backgroundColor: item.Stability === 'Stable' ? '#29AB87' : '#FF3B30' }]}>
+        <Text style={[styles.status, { backgroundColor: item.Stability === 'Stable' ? config.colors.hasBlockGreen : config.colors.wantBlockRed }]}>
           {item.Stability}
         </Text>
       </View>
@@ -139,15 +140,15 @@ const ValueScreen = ({ selectedTheme }) => {
             <ActivityIndicator size="large" color="#34C759" style={styles.loadingIndicator} />
           ) : (
             <View style={{ flex: 1 }}>
-              <FlatList
-                data={filteredData}
-                keyExtractor={(item) => item.Name}
-                renderItem={renderItem}
-                showsVerticalScrollIndicator={false}
-                removeClippedSubviews={true}
-                numColumns={2} // Specify 2 items per row
-                columnWrapperStyle={styles.columnWrapper} // Apply row styling
-              />
+             <FlatList
+  data={filteredData}
+  keyExtractor={(item) => item.Name}
+  renderItem={renderItem}
+  showsVerticalScrollIndicator={false}
+  removeClippedSubviews={true}
+  numColumns={!config.isNoman ? 1 : 2} // Specify the number of columns
+  columnWrapperStyle={!config.isNoman ?null  : styles.columnWrapper} // Apply row styling only for multiple columns
+/>
 
 
 
@@ -179,8 +180,8 @@ const styles = StyleSheet.create({
      zIndex: 1 },
   filterOption: { padding: 10, borderBottomWidth: 1, borderBottomColor: '#E0E0E0' },
   filterTextOption: { fontSize: 14 },
-  itemContainer: { alignItems: 'flex-start', backgroundColor: '#4E5465', borderRadius: 10, padding: 10, 
-     width: '100%', marginVertical: 5 },
+  // itemContainer: { alignItems: 'flex-start', backgroundColor: 'red', borderRadius: 10, padding: 10, 
+  //    width: '100%', marginVertical: 5 },
   icon: { width: 50, height: 50, borderRadius: 5, marginRight: 10 },
   infoContainer: { flex: 1 },
   name: {
@@ -241,14 +242,16 @@ const styles = StyleSheet.create({
   },
   itemContainer: {
     alignItems: 'flex-start',
-    backgroundColor: '#4E5465',
     borderRadius: 10,
     padding: 10,
-    
-    
-    width: '49%', // Take up roughly half of the screen width for 2 columns
+    backgroundColor: config.colors.primary,
+    width: !config.isNoman ? '99%' : '49%',
+    marginBottom:!config.isNoman ? 10 : 0,
+    ...(!config.isNoman && {
+      borderWidth: 5,
+      borderColor: config.colors.hasBlockGreen,
+    }),
   },
-
 });
 
 export default ValueScreen;

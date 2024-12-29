@@ -16,6 +16,7 @@ import SignInDrawer from './Firebase/SigninDrawer';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { BannerAd, BannerAdSize } from 'react-native-google-mobile-ads';
 import getAdUnitId from './ads';
+import config from './Helper/Environment';
 
 const bannerAdUnitId = getAdUnitId('banner');
 
@@ -233,11 +234,11 @@ const ChatComponent = ({ selectedTheme }) => {
             maxToRenderPerBatch={50} // Render 10 items per batch
             updateCellsBatchingPeriod={100} // Reduce time between rendering batches
             windowSize={5} // Number of screens worth of items to keep in memory
-            getItemLayout={(data, index) => ({
-              length: 80, // Approximate item height
-              offset: 80 * index,
-              index,
-            })}
+            // getItemLayout={(data, index) => ({
+            //   length: 80, // Approximate item height
+            //   offset: 80 * index,
+            //   index,
+            // })}
           />
 
         )}
@@ -332,21 +333,23 @@ const getStyles = (isDarkMode) =>
       flex: 1,
     },
     myMessageText: {
-      fontSize: 16,
+      fontSize: 14,
       color: isDarkMode ? 'white' : 'black',
-      backgroundColor: isDarkMode ? '#4E5465' : 'lightgreen',
+      backgroundColor: isDarkMode ? config.colors.primary : 'lightgreen',
       paddingVertical: 5,
       paddingHorizontal: 10,
       borderRadius: 20,
+      fontFamily:'Lato-Regular'
     },
     otherMessageText: {
-      fontSize: 16,
+      fontSize: 14,
       color: isDarkMode ? 'white' : 'black',
-      backgroundColor: isDarkMode ? '#4E5465' : 'white',
+      backgroundColor: isDarkMode ? config.colors.primary : 'white',
       paddingHorizontal: 10,
+      lineHeight:20,
       borderRadius: 20,
       paddingVertical: 5,
-
+      fontFamily:'Lato-Regular'
     },
     timestamp: {
       fontSize: 10,
@@ -410,7 +413,7 @@ const getStyles = (isDarkMode) =>
     login: {
       height: 60,
       justifyContent: 'center',
-      backgroundColor: '#29AB87',
+      backgroundColor: config.colors.hasBlockGreen,
       alignSelf: 'center',
       width: '100%',
       //  borderRadius:10

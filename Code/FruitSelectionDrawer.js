@@ -12,6 +12,7 @@ import {
   Keyboard,
   useColorScheme,
 } from 'react-native';
+import config from './Helper/Environment';
 
 const FruitSelectionDrawer = ({ visible, onClose, onSelect, data, selectedTheme }) => {
   const [searchText, setSearchText] = useState('');
@@ -115,7 +116,7 @@ const styles = StyleSheet.create({
   itemBlock: {
     width: '32%',
     height: 110,
-    backgroundColor: '#4E5465',
+    backgroundColor: config.colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 10,
@@ -142,7 +143,7 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   closeButton: {
-    backgroundColor: 'red',
+    backgroundColor: config.colors.wantBlockRed,
     padding: 10,
     borderRadius: 5,
     width: '22%',

@@ -8,6 +8,7 @@ import RNFS from 'react-native-fs';
 import Share from 'react-native-share'; 
 import { useGlobalState } from './GlobelStats';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import config from './Helper/Environment';
 
 const bannerAdUnitId = getAdUnitId('banner');
 const interstitialAdUnitId = getAdUnitId('interstitial');
@@ -272,13 +273,13 @@ export default function HomeScreen({selectedTheme}) {
             <Text style={[styles.profitLossText, {color:selectedTheme.colors.text}]}>
               {isProfit ? 'Profit' : 'Loss'}:
             </Text>
-            <Text style={[styles.profitLossValue, { color: isProfit ? 'green' : 'red' }]}>
+            <Text style={[styles.profitLossValue, { color: isProfit ? config.colors.hasBlockGreen : config.colors.wantBlockRed }]}>
               ${Math.abs(profitLoss).toLocaleString()}
             </Text>
             {!neutral && <Icon
               name={isProfit ? 'arrow-up-outline' : 'arrow-down-outline'}
               size={20}
-              color={isProfit ? '#29AB87' : 'red'}
+              color={isProfit ? config.colors.hasBlockGreen : config.colors.wantBlockRed}
               style={styles.icon}
             />}
           </View>
@@ -359,7 +360,7 @@ export default function HomeScreen({selectedTheme}) {
         </ScrollView>)}
       <TouchableOpacity onPress={shareScreenshot} style={styles.float}> 
         
-        <Icon name="arrow-down-circle" size={60} color='#29AB87'/>
+        <Icon name={!config.isNoman ? "chevron-down-circle" : 'arrow-down-circle'} size={60} color={config.colors.hasBlockGreen}/>
       </TouchableOpacity>
     
       <Modal
@@ -437,10 +438,10 @@ StyleSheet.create({
     borderRadius: 10,
   },
   hasBox: {
-    backgroundColor: '#29AB87',
+    backgroundColor: config.colors.hasBlockGreen,
   },
   wantsBox: {
-    backgroundColor: '#FF3B30',
+    backgroundColor: config.colors.wantBlockRed,
   },
   summaryText: {
     fontSize: 20,
@@ -472,7 +473,7 @@ StyleSheet.create({
   addItemBlock: {
     width: '32%',
     height: 110,
-    backgroundColor: '#3E8BFC',
+    backgroundColor: config.colors.secondary,
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 10,
@@ -481,13 +482,18 @@ StyleSheet.create({
   itemBlock: {
     width: '32%',
     height: 110,
-    backgroundColor: '#4E5465',
+    backgroundColor: config.colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 10,
     marginBottom: 10,
     position: 'relative',
+    ...(!config.isNoman && {
+      borderWidth: 5,
+      borderColor: config.colors.hasBlockGreen,
+    }),
   },
+  
   itemText: {
     color: 'white',
     textAlign: 'center',
@@ -501,14 +507,14 @@ StyleSheet.create({
     position: 'absolute',
     top: 5,
     right: 5,
-    backgroundColor: '#FF3B30',
+    backgroundColor: config.colors.wantBlockRed,
     borderRadius: 50,
     padding: 2,
   },
   divider: {
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#4E5465',
+    backgroundColor: config.colors.primary,
     margin: 'auto',
     borderRadius: 24,
     padding: 5,
@@ -552,7 +558,7 @@ StyleSheet.create({
     color: '#000',            
   },
   closeButton: {
-    backgroundColor: 'red',
+    backgroundColor: config.colors.wantBlockRed,
     padding: 10,
     borderRadius: 5,
     width: '22%',
