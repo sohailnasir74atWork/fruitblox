@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, FlatList, Image, Switch, TouchableOpacity, Alert, Linking, useColorScheme } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Image, Switch, TouchableOpacity, Alert, Linking, useColorScheme , Platform} from 'react-native';
 import { useGlobalState } from '../GlobelStats';
 import Icon from 'react-native-vector-icons/Ionicons';
 import FruitSelectionDrawer from './FruitSelectionDrawer';
@@ -7,9 +7,8 @@ import SigninDrawer from '../Firebase/SigninDrawer';
 import { GestureHandlerRootView, ScrollView } from 'react-native-gesture-handler';
 import { AdEventType, BannerAd, BannerAdSize, InterstitialAd } from 'react-native-google-mobile-ads';
 import getAdUnitId from '../Ads/ads';
-import notifee from '@notifee/react-native';
 import config from '../Helper/Environment';
-
+import notifee, { AuthorizationStatus } from '@notifee/react-native';
 const bannerAdUnitId = getAdUnitId('banner');
 const interstitialAdUnitId = getAdUnitId('interstitial');
 const interstitial = InterstitialAd.createForAdRequest(interstitialAdUnitId, {
@@ -69,75 +68,98 @@ const TimerScreen = ({ selectedTheme }) => {
   };
 
   // const toggleSwitch = () => setIsReminderEnabled((prev) => !prev);
-  const toggleSwitch = async () => {
-    try {
-      // First, request notification permissions
-      const { authorizationStatus } = await notifee.requestPermission();
+  
 
-      if (authorizationStatus === 0) {
-        // Permission denied, show popup with redirection to app settings
-        Alert.alert(
-          'Permission Required',
-          'Notification permissions are disabled. Please enable them in the app settings.',
-          [
-            { text: 'Cancel', style: 'cancel' },
-            {
-              text: 'Go to Settings',
-              onPress: () => Linking.openSettings(), // Redirect to app settings
-            },
-          ]
-        );
-        return; // Exit early if permission is denied
-      }
+const requestPermission = async () => {
+  try {
+    const settings = await notifee.requestPermission();
 
-      // If permission is granted, check if the user is logged in
-      if (user?.uid == null) {
-        // Show the sign-in drawer if the user is not logged in
-        setisSigninDrawerVisible(true);
-      } else {
-        // Toggle the reminder state
-        setIsReminderEnabled((prev) => !prev);
-      }
-    } catch (error) {
-      console.error('Error handling notification permission or sign-in:', error);
-      Alert.alert('Error', 'Something went wrong while processing your request.');
+    if (
+      settings.authorizationStatus === AuthorizationStatus.DENIED ||
+      settings.authorizationStatus === AuthorizationStatus.NOT_DETERMINED
+    ) {
+      Alert.alert(
+        'Permission Required',
+        'Notification permissions are disabled. Please enable them in the app settings.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Go to Settings',
+            onPress: () => Linking.openSettings(), // Redirect to app settings
+          },
+        ]
+      );
+      return false; // Permission not granted
     }
-  };
 
-  const toggleSwitch2 = async () => {
-    try {
-      // Request notification permissions first
-      const { authorizationStatus } = await notifee.requestPermission();
-
-      if (authorizationStatus === 0) {
-        // Permission denied, show popup with redirection to app settings
-        Alert.alert(
-          'Permission Required',
-          'Notification permissions are disabled. Please enable them in the app settings.',
-          [
-            { text: 'Cancel', style: 'cancel' },
-            {
-              text: 'Go to Settings',
-              onPress: () => Linking.openSettings(), // Redirect to app settings
-            },
-          ]
-        );
-        return; // Exit early if permission is denied
-      }
-
-      // Check user authentication after permissions are granted
-      if (user?.uid == null) {
-        // Show the sign-in drawer if the user is not logged in
-        setisSigninDrawerVisible(true);
-      } else {
-        // Toggle the selected reminder state
-        setIsSelectedReminderEnabled((prev) => !prev);
-      }
-    } catch (error) {
-      console.error('Error handling notification permission or sign-in:', error);
-      Alert.alert('Error', 'Something went wrong while processing your request.');
+    if (
+      settings.authorizationStatus === AuthorizationStatus.AUTHORIZED ||
+      settings.authorizationStatus === AuthorizationStatus.PROVISIONAL
+    ) {
+      console.log('Notification permissions granted:', settings);
+      return true; // Permission granted
     }
-  };
+  } catch (error) {
+    console.error('Error requesting notification permission:', error);
+    Alert.alert('Error', 'An error occurred while requesting notification permissions.');
+    return false;
+  }
+};
+
+const toggleSwitch = async () => {
+  try {
+    // Request notification permissions
+    const permissionGranted = await requestPermission();
+    if (!permissionGranted) return;
+
+    // Check user authentication
+    if (user?.uid == null) {
+      setisSigninDrawerVisible(true); // Show sign-in drawer
+    } else {
+      // Toggle the reminder state
+      setIsReminderEnabled((prev) => !prev);
+
+      // If iOS, optionally schedule a local notification as a test
+      if (Platform.OS === 'ios') {
+        await notifee.displayNotification({
+          title: 'Reminder Toggled',
+          body: `Reminder has been ${!isReminderEnabled ? 'enabled' : 'disabled'}.`,
+        });
+      }
+    }
+  } catch (error) {
+    console.error('Error handling notification permission or sign-in:', error);
+    Alert.alert('Error', 'Something went wrong while processing your request.');
+  }
+};
+
+const toggleSwitch2 = async () => {
+  try {
+    // Request notification permissions
+    const permissionGranted = await requestPermission();
+    if (!permissionGranted) return;
+
+    // Check user authentication
+    if (user?.uid == null) {
+      setisSigninDrawerVisible(true); // Show sign-in drawer
+    } else {
+      // Toggle the selected reminder state
+      setIsSelectedReminderEnabled((prev) => !prev);
+
+      // If iOS, optionally schedule a local notification as a test
+      if (Platform.OS === 'ios') {
+        await notifee.displayNotification({
+          title: 'Selected Reminder Toggled',
+          body: `Selected Reminder has been ${!isSelectedReminderEnabled ? 'enabled' : 'disabled'}.`,
+        });
+      }
+    }
+  } catch (error) {
+    console.error('Error handling notification permission or sign-in:', error);
+    Alert.alert('Error', 'Something went wrong while processing your request.');
+  }
+};
+
 
 
   // Format time utility

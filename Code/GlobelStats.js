@@ -72,37 +72,37 @@ export const GlobalStateProvider = ({ children }) => {
   };
 
   // Register for notifications
-  const registerForNotifications = async (currentUserId) => {
-    try {
-      const authStatus = await messaging().requestPermission();
-      const enabled =
-        authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-        authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+  // const registerForNotifications = async (currentUserId) => {
+  //   try {
+  //     const authStatus = await messaging().requestPermission();
+  //     const enabled =
+  //       authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+  //       authStatus === messaging.AuthorizationStatus.PROVISIONAL;
 
-      if (enabled) {
-        const token = await messaging().getToken();
+  //     if (enabled) {
+  //       const token = await messaging().getToken();
 
-        if (currentUserId) {
-          await saveTokenToDatabase(token, currentUserId);
-        } else {
-          console.warn('User ID is null. Token not saved.');
-        }
-      } else {
-        console.error('Notification permissions not granted.');
-      }
-    } catch (error) {
-      console.error('Error registering for notifications:', error);
-      // Optional: Retry logic
-      setTimeout(() => registerForNotifications(currentUserId), 5000);
-    }
-  };
+  //       if (currentUserId) {
+  //         await saveTokenToDatabase(token, currentUserId);
+  //       } else {
+  //         console.warn('User ID is null. Token not saved.');
+  //       }
+  //     } else {
+  //       console.error('Notification permissions not granted.');
+  //     }
+  //   } catch (error) {
+  //     console.error('Error registering for notifications:', error);
+  //     // Optional: Retry logic
+  //     setTimeout(() => registerForNotifications(currentUserId), 5000);
+  //   }
+  // };
 
   useEffect(() => {
     const unsubscribe = auth().onAuthStateChanged(async (loggedInUser) => {
       if (loggedInUser) {
         setUser(loggedInUser);
         setUserId(loggedInUser.uid);
-        await registerForNotifications(loggedInUser.uid);
+        // await registerForNotifications(loggedInUser.uid);
       } else {
         setUser(null);
         setUserId(null);

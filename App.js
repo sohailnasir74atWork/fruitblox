@@ -12,8 +12,6 @@ import NotificationHandler from './Code/Firebase/FrontendNotificationHandling';
 import requestPermission from './Code/Helper/PermissionCheck';
 import config from './Code/Helper/Environment';
 import { GlobalStateProvider } from './Code/GlobelStats';
-import OTPublishersNativeSDK from 'react-native-onetrust-cmp';
-
 
 
 const Tab = createBottomTabNavigator();
@@ -39,28 +37,6 @@ const MyDarkTheme = {
 
 function App() {
   const [theme, setTheme] = useState(Appearance.getColorScheme());
-
-
-  // useEffect(() => {
-  //   OTPublishersNativeSDK.startSDK(
-  //     'cdn.cookielaw.org',
-  //     'com.bloxfruitstock',
-  //     'en',
-  //     {
-  //       countryCode: 'IN', //remove if not applicable
-  //       enableDarkMode: 'true', //remove if not applicable
-  //       sdkVersion: '202409.1.0' //remove unless explicitly and intentionally overriding the sdk version. do not use in production. 
-  //     },
-  //     true,
-  //   )
-  //     .then((responseObject) => {
-  //       console.info(`Download status is ${responseObject.status}`);
-  //       // get full JSON object from responseObject.responseString
-  //     })
-  //     .catch((error) => {
-  //       console.error(`OneTrust download failed with error ${error}`);
-  //     });
-  // }, []);
   
 
   useEffect(() => {
