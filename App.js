@@ -3,15 +3,18 @@ import { View, StatusBar, Platform, Animated, SafeAreaView, Appearance } from 'r
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/Ionicons';
-import HomeScreen from './Code/HomeScreen';
-import ValueScreen from './Code/ValueScreen';
-import TimerScreen from './Code/TimerScreen';
-import SettingsScreen from './Code/Setting';
-import UpcomingFeaturesScreen from './Code/Trader';
-import { GlobalStateProvider } from './Code/GlobelStats';
+import HomeScreen from './Code/Homescreen/HomeScreen';
+import ValueScreen from './Code/ValuesScreen/ValueScreen';
+import TimerScreen from './Code/StockScreen/TimerScreen';
+import SettingsScreen from './Code/SettingScreen/Setting';
+import UpcomingFeaturesScreen from './Code/ChatScreen/Trader';
 import NotificationHandler from './Code/Firebase/FrontendNotificationHandling';
 import requestPermission from './Code/Helper/PermissionCheck';
 import config from './Code/Helper/Environment';
+import { GlobalStateProvider } from './Code/GlobelStats';
+import OTPublishersNativeSDK from 'react-native-onetrust-cmp';
+
+
 
 const Tab = createBottomTabNavigator();
 
@@ -38,7 +41,27 @@ function App() {
   const [theme, setTheme] = useState(Appearance.getColorScheme());
 
 
-
+  // useEffect(() => {
+  //   OTPublishersNativeSDK.startSDK(
+  //     'cdn.cookielaw.org',
+  //     'com.bloxfruitstock',
+  //     'en',
+  //     {
+  //       countryCode: 'IN', //remove if not applicable
+  //       enableDarkMode: 'true', //remove if not applicable
+  //       sdkVersion: '202409.1.0' //remove unless explicitly and intentionally overriding the sdk version. do not use in production. 
+  //     },
+  //     true,
+  //   )
+  //     .then((responseObject) => {
+  //       console.info(`Download status is ${responseObject.status}`);
+  //       // get full JSON object from responseObject.responseString
+  //     })
+  //     .catch((error) => {
+  //       console.error(`OneTrust download failed with error ${error}`);
+  //     });
+  // }, []);
+  
 
   useEffect(() => {
     requestPermission();

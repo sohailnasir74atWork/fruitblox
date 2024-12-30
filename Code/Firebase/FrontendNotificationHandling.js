@@ -40,7 +40,7 @@ const NotificationHandler = () => {
 
       try {
         const { notification, data } = remoteMessage || {};
-        console.log(data)
+        // console.log(data)
         const title = notification?.title || data?.title || 'Notification';
         const body = notification?.body || data?.body || 'No details available';
         const type = data?.type;
@@ -49,7 +49,6 @@ const NotificationHandler = () => {
           console.warn('Notification payload is incomplete:', remoteMessage);
           return;
         }
-
         const capitalizeFruits = (fruits) => {
           if (!fruits) return '';
           return fruits

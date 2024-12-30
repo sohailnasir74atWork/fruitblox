@@ -2,9 +2,9 @@
 
 import { Platform } from 'react-native';
 import {  TestIds } from 'react-native-google-mobile-ads';
-import config from './Helper/Environment';
+import config from '../Helper/Environment';
 
-const developmentMode = false
+const developmentMode = true
 
 
 const adUnits = {

@@ -13,10 +13,10 @@ import {
 import Icon from 'react-native-vector-icons/Ionicons';
 import debounce from 'lodash.debounce';
 import { BannerAd, BannerAdSize } from 'react-native-google-mobile-ads';
-import getAdUnitId from './ads';
-import { useGlobalState } from './GlobelStats';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import config from './Helper/Environment';
+import getAdUnitId from '../Ads/ads';
+import config from '../Helper/Environment';
+import { useGlobalState } from '../GlobelStats';
 
 const bannerAdUnitId = getAdUnitId('banner');
 

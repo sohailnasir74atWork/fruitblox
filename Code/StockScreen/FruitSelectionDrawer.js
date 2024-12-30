@@ -12,7 +12,7 @@ import {
   Keyboard,
   useColorScheme,
 } from 'react-native';
-import config from './Helper/Environment';
+import config from '../Helper/Environment';
 
 const FruitSelectionDrawer = ({ visible, onClose, onSelect, data, selectedTheme }) => {
   const [searchText, setSearchText] = useState('');

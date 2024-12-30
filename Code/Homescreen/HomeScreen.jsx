@@ -2,13 +2,13 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Modal, FlatList, TextInput, Image, Alert, useColorScheme } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { InterstitialAd, AdEventType, TestIds, BannerAd, BannerAdSize } from 'react-native-google-mobile-ads';
-import getAdUnitId from './ads';
+import getAdUnitId from '../Ads/ads';
 import ViewShot, { captureRef } from 'react-native-view-shot';
 import RNFS from 'react-native-fs';  
 import Share from 'react-native-share'; 
-import { useGlobalState } from './GlobelStats';
+import { useGlobalState } from '../GlobelStats';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import config from './Helper/Environment';
+import config from '../Helper/Environment';
 
 const bannerAdUnitId = getAdUnitId('banner');
 const interstitialAdUnitId = getAdUnitId('interstitial');
@@ -16,7 +16,7 @@ const interstitial = InterstitialAd.createForAdRequest(interstitialAdUnitId, {
   requestNonPersonalizedAdsOnly: true,
 });
 
-export default function HomeScreen({selectedTheme}) {
+const HomeScreen = ({selectedTheme})=> {
   const { data } = useGlobalState();
   const initialItems = [null, null];
   const [hasItems, setHasItems] = useState(initialItems);
@@ -643,3 +643,5 @@ StyleSheet.create({
   },
   
 });
+
+export default HomeScreen

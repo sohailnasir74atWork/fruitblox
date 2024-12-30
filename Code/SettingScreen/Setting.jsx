@@ -12,9 +12,9 @@ import {
 } from 'react-native';
 import Share from 'react-native-share';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { useGlobalState } from './GlobelStats';
-import { logoutUser } from './Firebase/UserLogics';
-import config from './Helper/Environment';
+import { useGlobalState } from '../GlobelStats';
+import { logoutUser } from '../Firebase/UserLogics';
+import config from '../Helper/Environment';
 export default function SettingsScreen({ selectedTheme }) {
   const { user } = useGlobalState();
   const colorScheme = useColorScheme(); // Returns 'light' or 'dark'
@@ -93,7 +93,7 @@ export default function SettingsScreen({ selectedTheme }) {
           <Image source={{ uri: user.photoURL }} style={styles.profileImage} />
         ) : (
 <Image 
-  source={require('../assets/icon.png')} 
+  source={require('../../assets/icon.png')} 
   style={styles.profileImage} 
 />
         )}

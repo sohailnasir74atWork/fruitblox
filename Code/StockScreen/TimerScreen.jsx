@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, FlatList, Image, Switch, TouchableOpacity, Alert, Linking, useColorScheme } from 'react-native';
-import { useGlobalState } from './GlobelStats';
+import { useGlobalState } from '../GlobelStats';
 import Icon from 'react-native-vector-icons/Ionicons';
 import FruitSelectionDrawer from './FruitSelectionDrawer';
-import SigninDrawer from './Firebase/SigninDrawer';
+import SigninDrawer from '../Firebase/SigninDrawer';
 import { GestureHandlerRootView, ScrollView } from 'react-native-gesture-handler';
 import { AdEventType, BannerAd, BannerAdSize, InterstitialAd } from 'react-native-google-mobile-ads';
-import getAdUnitId from './ads';
+import getAdUnitId from '../Ads/ads';
 import notifee from '@notifee/react-native';
-import config from './Helper/Environment';
+import config from '../Helper/Environment';
 
 const bannerAdUnitId = getAdUnitId('banner');
 const interstitialAdUnitId = getAdUnitId('interstitial');
