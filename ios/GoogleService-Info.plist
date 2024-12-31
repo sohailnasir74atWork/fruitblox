@@ -3,9 +3,9 @@
 <plist version="1.0">
 <dict>
 	<key>CLIENT_ID</key>
-	<string>409137828081-5hsdhsorirt9c2k9s3umlknjj15tvk6v.apps.googleusercontent.com</string>
+	<string>409137828081-84d1n1p5ps8tkfk1ofguh1jqafrlmgdk.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.409137828081-5hsdhsorirt9c2k9s3umlknjj15tvk6v</string>
+	<string>com.googleusercontent.apps.409137828081-84d1n1p5ps8tkfk1ofguh1jqafrlmgdk</string>
 	<key>ANDROID_CLIENT_ID</key>
 	<string>409137828081-cic6tf2lv18es9jkub2mc11ijjjvjmo3.apps.googleusercontent.com</string>
 	<key>API_KEY</key>
@@ -15,7 +15,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.bloxfruitevalues</string>
+	<string>org.reactjs.native.example.bloxfruitevalues</string>
 	<key>PROJECT_ID</key>
 	<string>fruiteblocks</string>
 	<key>STORAGE_BUCKET</key>
@@ -31,7 +31,7 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:409137828081:ios:b0aea100672cb4a6f39950</string>
+	<string>1:409137828081:ios:89f062c9951cd664f39950</string>
 	<key>DATABASE_URL</key>
 	<string>https://fruiteblocks-default-rtdb.firebaseio.com</string>
 </dict>
