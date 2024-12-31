@@ -4,8 +4,8 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { InterstitialAd, AdEventType, TestIds, BannerAd, BannerAdSize } from 'react-native-google-mobile-ads';
 import getAdUnitId from '../Ads/ads';
 import ViewShot, { captureRef } from 'react-native-view-shot';
-import RNFS from 'react-native-fs';  
-import Share from 'react-native-share'; 
+import RNFS from 'react-native-fs';
+import Share from 'react-native-share';
 import { useGlobalState } from '../GlobelStats';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import config from '../Helper/Environment';
@@ -16,8 +16,8 @@ const interstitial = InterstitialAd.createForAdRequest(interstitialAdUnitId, {
   requestNonPersonalizedAdsOnly: true,
 });
 
-const HomeScreen = ({selectedTheme})=> {
-  const { data } = useGlobalState();
+const HomeScreen = ({ selectedTheme }) => {
+  const { data, theme } = useGlobalState();
   const initialItems = [null, null];
   const [hasItems, setHasItems] = useState(initialItems);
   const [fruitRecords, setFruitRecords] = useState([]);
@@ -30,7 +30,8 @@ const HomeScreen = ({selectedTheme})=> {
   const [isAdLoaded, setIsAdLoaded] = useState(false);
   const [isShowingAd, setIsShowingAd] = useState(false);
   const [hasAdBeenShown, setHasAdBeenShown] = useState(false);
-    const [loading, setLoading] = useState(true); 
+  const [loading, setLoading] = useState(true);
+  const isDarkMode = theme === 'dark'
   const viewRef = useRef();
   useEffect(() => {
     if (data && Object.keys(data).length > 0) {
@@ -40,10 +41,6 @@ const HomeScreen = ({selectedTheme})=> {
       setFruitRecords([]);
     }
   }, [data]);
-  const colorScheme = useColorScheme(); // Returns 'light' or 'dark'
-
-  const isDarkMode = colorScheme === 'dark';
-
 
   // Interstitial ad logic
   useEffect(() => {
@@ -87,7 +84,7 @@ const HomeScreen = ({selectedTheme})=> {
       callback(); // If ad is not loaded, proceed immediately
     }
   };
-  
+
   const openDrawer = (section) => {
     // Show ad only if it's the "wants" section and the ad hasn't been shown yet
     if (section === 'wants' && !hasAdBeenShown) {
@@ -102,14 +99,14 @@ const HomeScreen = ({selectedTheme})=> {
       setIsDrawerVisible(true);
     }
   };
-  
+
 
   const closeDrawer = () => {
     setIsDrawerVisible(false);
   };
 
 
-    const toggleItemValueMode = (index, section) => {
+  const toggleItemValueMode = (index, section) => {
     const items = section === 'has' ? [...hasItems] : [...wantsItems];
     const item = items[index];
 
@@ -167,7 +164,7 @@ const HomeScreen = ({selectedTheme})=> {
 
   };
 
-    const removeItem = (index, isHas) => {
+  const removeItem = (index, isHas) => {
     const section = isHas ? 'has' : 'wants';
     const items = isHas ? hasItems : wantsItems;
     const updatedItems = [...items];
@@ -194,7 +191,7 @@ const HomeScreen = ({selectedTheme})=> {
   const captureAndSave = async () => {
 
     try {
-      
+
       const uri = await captureRef(viewRef, {
         format: 'png',
         quality: 0.8,
@@ -203,34 +200,34 @@ const HomeScreen = ({selectedTheme})=> {
 
       const downloadDest = Platform.OS === 'android'
         ? `${RNFS.ExternalDirectoryPath}/screenshot.png`
-        : `${RNFS.DocumentDirectoryPath}/screenshot.png`; 
+        : `${RNFS.DocumentDirectoryPath}/screenshot.png`;
 
       await RNFS.copyFile(uri, downloadDest);
 
 
-      return downloadDest; 
+      return downloadDest;
     } catch (error) {
       // console.log('Error capturing screenshot:', error);
     }
   };
 
   const shareScreenshot = async () => {
-      showInterstitialAd(() => {
-        proceedWithScreenshotShare();
-      });
+    showInterstitialAd(() => {
+      proceedWithScreenshotShare();
+    });
   };
-  
+
   const proceedWithScreenshotShare = async () => {
     try {
       const filePath = await captureAndSave();
-  
+
       if (filePath) {
         const shareOptions = {
           title: 'Share Screenshot',
           url: `file://${filePath}`,
           type: 'image/png',
         };
-  
+
         Share.open(shareOptions)
           .then((res) => console.log('Share Response:', res))
           .catch((err) => console.log('Share Error:', err));
@@ -239,176 +236,176 @@ const HomeScreen = ({selectedTheme})=> {
       // console.log('Error sharing screenshot:', error);
     }
   };
-  
+
   const styles = getStyles(isDarkMode);
 
 
   return (
     <>
-    <GestureHandlerRootView>
-    <View style={styles.container}>
+      <GestureHandlerRootView>
+        <View style={styles.container}>
 
-      {loading ? (
-      <View style={styles.loaderContainer}>
-        <Text style={[styles.loaderText, {color:selectedTheme.colors.text}]}>Loading...</Text>
-      </View>
-    ) : (
-        <ScrollView showsVerticalScrollIndicator={false}>
-        <ViewShot ref={viewRef} style={styles.screenshotView}>
-          <View style={styles.summaryContainer}>
-            <View style={[styles.summaryBox, styles.hasBox]}>
-              <Text style={[styles.summaryText]}>You</Text>
-              <View style={{ width: '90%', backgroundColor: '#e0e0e0', height: 1, alignSelf: 'center' }} />
-              <Text style={styles.priceValue}>Price: ${hasTotal.price.toLocaleString()}</Text>
-              <Text style={styles.priceValue}>Value: ${hasTotal.value.toLocaleString()}</Text>
+          {loading ? (
+            <View style={styles.loaderContainer}>
+              <Text style={[styles.loaderText, { color: selectedTheme.colors.text }]}>Loading...</Text>
             </View>
-            <View style={[styles.summaryBox, styles.wantsBox]}>
-              <Text style={styles.summaryText}>Them</Text>
-              <View style={{ width: '90%', backgroundColor: '#e0e0e0', height: 1, alignSelf: 'center' }} />
-              <Text style={styles.priceValue}>Price: ${wantsTotal.price.toLocaleString()}</Text>
-              <Text style={styles.priceValue}>Value: ${wantsTotal.value.toLocaleString()}</Text>
+          ) : (
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <ViewShot ref={viewRef} style={styles.screenshotView}>
+                <View style={styles.summaryContainer}>
+                  <View style={[styles.summaryBox, styles.hasBox]}>
+                    <Text style={[styles.summaryText]}>You</Text>
+                    <View style={{ width: '90%', backgroundColor: '#e0e0e0', height: 1, alignSelf: 'center' }} />
+                    <Text style={styles.priceValue}>Price: ${hasTotal.price.toLocaleString()}</Text>
+                    <Text style={styles.priceValue}>Value: ${hasTotal.value.toLocaleString()}</Text>
+                  </View>
+                  <View style={[styles.summaryBox, styles.wantsBox]}>
+                    <Text style={styles.summaryText}>Them</Text>
+                    <View style={{ width: '90%', backgroundColor: '#e0e0e0', height: 1, alignSelf: 'center' }} />
+                    <Text style={styles.priceValue}>Price: ${wantsTotal.price.toLocaleString()}</Text>
+                    <Text style={styles.priceValue}>Value: ${wantsTotal.value.toLocaleString()}</Text>
+                  </View>
+                </View>
+                <View style={styles.profitLossBox}>
+                  <Text style={[styles.profitLossText, { color: selectedTheme.colors.text }]}>
+                    {isProfit ? 'Profit' : 'Loss'}:
+                  </Text>
+                  <Text style={[styles.profitLossValue, { color: isProfit ? config.colors.hasBlockGreen : config.colors.wantBlockRed }]}>
+                    ${Math.abs(profitLoss).toLocaleString()}
+                  </Text>
+                  {!neutral && <Icon
+                    name={isProfit ? 'arrow-up-outline' : 'arrow-down-outline'}
+                    size={20}
+                    color={isProfit ? config.colors.hasBlockGreen : config.colors.wantBlockRed}
+                    style={styles.icon}
+                  />}
+                </View>
+
+                <Text style={[styles.sectionTitle, { color: selectedTheme.colors.text }]}>You</Text>
+                <View style={styles.itemRow}>
+                  <TouchableOpacity onPress={() => openDrawer('has')} style={styles.addItemBlock}>
+                    <Icon name="add-circle" size={40} color="white" />
+                    <Text style={styles.itemText}>Add Item</Text>
+                  </TouchableOpacity>
+                  {hasItems?.map((item, index) => (
+                    <View key={index} style={styles.itemBlock}>
+                      {item ? (
+                        <>
+                          <Image
+                            source={{ uri: `https://bloxfruitscalc.com/wp-content/uploads/2024/09/${formatName(item.Name)}_Icon.webp` }}
+                            style={styles.itemImageOverlay}
+                          />
+                          <Text style={styles.itemText}>${item.usePermanent ? item.Permanent.toLocaleString() : item.Value.toLocaleString()}</Text>
+                          <Text style={styles.itemText}>{item.Name}</Text>
+                          {item.Type.toUpperCase() !== 'PREMIUM' && (
+                            <TouchableOpacity style={styles.switchValue} onPress={() => toggleItemValueMode(index, 'has')}>
+                              <Icon name="repeat-outline" size={14} />
+                              <Text style={styles.switchValueText}>Physical</Text>
+                            </TouchableOpacity>
+                          )}
+
+
+                          <TouchableOpacity onPress={() => removeItem(index, true)} style={styles.removeButton}>
+                            <Icon name="close-outline" size={14} color="white" />
+                          </TouchableOpacity>
+                        </>
+                      ) : (
+                        <Text style={styles.itemPlaceholder}>Empty</Text>
+                      )}
+                    </View>
+                  ))}
+                </View>
+
+                <View style={styles.divider}>
+                  <Icon name="git-commit" size={24} color="white" />
+                </View>
+
+                <Text style={[styles.sectionTitle, { color: selectedTheme.colors.text }]}>Them</Text>
+                <View style={styles.itemRow}>
+                  <TouchableOpacity onPress={() => openDrawer('wants')} style={styles.addItemBlock}>
+                    <Icon name="add-circle" size={40} color="white" />
+                    <Text style={styles.itemText}>Add Item</Text>
+                  </TouchableOpacity>
+                  {wantsItems?.map((item, index) => (
+                    <View key={index} style={styles.itemBlock}>
+                      {item ? (
+                        <>
+                          <Image
+                            source={{ uri: `https://bloxfruitscalc.com/wp-content/uploads/2024/09/${formatName(item.Name)}_Icon.webp` }}
+                            style={styles.itemImageOverlay}
+                          />
+                          <Text style={styles.itemText}>${item.Value.toLocaleString()}</Text>
+                          <Text style={styles.itemText}>{item.Name}</Text>
+                          {item.Type.toUpperCase() !== 'PREMIUM' && (
+                            <TouchableOpacity style={styles.switchValue} onPress={() => toggleItemValueMode(index, 'want')}>
+                              <Icon name="repeat-outline" size={14} />
+                              <Text style={styles.switchValueText}>Physical</Text>
+                            </TouchableOpacity>
+                          )}
+                          <TouchableOpacity onPress={() => removeItem(index, false)} style={styles.removeButton}>
+                            <Icon name="close-outline" size={18} color="white" />
+                          </TouchableOpacity>
+                        </>
+
+                      ) : (
+                        <Text style={styles.itemPlaceholder}>Empty</Text>
+                      )}
+                    </View>
+                  ))}
+                </View>
+              </ViewShot>
+            </ScrollView>)}
+          <TouchableOpacity onPress={shareScreenshot} style={styles.float}>
+
+            <Icon name={!config.isNoman ? "chevron-down-circle" : 'arrow-down-circle'} size={60} color={config.colors.hasBlockGreen} />
+          </TouchableOpacity>
+
+          <Modal
+            visible={isDrawerVisible}
+            transparent={true}
+            animationType="slide"
+            onRequestClose={closeDrawer}
+          >
+            <TouchableOpacity style={styles.modalOverlay} onPress={closeDrawer} />
+            <View style={[styles.drawerContainer, { backgroundColor: isDarkMode ? '#3B404C' : 'white' }]}>
+              <Text style={[styles.titleText, { color: selectedTheme.colors.text }]}>You can search fruite and select it</Text>
+              <View style={{
+                flexDirection: 'row', justifyContent: 'space-between', marginVertical: 10,
+              }}>
+
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder="Search..."
+                  value={searchText}
+                  onChangeText={setSearchText}
+                />
+                <TouchableOpacity onPress={closeDrawer} style={styles.closeButton}>
+                  <Text style={styles.closeButtonText}>CLOSE</Text>
+                </TouchableOpacity></View>
+              <FlatList
+                data={filteredData}
+                keyExtractor={(item) => item.Name}
+                renderItem={({ item }) => (
+                  <TouchableOpacity style={styles.itemBlock} onPress={() => selectItem(item)}>
+                    <>
+                      <Image
+                        source={{ uri: `https://bloxfruitscalc.com/wp-content/uploads/2024/09/${formatName(item.Name)}_Icon.webp` }}
+                        style={styles.itemImageOverlay}
+                      />
+                      <Text style={styles.itemText}>${item.Value.toLocaleString()}</Text>
+                      <Text style={styles.itemText}>{item.Name}</Text></>
+                  </TouchableOpacity>
+                )}
+                numColumns={3}
+                contentContainerStyle={styles.flatListContainer}
+                columnWrapperStyle={styles.columnWrapper}
+
+              />
             </View>
-          </View>
-          <View style={styles.profitLossBox}>
-            <Text style={[styles.profitLossText, {color:selectedTheme.colors.text}]}>
-              {isProfit ? 'Profit' : 'Loss'}:
-            </Text>
-            <Text style={[styles.profitLossValue, { color: isProfit ? config.colors.hasBlockGreen : config.colors.wantBlockRed }]}>
-              ${Math.abs(profitLoss).toLocaleString()}
-            </Text>
-            {!neutral && <Icon
-              name={isProfit ? 'arrow-up-outline' : 'arrow-down-outline'}
-              size={20}
-              color={isProfit ? config.colors.hasBlockGreen : config.colors.wantBlockRed}
-              style={styles.icon}
-            />}
-          </View>
-
-          <Text style={[styles.sectionTitle, {color:selectedTheme.colors.text}]}>You</Text>
-          <View style={styles.itemRow}>
-            <TouchableOpacity onPress={() => openDrawer('has')} style={styles.addItemBlock}>
-              <Icon name="add-circle" size={40} color="white" />
-              <Text style={styles.itemText}>Add Item</Text>
-            </TouchableOpacity>
-            {hasItems?.map((item, index) => (
-              <View key={index} style={styles.itemBlock}>
-                {item ? (
-                  <>
-                    <Image
-                      source={{ uri: `https://bloxfruitscalc.com/wp-content/uploads/2024/09/${formatName(item.Name)}_Icon.webp` }}
-                      style={styles.itemImageOverlay}
-                    />
-                    <Text style={styles.itemText}>${item.usePermanent ? item.Permanent.toLocaleString() : item.Value.toLocaleString()}</Text>
-                    <Text style={styles.itemText}>{item.Name}</Text>
-                    {item.Type.toUpperCase() !== 'PREMIUM' && (
-                      <TouchableOpacity style={styles.switchValue} onPress={() => toggleItemValueMode(index, 'has')}>
-                        <Icon name="repeat-outline" size={14} />
-                        <Text style={styles.switchValueText}>Physical</Text>
-                      </TouchableOpacity>
-                    )}
-
-
-                    <TouchableOpacity onPress={() => removeItem(index, true)} style={styles.removeButton}>
-                      <Icon name="close-outline" size={14} color="white" />
-                    </TouchableOpacity>
-                  </>
-                ) : (
-                  <Text style={styles.itemPlaceholder}>Empty</Text>
-                )}
-              </View>
-            ))}
-          </View>
-
-          <View style={styles.divider}>
-            <Icon name="git-commit" size={24} color="white" />
-          </View>
-
-          <Text style={[styles.sectionTitle, {color:selectedTheme.colors.text}]}>Them</Text>
-          <View style={styles.itemRow}>
-            <TouchableOpacity onPress={() => openDrawer('wants')} style={styles.addItemBlock}>
-              <Icon name="add-circle" size={40} color="white" />
-              <Text style={styles.itemText}>Add Item</Text>
-            </TouchableOpacity>
-            {wantsItems?.map((item, index) => (
-              <View key={index} style={styles.itemBlock}>
-                {item ? (
-                  <>
-                    <Image
-                      source={{ uri: `https://bloxfruitscalc.com/wp-content/uploads/2024/09/${formatName(item.Name)}_Icon.webp` }}
-                      style={styles.itemImageOverlay}
-                    />
-                    <Text style={styles.itemText}>${item.Value.toLocaleString()}</Text>
-                    <Text style={styles.itemText}>{item.Name}</Text>
-                    {item.Type.toUpperCase() !== 'PREMIUM' && (
-                      <TouchableOpacity style={styles.switchValue} onPress={() => toggleItemValueMode(index, 'want')}>
-                        <Icon name="repeat-outline" size={14} />
-                        <Text style={styles.switchValueText}>Physical</Text>
-                      </TouchableOpacity>
-                    )}
-                    <TouchableOpacity onPress={() => removeItem(index, false)} style={styles.removeButton}>
-                      <Icon name="close-outline" size={18} color="white" />
-                    </TouchableOpacity>
-                  </>
-
-                ) : (
-                  <Text style={styles.itemPlaceholder}>Empty</Text>
-                )}
-              </View>
-            ))}
-          </View>
-          </ViewShot>
-        </ScrollView>)}
-      <TouchableOpacity onPress={shareScreenshot} style={styles.float}> 
-        
-        <Icon name={!config.isNoman ? "chevron-down-circle" : 'arrow-down-circle'} size={60} color={config.colors.hasBlockGreen}/>
-      </TouchableOpacity>
-    
-      <Modal
-        visible={isDrawerVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={closeDrawer}
-      >
-        <TouchableOpacity style={styles.modalOverlay} onPress={closeDrawer} />
-        <View style={[styles.drawerContainer, {backgroundColor: isDarkMode ? '#3B404C' : 'white'}]}>
-          <Text style={[styles.titleText, {color:selectedTheme.colors.text}]}>You can search fruite and select it</Text>
-          <View style={{
-            flexDirection: 'row', justifyContent: 'space-between', marginVertical: 10,
-          }}>
-
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search..."
-              value={searchText}
-              onChangeText={setSearchText}
-            />
-            <TouchableOpacity onPress={closeDrawer} style={styles.closeButton}>
-              <Text style={styles.closeButtonText}>CLOSE</Text>
-            </TouchableOpacity></View>
-          <FlatList
-            data={filteredData}
-            keyExtractor={(item) => item.Name}
-            renderItem={({ item }) => (
-              <TouchableOpacity style={styles.itemBlock} onPress={() => selectItem(item)}>
-                <>
-                  <Image
-                    source={{ uri: `https://bloxfruitscalc.com/wp-content/uploads/2024/09/${formatName(item.Name)}_Icon.webp` }}
-                    style={styles.itemImageOverlay}
-                  />
-                  <Text style={styles.itemText}>${item.Value.toLocaleString()}</Text>
-                  <Text style={styles.itemText}>{item.Name}</Text></>
-              </TouchableOpacity>
-            )}
-            numColumns={3}
-            contentContainerStyle={styles.flatListContainer}
-            columnWrapperStyle={styles.columnWrapper}
-
-          />
+          </Modal>
         </View>
-      </Modal>
-    </View>
-    </GestureHandlerRootView>
-    <View style={{ alignSelf:'center'}}>
+      </GestureHandlerRootView>
+      <View style={{ alignSelf: 'center' }}>
         <BannerAd
           unitId={bannerAdUnitId}
           size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
@@ -416,232 +413,232 @@ const HomeScreen = ({selectedTheme})=> {
             requestNonPersonalizedAdsOnly: true,
           }}
         />
-        </View>
+      </View>
     </>
   );
 }
 const getStyles = (isDarkMode) =>
-StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: isDarkMode ? '#121212' : '#f2f2f7',
-  },
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: isDarkMode ? '#121212' : '#f2f2f7',
+    },
 
-  summaryContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-  },
-  summaryBox: {
-    width: '48%',
-    padding: 10,
-    borderRadius: 10,
-  },
-  hasBox: {
-    backgroundColor: config.colors.hasBlockGreen,
-  },
-  wantsBox: {
-    backgroundColor: config.colors.wantBlockRed,
-  },
-  summaryText: {
-    fontSize: 20,
-    color: 'white',
-    textAlign: 'center',
-    fontFamily: 'Lato-Bold',
+    summaryContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: 20,
+    },
+    summaryBox: {
+      width: '48%',
+      padding: 10,
+      borderRadius: 10,
+    },
+    hasBox: {
+      backgroundColor: config.colors.hasBlockGreen,
+    },
+    wantsBox: {
+      backgroundColor: config.colors.wantBlockRed,
+    },
+    summaryText: {
+      fontSize: 20,
+      color: 'white',
+      textAlign: 'center',
+      fontFamily: 'Lato-Bold',
 
-  },
-  priceValue: {
-    color: 'white',
-    textAlign: 'center',
-    marginTop: 5,
-    fontFamily: 'Lato-Bold',
+    },
+    priceValue: {
+      color: 'white',
+      textAlign: 'center',
+      marginTop: 5,
+      fontFamily: 'Lato-Bold',
 
-  },
-  sectionTitle: {
-    fontSize: 18,
-    marginVertical: 10,
-    fontFamily: 'Lato-Bold',
+    },
+    sectionTitle: {
+      fontSize: 18,
+      marginVertical: 10,
+      fontFamily: 'Lato-Bold',
 
-  },
-  itemRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginBottom: 40,
+    },
+    itemRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'space-between',
+      marginBottom: 40,
 
-  },
-  addItemBlock: {
-    width: '32%',
-    height: 110,
-    backgroundColor: config.colors.secondary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 10,
-    marginBottom: 10,
-  },
-  itemBlock: {
-    width: '32%',
-    height: 110,
-    backgroundColor: config.colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 10,
-    marginBottom: 10,
-    position: 'relative',
-    ...(!config.isNoman && {
-      borderWidth: 5,
-      borderColor: config.colors.hasBlockGreen,
-    }),
-  },
-  
-  itemText: {
-    color: 'white',
-    textAlign: 'center',
-    fontFamily: 'Lato-Bold',
-  },
-  itemPlaceholder: {
-    color: '#CCC',
-    textAlign: 'center',
-  },
-  removeButton: {
-    position: 'absolute',
-    top: 5,
-    right: 5,
-    backgroundColor: config.colors.wantBlockRed,
-    borderRadius: 50,
-    padding: 2,
-  },
-  divider: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: config.colors.primary,
-    margin: 'auto',
-    borderRadius: 24,
-    padding: 5,
-  },
-  drawerContainer: {
-    borderTopLeftRadius: 10,
-    borderTopRightRadius: 10,
-    paddingHorizontal: 10,
-    paddingTop:20,
-    height: 400,
-    overflow: 'hidden',
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-  },
+    },
+    addItemBlock: {
+      width: '32%',
+      height: 110,
+      backgroundColor: config.colors.secondary,
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderRadius: 10,
+      marginBottom: 10,
+    },
+    itemBlock: {
+      width: '32%',
+      height: 110,
+      backgroundColor: config.colors.primary,
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderRadius: 10,
+      marginBottom: 10,
+      position: 'relative',
+      ...(!config.isNoman && {
+        borderWidth: 5,
+        borderColor: config.colors.hasBlockGreen,
+      }),
+    },
 
-  drawerTitle: {
-    fontSize: 20,
-    textAlign: 'center',
-    fontFamily: 'Lato-Bold'
-  },
-  profitLossBox: { flexDirection: 'row', justifyContent: 'center', marginVertical: 10, alignItems: 'center' },
-  profitLossText: { fontSize: 18, fontFamily: 'Lato-Bold' },
-  profitLossValue: { fontSize: 18, marginLeft: 5, fontFamily: 'Lato-Bold' },
-  modalOverlay: {
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', 
-    flex: 1,
-  },
-  searchInput: {
-    width: '78%',
-    borderColor: 'grey',
-    borderWidth: 1,
-    borderRadius: 5,
-    height: 48,
-    borderColor: '#333',       
-    borderWidth: 1,          
-    borderRadius: 5,          
-    paddingHorizontal: 10,    
-    backgroundColor: '#fff',  
-    color: '#000',            
-  },
-  closeButton: {
-    backgroundColor: config.colors.wantBlockRed,
-    padding: 10,
-    borderRadius: 5,
-    width: '22%',
-    alignItems:'center',
-    justifyContent:'center'
-  },
-  closeButtonText: {
-    color: 'white',
-    textAlign: 'center',
-    fontFamily: 'Lato-Regular'
-  },
-  flatListContainer: {
-    justifyContent: 'space-between',
-  },
-  columnWrapper: {
-    flex: 1,
-    justifyContent: 'space-around',
-  },
-  itemImageOverlay: {
-    width: 40,
-    height: 40,
-    borderRadius: 5,
+    itemText: {
+      color: 'white',
+      textAlign: 'center',
+      fontFamily: 'Lato-Bold',
+    },
+    itemPlaceholder: {
+      color: '#CCC',
+      textAlign: 'center',
+    },
+    removeButton: {
+      position: 'absolute',
+      top: 5,
+      right: 5,
+      backgroundColor: config.colors.wantBlockRed,
+      borderRadius: 50,
+      padding: 2,
+    },
+    divider: {
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: config.colors.primary,
+      margin: 'auto',
+      borderRadius: 24,
+      padding: 5,
+    },
+    drawerContainer: {
+      borderTopLeftRadius: 10,
+      borderTopRightRadius: 10,
+      paddingHorizontal: 10,
+      paddingTop: 20,
+      height: 400,
+      overflow: 'hidden',
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
+    },
 
-  },
-  switchValue: {
-    backgroundColor: 'lightgreen',
-    flexDirection: 'row',
-    paddingVertical: 0,
-    paddingHorizontal: 10,
-    borderRadius: 20,
-    margin:5,
-    alignItems:'center'
-  },
-  switchValueText: {
-    fontSize: 12,
-    padding: 3,
-    fontFamily: 'Lato-Regular'
+    drawerTitle: {
+      fontSize: 20,
+      textAlign: 'center',
+      fontFamily: 'Lato-Bold'
+    },
+    profitLossBox: { flexDirection: 'row', justifyContent: 'center', marginVertical: 10, alignItems: 'center' },
+    profitLossText: { fontSize: 18, fontFamily: 'Lato-Bold' },
+    profitLossValue: { fontSize: 18, marginLeft: 5, fontFamily: 'Lato-Bold' },
+    modalOverlay: {
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      flex: 1,
+    },
+    searchInput: {
+      width: '78%',
+      borderColor: 'grey',
+      borderWidth: 1,
+      borderRadius: 5,
+      height: 48,
+      borderColor: '#333',
+      borderWidth: 1,
+      borderRadius: 5,
+      paddingHorizontal: 10,
+      backgroundColor: '#fff',
+      color: '#000',
+    },
+    closeButton: {
+      backgroundColor: config.colors.wantBlockRed,
+      padding: 10,
+      borderRadius: 5,
+      width: '22%',
+      alignItems: 'center',
+      justifyContent: 'center'
+    },
+    closeButtonText: {
+      color: 'white',
+      textAlign: 'center',
+      fontFamily: 'Lato-Regular'
+    },
+    flatListContainer: {
+      justifyContent: 'space-between',
+    },
+    columnWrapper: {
+      flex: 1,
+      justifyContent: 'space-around',
+    },
+    itemImageOverlay: {
+      width: 40,
+      height: 40,
+      borderRadius: 5,
 
-  },
-  captureButton: { backgroundColor: '#3E8BFC', padding: 10, borderRadius: 8, alignItems: 'center', marginTop: 20, alignSelf: 'center' },
-  captureButtonText: { color: 'white', fontFamily: 'Lato-Bold', fontSize: 16 },
-  captureView: { backgroundColor: '#fff', padding: 10, borderRadius: 10 },
- 
-  screenshotView: {
-    padding: 10,
-     flex:1,
-     paddingVertical:20
-  },
-  float:{
-    position:'absolute',
-    right:5,
-    bottom:0,
-    // width:40,
-    zIndex:1,
-    // height:40,
-    // backgroundColor:'red'
-    
-  },
-  titleText:{
-    fontFamily:'Lato-Regular',
-    fontSize:12
-  },
-  loaderContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loaderText: {
-    fontSize: 18,
-    fontFamily: 'Lato-Bold',
-  },
-  noDataContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f9f9f9',
-  },
-  noDataText: {
-    fontSize: 18,
-    color: 'gray',
-    fontFamily: 'Lato-Bold',
-  },
-  
-});
+    },
+    switchValue: {
+      backgroundColor: 'lightgreen',
+      flexDirection: 'row',
+      paddingVertical: 0,
+      paddingHorizontal: 10,
+      borderRadius: 20,
+      margin: 5,
+      alignItems: 'center'
+    },
+    switchValueText: {
+      fontSize: 12,
+      padding: 3,
+      fontFamily: 'Lato-Regular'
+
+    },
+    captureButton: { backgroundColor: '#3E8BFC', padding: 10, borderRadius: 8, alignItems: 'center', marginTop: 20, alignSelf: 'center' },
+    captureButtonText: { color: 'white', fontFamily: 'Lato-Bold', fontSize: 16 },
+    captureView: { backgroundColor: '#fff', padding: 10, borderRadius: 10 },
+
+    screenshotView: {
+      padding: 10,
+      flex: 1,
+      paddingVertical: 20
+    },
+    float: {
+      position: 'absolute',
+      right: 5,
+      bottom: 0,
+      // width:40,
+      zIndex: 1,
+      // height:40,
+      // backgroundColor:'red'
+
+    },
+    titleText: {
+      fontFamily: 'Lato-Regular',
+      fontSize: 12
+    },
+    loaderContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    loaderText: {
+      fontSize: 18,
+      fontFamily: 'Lato-Bold',
+    },
+    noDataContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: '#f9f9f9',
+    },
+    noDataText: {
+      fontSize: 18,
+      color: 'gray',
+      fontFamily: 'Lato-Bold',
+    },
+
+  });
 
 export default HomeScreen

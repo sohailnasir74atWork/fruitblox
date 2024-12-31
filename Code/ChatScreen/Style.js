@@ -20,7 +20,7 @@ export  const getStyles = (isDarkMode) =>
         paddingVertical: 5,
       },
       mymessageBubble: {
-        maxWidth: '85%',
+        maxWidth: '90%',
         paddingHorizontal: 10,
         borderRadius: 15,
         flexDirection: "row-reverse",
@@ -28,7 +28,7 @@ export  const getStyles = (isDarkMode) =>
         alignItems: 'flex-end'
       },
       othermessageBubble: {
-        maxWidth: '85%',
+        maxWidth: '90%',
         paddingHorizontal: 10,
         borderRadius: 15,
         flexDirection: 'row',

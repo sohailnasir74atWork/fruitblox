@@ -13,12 +13,13 @@ import {
   useColorScheme,
 } from 'react-native';
 import config from '../Helper/Environment';
+import { useGlobalState } from '../GlobelStats';
 
 const FruitSelectionDrawer = ({ visible, onClose, onSelect, data, selectedTheme }) => {
   const [searchText, setSearchText] = useState('');
   const [selectedItems, setSelectedItems] = useState([]);
-  const colorScheme = useColorScheme(); // Returns 'light' or 'dark'
-  const isDarkMode = colorScheme === 'dark';
+  const {theme} = useGlobalState()
+  const isDarkMode = theme === 'dark';
 
   // Clear search text and reset selected items when the modal opens
   useEffect(() => {

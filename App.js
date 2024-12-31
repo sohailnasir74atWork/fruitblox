@@ -1,5 +1,13 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { View, StatusBar, Platform, Animated, SafeAreaView, Appearance } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import {
+  View,
+  StatusBar,
+  Platform,
+  Animated,
+  SafeAreaView,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -9,10 +17,9 @@ import TimerScreen from './Code/StockScreen/TimerScreen';
 import SettingsScreen from './Code/SettingScreen/Setting';
 import UpcomingFeaturesScreen from './Code/ChatScreen/Trader';
 import NotificationHandler from './Code/Firebase/FrontendNotificationHandling';
-import requestPermission from './Code/Helper/PermissionCheck';
 import config from './Code/Helper/Environment';
-import { GlobalStateProvider } from './Code/GlobelStats';
-
+import { GlobalStateProvider, useGlobalState } from './Code/GlobelStats';
+import { AdsConsent, AdsConsentStatus } from 'react-native-google-mobile-ads';
 
 const Tab = createBottomTabNavigator();
 
@@ -36,23 +43,57 @@ const MyDarkTheme = {
 };
 
 function App() {
-  const [theme, setTheme] = useState(Appearance.getColorScheme());
-  
-
-  useEffect(() => {
-    requestPermission();
-  }, []);
-
-  useEffect(() => {
-    const subscription = Appearance.addChangeListener(({ colorScheme }) => {
-      setTheme(colorScheme);
-    });
-    return () => subscription.remove();
-  }, []);
-
+  const { theme } = useGlobalState();
   const selectedTheme = theme === 'dark' ? MyDarkTheme : MyLightTheme;
+  const [consentStatus, setConsentStatus] = useState(null);
+  const [loading, setLoading] = useState(false);
 
+  // const handleUserConsent = async () => {
+  //   try {
+  //     // Request consent information
+  //     const consentInfo = await AdsConsent.requestInfoUpdate();
+  //     console.log('Consent Info:', consentInfo);
 
+  //     // Check if consent form is available and required
+  //     if (consentInfo.isConsentFormAvailable) {
+  //       if (consentInfo.status === AdsConsentStatus.REQUIRED) {
+  //         const formResult = await AdsConsent.showForm();
+  //         console.log('Consent Form Result:', formResult);
+
+  //         // Update the consent status based on the user's action
+  //         setConsentStatus(formResult.status);
+
+  //         if (formResult.status === AdsConsentStatus.OBTAINED) {
+  //           Alert.alert('Thank You!', 'You have provided your consent.');
+  //         } else {
+  //           Alert.alert('Notice', 'You have chosen limited ad tracking.');
+  //         }
+  //       } else {
+  //         setConsentStatus(consentInfo.status);
+  //         Alert.alert('Notice', 'Your consent is already up to date.');
+  //       }
+  //     } else {
+  //       Alert.alert('Notice', 'Consent form is not available.');
+  //     }
+  //   } catch (error) {
+  //     console.error('Error handling consent:', error);
+  //     Alert.alert('Error', 'Failed to update consent information. Please try again.');
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+  // useEffect(() => {
+  //   handleUserConsent();
+  // }, []);
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#1E88E5" />
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: selectedTheme.colors.background }}>
@@ -60,7 +101,9 @@ function App() {
         <NavigationContainer theme={selectedTheme}>
           <StatusBar
             barStyle={theme === 'dark' ? 'light-content' : 'dark-content'}
-            {...(Platform.OS === 'android' && { backgroundColor: selectedTheme.colors.background })}
+            {...(Platform.OS === 'android' && {
+              backgroundColor: selectedTheme.colors.background,
+            })}
           />
           <Tab.Navigator
             screenOptions={({ route }) => ({
@@ -78,19 +121,49 @@ function App() {
                 let iconName;
                 switch (route.name) {
                   case 'Calculator':
-                    iconName = focused ? (config.isNoman ? 'home': 'calculator') : (config.isNoman ? 'home-outline': 'calculator-outline');
+                    iconName = focused
+                      ? config.isNoman
+                        ? 'home'
+                        : 'calculator'
+                      : config.isNoman
+                      ? 'home-outline'
+                      : 'calculator-outline';
                     break;
                   case 'Values':
-                    iconName = focused ? (config.isNoman ? 'trending-up': 'pricetags') : (config.isNoman ? 'trending-up-outline': 'pricetags-outline');
+                    iconName = focused
+                      ? config.isNoman
+                        ? 'trending-up'
+                        : 'pricetags'
+                      : config.isNoman
+                      ? 'trending-up-outline'
+                      : 'pricetags-outline';
                     break;
                   case 'Stock':
-                    iconName = focused ? (config.isNoman ? 'newspaper': 'notifications') : (config.isNoman ? 'newspaper-outline': 'notifications-outline');
+                    iconName = focused
+                      ? config.isNoman
+                        ? 'newspaper'
+                        : 'notifications'
+                      : config.isNoman
+                      ? 'newspaper-outline'
+                      : 'notifications-outline';
                     break;
                   case 'Chat':
-                    iconName = focused ? (config.isNoman ? 'chatbubble-ellipses': 'chatbubbles') : (config.isNoman ? 'chatbubble-ellipses-outline': 'chatbubbles-outline');
+                    iconName = focused
+                      ? config.isNoman
+                        ? 'chatbubble-ellipses'
+                        : 'chatbubbles'
+                      : config.isNoman
+                      ? 'chatbubble-ellipses-outline'
+                      : 'chatbubbles-outline';
                     break;
                   case 'Setting':
-                    iconName = focused ? (config.isNoman ? 'settings': 'cog') : (config.isNoman ? 'settings-outline': 'cog-outline');
+                    iconName = focused
+                      ? config.isNoman
+                        ? 'settings'
+                        : 'cog'
+                      : config.isNoman
+                      ? 'settings-outline'
+                      : 'cog-outline';
                     break;
                   default:
                     iconName = 'alert-circle-outline';

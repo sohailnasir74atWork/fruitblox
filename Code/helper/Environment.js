@@ -27,12 +27,20 @@ const config = {
       secondary: '#3E8BFC', // Bright action blue
       hasBlockGreen: '#29AB87', // Vibrant success green
       wantBlockRed: '#FF3B30', // Vivid warning red
+      backgroundLight: '#f2f2f7',
+      backgroundDark: '#121212',
+      white:'white',
+      black:'black'
     }
     : {
       primary: '#697565', // Deep navy blue
       secondary: '#457B9D', // Muted teal
       hasBlockGreen: '#B8860B', // Light mint green
       wantBlockRed: '#E63946', // Warm, soft red
+      backgroundLight: '#f2f2f7',
+      backgroundDark: '#121212',
+       white:'white',
+      black:'black'
     },
 
 };

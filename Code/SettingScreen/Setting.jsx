@@ -16,9 +16,8 @@ import { useGlobalState } from '../GlobelStats';
 import { logoutUser } from '../Firebase/UserLogics';
 import config from '../Helper/Environment';
 export default function SettingsScreen({ selectedTheme }) {
-  const { user } = useGlobalState();
-  const colorScheme = useColorScheme(); // Returns 'light' or 'dark'
-  const isDarkMode = colorScheme === 'dark';
+  const { user, theme } = useGlobalState();
+  const isDarkMode = theme === 'dark';
 
   const getAppDownloadLink = () => {
     return Platform.OS === 'ios'

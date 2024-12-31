@@ -3,6 +3,9 @@ import { initializeApp, getApps } from 'firebase/app';
 import { getDatabase, ref, set, onValue, get } from 'firebase/database';
 import auth from '@react-native-firebase/auth';
 import messaging from '@react-native-firebase/messaging';
+import { Platform } from 'react-native';
+import { Appearance } from 'react-native';
+
 
 // Firebase configuration
 const firebaseConfig = {
@@ -12,7 +15,10 @@ const firebaseConfig = {
   projectId: "fruiteblocks",
   storageBucket: "fruiteblocks.appspot.com",
   messagingSenderId: "409137828081",
-  appId: "1:409137828081:android:2b2e10b900614979f39950",
+  appId: Platform.select({
+    ios: "1:409137828081:ios:89f062c9951cd664f39950", // Fixed iOS app ID
+    android: "1:409137828081:android:2b2e10b900614979f39950", // Android app ID
+  }),
   measurementId: "G-C3T24PS3SF",
 };
 
@@ -27,6 +33,7 @@ const GlobalStateContext = createContext();
 export const useGlobalState = () => useContext(GlobalStateContext);
 
 export const GlobalStateProvider = ({ children }) => {
+  const [theme, setTheme] = useState(Appearance.getColorScheme());
   const [state, setState] = useState({
     data: null,
     normalStock: [],
@@ -39,7 +46,10 @@ export const GlobalStateProvider = ({ children }) => {
   const [isSelectedReminderEnabled, setIsSelectedReminderEnabled] = useState(null);
   const [user, setUser] = useState(null);
   const [userId, setUserId] = useState(null);
-  const [isFetchingUserData, setIsFetchingUserData] = useState(true);
+  const [isFetchingUserData, setIsFetchingUserData] = useState(false);
+  const [dataloading, setDataLoading] = useState(true);
+
+
 
   // Helper: Get user reference dynamically
   const getUserRef = (key) => ref(database, `users/${userId}/${key}`);
@@ -49,60 +59,85 @@ export const GlobalStateProvider = ({ children }) => {
     setIsReminderEnabled(null);
     setIsSelectedReminderEnabled(null);
   };
+  // console.log(userId)
 
+  useEffect(() => {
+    const listener = Appearance.addChangeListener(({ colorScheme }) => {
+      setTheme(colorScheme);
+    });
+  
+    return () => listener.remove();
+  }, []);
+  
   const saveTokenToDatabase = async (token, currentUserId) => {
     if (!currentUserId) {
       console.warn('User ID is null. Token not saved.');
       return;
     }
+  
     try {
       const tokenRef = ref(database, `users/${currentUserId}/fcmToken`);
       const invalidTokenRef = ref(database, `users/${currentUserId}/isTokenInvalid`);
-
-      // Reset the invalid token flag when a new token is saved
+  
+      // Fetch the existing token to check if it matches the new token
+      const currentToken = await get(tokenRef);
+      if (currentToken.exists() && currentToken.val() === token) {
+        // console.log('FCM token is already up-to-date. No action needed.');
+        return;
+      }
+  
+      // Reset the invalid token flag and save the new token
       await Promise.all([
         set(tokenRef, token),
         set(invalidTokenRef, false),
       ]);
-
+  
       // console.log('FCM token saved and invalid flag reset successfully:', token);
     } catch (error) {
       console.error('Error saving FCM token to database:', error);
     }
   };
-
-  // Register for notifications
-  // const registerForNotifications = async (currentUserId) => {
-  //   try {
-  //     const authStatus = await messaging().requestPermission();
-  //     const enabled =
-  //       authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-  //       authStatus === messaging.AuthorizationStatus.PROVISIONAL;
-
-  //     if (enabled) {
-  //       const token = await messaging().getToken();
-
-  //       if (currentUserId) {
-  //         await saveTokenToDatabase(token, currentUserId);
-  //       } else {
-  //         console.warn('User ID is null. Token not saved.');
-  //       }
-  //     } else {
-  //       console.error('Notification permissions not granted.');
-  //     }
-  //   } catch (error) {
-  //     console.error('Error registering for notifications:', error);
-  //     // Optional: Retry logic
-  //     setTimeout(() => registerForNotifications(currentUserId), 5000);
-  //   }
-  // };
+  
+  
+  // Register for notification
+  const registerForNotifications = async (currentUserId) => {
+    try {
+      const authStatus = await messaging().requestPermission();
+      const enabled =
+        authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+        authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+  
+      if (enabled) {
+        // console.log('Notification permissions granted.');
+        const token = await messaging().getToken();
+  
+        if (currentUserId && token) {
+          await saveTokenToDatabase(token, currentUserId);
+          // console.log('FCM token saved successfully:', token);
+        } else {
+          console.warn('User ID is null or token retrieval failed. Token not saved.');
+        }
+      } else {
+        console.error('Notification permissions not granted.');
+      }
+    } catch (error) {
+      console.error('Error registering for notifications:', error);
+  
+      // Retry logic for recoverable errors
+      if (Platform.OS === 'ios' || error.code === 'messaging/permission-blocked') {
+        // console.log('Retrying registration in 5 seconds...');
+        setTimeout(() => registerForNotifications(currentUserId), 5000);
+      }
+    }
+  };
+  
 
   useEffect(() => {
     const unsubscribe = auth().onAuthStateChanged(async (loggedInUser) => {
       if (loggedInUser) {
         setUser(loggedInUser);
         setUserId(loggedInUser.uid);
-        // await registerForNotifications(loggedInUser.uid);
+        await registerForNotifications(loggedInUser.uid);
       } else {
         setUser(null);
         setUserId(null);
@@ -181,7 +216,7 @@ export const GlobalStateProvider = ({ children }) => {
           mirageStock: calcData.mirage || [],
           isAppReady: true,
         });
-
+        setDataLoading(false)
         // console.log('Stock data loaded successfully.');
       } catch (error) {
         console.error('Error fetching stock data:', error);
@@ -241,8 +276,9 @@ export const GlobalStateProvider = ({ children }) => {
       setIsSelectedReminderEnabled,
       user,
       isFetchingUserData,
+      theme, dataloading
     }),
-    [state, selectedFruits, isReminderEnabled, isSelectedReminderEnabled, user, isFetchingUserData]
+    [state, selectedFruits, isReminderEnabled, isSelectedReminderEnabled, user, isFetchingUserData, theme, dataloading]
   );
 
 

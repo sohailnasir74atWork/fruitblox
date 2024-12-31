@@ -7,7 +7,6 @@ import {
   TextInput,
   Image,
   FlatList,
-  TouchableWithoutFeedback,
   ActivityIndicator,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -25,10 +24,9 @@ const ValueScreen = ({ selectedTheme }) => {
   const [selectedFilter, setSelectedFilter] = useState('ALL');
   const [filterDropdownVisible, setFilterDropdownVisible] = useState(false);
   const [filteredData, setFilteredData] = useState([]);
-  const [loading, setLoading] = useState(true);
 
 
-  const { data } = useGlobalState();
+  const { data, dataloading } = useGlobalState();
   const valuesData = useMemo(() => (data ? Object.values(data) : []), [data]);
   const filters = ['ALL', 'COMMON', 'UNCOMMON', 'RARE', 'LEGENDARY', 'MYTHICAL', 'GAME PASS'];
 
@@ -40,6 +38,7 @@ const ValueScreen = ({ selectedTheme }) => {
     setSelectedFilter(filter === 'GAME PASS' ? 'PREMIUM' : filter);
     setFilterDropdownVisible(false);
   };
+  // console.log(dataloading)
 
   const handleSearchChange = debounce((text) => {
     setSearchText(text);
@@ -48,7 +47,6 @@ const ValueScreen = ({ selectedTheme }) => {
     setFilterDropdownVisible(false);
   };
   useEffect(() => {
-    setLoading(true);
     const filtered = valuesData.filter((item) => {
       const itemType = item.Type.toUpperCase() === 'GAME PASS' ? 'PREMIUM' : item.Type.toUpperCase();
       return (
@@ -57,8 +55,8 @@ const ValueScreen = ({ selectedTheme }) => {
       );
     });
     setFilteredData(filtered);
-    setLoading(false);
-  }, [searchText, selectedFilter]);
+  }, [valuesData, searchText, selectedFilter]); 
+  
   const renderItem = React.useCallback(({ item }) => (
     <View style={styles.itemContainer}>
       <View style={styles.imageContainer}>
@@ -90,8 +88,7 @@ const ValueScreen = ({ selectedTheme }) => {
     <>
         <GestureHandlerRootView>
 
-
-      <View style={styles.container}>
+    <View style={styles.container}>
           <Text style={[styles.description, { color: selectedTheme.colors.text }]}>
             Live Blox Fruits values updated hourly. Find accurate item values here and visit the trade feed for fruits or game passes.
           </Text>
@@ -136,25 +133,29 @@ const ValueScreen = ({ selectedTheme }) => {
             </View>
           )}
 
-          {loading ? (
-            <ActivityIndicator size="large" color="#34C759" style={styles.loadingIndicator} />
-          ) : (
-            <View style={{ flex: 1 }}>
-             <FlatList
-  data={filteredData}
-  keyExtractor={(item) => item.Name}
-  renderItem={renderItem}
-  showsVerticalScrollIndicator={false}
-  removeClippedSubviews={true}
-  numColumns={!config.isNoman ? 1 : 2} // Specify the number of columns
-  columnWrapperStyle={!config.isNoman ? null  : styles.columnWrapper} // Apply row styling only for multiple columns
-/>
+{dataloading ? (
+ <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+  <ActivityIndicator size="large" color="#1E88E5" />
+</View>
 
+) : (
+  filteredData.length > 0 ? (
+    <FlatList
+      data={filteredData}
+      keyExtractor={(item) => item.Name}
+      renderItem={renderItem}
+      showsVerticalScrollIndicator={false}
+      removeClippedSubviews={true}
+      numColumns={!config.isNoman ? 1 : 2}
+      columnWrapperStyle={!config.isNoman ? null : styles.columnWrapper}
+    />
+  ) : (
+    <Text style={[styles.description, { textAlign: 'center', marginTop: 20, color: 'gray' }]}>
+      No items match your search criteria.
+    </Text>
+  )
+)}
 
-
-            </View>
-
-          )}
       </View>
 
       </GestureHandlerRootView>
