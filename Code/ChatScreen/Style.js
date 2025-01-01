@@ -139,17 +139,87 @@ export  const getStyles = (isDarkMode) =>
       login: {
         height: 60,
         justifyContent: 'center',
-        backgroundColor: config.colors.hasBlockGreen,
+        color: config.colors.hasBlockGreen,
         alignSelf: 'center',
         width: '100%',
+        borderTopWidth:1,
+        borderColor: isDarkMode ? '#333333' : '#cccccc',
+
         //  borderRadius:10
   
       },
       loginText: {
-        color: 'white',
+        color: config.colors.hasBlockGreen,
         fontFamily: 'Lato-Bold',
         textAlign: 'center',
         lineHeight: 24
   
-      }
+      },
+          inputWrapper: {
+            padding: 10,
+            borderTopWidth: 1,
+            borderTopColor: isDarkMode ? '#333' : '#ddd',
+            backgroundColor: isDarkMode ? '#222' : '#fff',
+          },
+          replyContainer: {
+            backgroundColor: isDarkMode ? '#333' : '#f0f0f0',
+            padding: 10,
+            borderRadius: 8,
+            marginBottom: 10,
+          },
+          replyText: {
+            color: isDarkMode ? '#fff' : '#333',
+            fontSize: 14,
+          },
+          cancelReplyButton: {
+            alignSelf: 'flex-end',
+            
+          },
+          cancelReplyText: {
+            color: '#E74C3C',
+            fontSize: 12,
+          },
+          inputContainer: {
+            flexDirection: 'row',
+            alignItems: 'center',
+          },
+          input: {
+            flex: 1,
+            backgroundColor: isDarkMode ? '#333' : '#f0f0f0',
+            borderRadius: 20,
+            paddingHorizontal: 15,
+            paddingVertical: 10,
+            fontSize: 16,
+          },
+          sendButton: {
+            marginLeft: 10,
+            borderRadius: 20,
+            paddingHorizontal: 20,
+            paddingVertical: 10,
+          },
+          sendButtonText: {
+            color: '#fff',
+            fontSize: 16,
+          },
+          replyContainer: {
+            backgroundColor: isDarkMode ? '#333' : '#f0f0f0',
+            borderLeftWidth: 3,
+            borderLeftColor: isDarkMode ? '#1E88E5' : '#007BFF',
+            padding: 5,
+            marginBottom: 5,
+            borderRadius: 5,
+          },
+          replyText: {
+            fontSize: 10,
+            color: isDarkMode ? '#FFF' : '#000',
+            width:'95%'
+
+          },
+          replySenderText: {
+            fontSize: 12,
+            fontFamily: 'Lato-Bold',
+            color: isDarkMode ? '#FFF' : '#000',
+          },
+       
+      
     });

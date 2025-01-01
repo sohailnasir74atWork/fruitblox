@@ -6,9 +6,9 @@ const isNoman = true; // Toggle this to switch configurations
 //waqas pkgName = com.bloxfruitstock
 
 const config = {
-  appName: isNoman ? 'Noman App' : 'Waqas App',
-  andriodBanner: isNoman ? 'ca-app-pub-5740215782746766/5225162749' : 'ca-app-pub-5740215782746766/5225162749',
-  andriodIntestial: isNoman ? 'ca-app-pub-5740215782746766/1206026687' : 'ca-app-pub-5740215782746766/1206026687',
+  appName: isNoman ? 'Blox Fruit Values' : 'Blox Fruit Stock',
+  andriodBanner: isNoman ? 'ca-app-pub-5740215782746766/5225162749' : 'ca-app-pub-3701208411582706/4133745803',
+  andriodIntestial: isNoman ? 'ca-app-pub-5740215782746766/1206026687' : 'ca-app-pub-3701208411582706/2820664136',
   IOsIntestial: isNoman ? 'ca-app-pub-5740215782746766/3209373499' : '',
   IOsBanner: isNoman ? 'ca-app-pub-5740215782746766/4522455164' : '',
 

@@ -92,7 +92,7 @@ const TimerScreen = ({ selectedTheme }) => {
         settings.authorizationStatus === AuthorizationStatus.AUTHORIZED ||
         settings.authorizationStatus === AuthorizationStatus.PROVISIONAL
       ) {
-        console.log('Notification permissions granted:', settings);
+        // console.log('Notification permissions granted:', settings);
         return true; // Permission granted
       }
     } catch (error) {
@@ -281,7 +281,6 @@ const TimerScreen = ({ selectedTheme }) => {
   };
   const styles = getStyles(isDarkMode);
 
-
   return (
     <>
       <GestureHandlerRootView>
@@ -383,9 +382,6 @@ const TimerScreen = ({ selectedTheme }) => {
                 })}
               </View>}
             </View>
-
-
-
             <FruitSelectionDrawer
               visible={isDrawerVisible}
               onClose={closeDrawer}
@@ -424,7 +420,7 @@ const getStyles = (isDarkMode) =>
       flex: 1, paddingHorizontal: 10, backgroundColor: isDarkMode ? '#121212' : '#f2f2f7',
     },
     description: { fontSize: 14, marginVertical: 10, fontFamily: 'Lato-Regular' },
-    headerContainer: { flexDirection: !config.isNoman ? 'coulmn' : 'row', justifyContent: 'space-between', marginVertical: 10, paddingHorizontal: 10 },
+    headerContainer: { flexDirection:  'row', justifyContent: 'space-between', marginVertical: 10, paddingHorizontal: 10 },
 
     timer: { fontSize: 16, fontFamily: 'Lato-Bold' },
     time: { fontSize: 16, fontFamily: 'Lato-Bold' },
@@ -455,7 +451,7 @@ const getStyles = (isDarkMode) =>
     },
     row: {
       flexDirection: !config.isNoman ? 'column' : 'row',
-      width: !config.isNoman ? '49%' : '100%',
+      width: !config.isNoman ? '100%' : '100%',
       justifyContent: !config.isNoman ? 'center' : 'space-between',
       alignItems: 'center',
       padding: 10,
@@ -465,7 +461,7 @@ const getStyles = (isDarkMode) =>
     },
     row2: {
       flexDirection: !config.isNoman ? 'column' : 'row',
-      width: !config.isNoman ? '49%' : '100%',
+      width: !config.isNoman ? '100%' : '100%',
       justifyContent: !config.isNoman ? 'center' : 'space-between',
       alignItems: 'center',
       padding: 10,

@@ -1,24 +1,46 @@
 import React from 'react';
-import { FlatList, View, Text, TouchableOpacity } from 'react-native';
+import {
+  FlatList,
+  View,
+  Text,
+  TouchableOpacity,
+  RefreshControl,
+  Vibration,
+} from 'react-native';
 import { getStyles } from './Style';
 import { formatDate, generateShortDisplayName, getColorForName } from './utils';
 
-const MessagesList = ({ messages, user, userColors, isDarkMode, onPinMessage, onDeleteMessage, isAdmin }) => {
+const MessagesList = ({
+  messages,
+  user,
+  userColors,
+  isDarkMode,
+  onPinMessage,
+  onDeleteMessage,
+  onReply,
+  isAdmin,
+  refreshing,
+  onRefresh,
+}) => {
   const styles = getStyles(isDarkMode);
 
+  const handleReply = (item) => {
+    Vibration.vibrate(50); // Vibrate for feedback
+    onReply(item); // Trigger reply with selected message
+  };
+
   const renderMessage = ({ item, index }) => {
-    const previousMessage = messages[index + 1]; // Get the next message (list is inverted)
+    const previousMessage = messages[index + 1];
     const currentDate = new Date(item.timestamp).toDateString();
     const previousDate = previousMessage
       ? new Date(previousMessage.timestamp).toDateString()
       : null;
 
-    // Check if the date header should be displayed
     const shouldShowDateHeader = currentDate !== previousDate;
 
     return (
       <View>
-        {/* Display the date header if it's the first message of the day */}
+        {/* Display the date header if it's a new day */}
         {shouldShowDateHeader && (
           <View>
             <Text style={styles.dateSeparator}>{currentDate}</Text>
@@ -43,24 +65,43 @@ const MessagesList = ({ messages, user, userColors, isDarkMode, onPinMessage, on
             </Text>
           </View>
           <View style={styles.messageTextBox}>
-            <Text
-              style={
-                item.senderId === user?.uid
-                  ? styles.myMessageText
-                  : styles.otherMessageText
-              }
+            {item.isReply && item.replyTo && (
+              <View style={styles.replyContainer}>
+                <Text>
+                  <Text style={styles.replyText}>Replying to:{'\n'} </Text>
+                  {item.replyTo.text}
+                </Text>
+              </View>
+            )}
+            <TouchableOpacity
+              onLongPress={() => handleReply(item)} // Use handleReply
+              delayLongPress={300}
             >
-              {item.text}
-            </Text>
+              <Text
+                style={
+                  item.senderId === user?.uid
+                    ? styles.myMessageText
+                    : styles.otherMessageText
+                }
+              >
+                {item.text}
+              </Text>
+            </TouchableOpacity>
           </View>
 
-          {/* Conditionally render admin actions or timestamp */}
+          {/* Admin Actions or Timestamp */}
           {isAdmin ? (
             <View style={styles.adminActions}>
-              <TouchableOpacity onPress={() => onPinMessage(item)} style={styles.pinButton}>
+              <TouchableOpacity
+                onPress={() => onPinMessage(item)}
+                style={styles.pinButton}
+              >
                 <Text style={styles.pinButtonText}>Pin</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => onDeleteMessage(item.id)} style={styles.deleteButton}>
+              <TouchableOpacity
+                onPress={() => onDeleteMessage(item.id)}
+                style={styles.deleteButton}
+              >
                 <Text style={styles.deleteButtonText}>Delete</Text>
               </TouchableOpacity>
             </View>
@@ -86,6 +127,13 @@ const MessagesList = ({ messages, user, userColors, isDarkMode, onPinMessage, on
       renderItem={({ item, index }) => renderMessage({ item, index })}
       contentContainerStyle={styles.chatList}
       inverted
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor={isDarkMode ? '#FFF' : '#000'}
+        />
+      }
     />
   );
 };

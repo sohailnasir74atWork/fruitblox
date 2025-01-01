@@ -19,7 +19,7 @@ import UpcomingFeaturesScreen from './Code/ChatScreen/Trader';
 import NotificationHandler from './Code/Firebase/FrontendNotificationHandling';
 import config from './Code/Helper/Environment';
 import { GlobalStateProvider, useGlobalState } from './Code/GlobelStats';
-import { AdsConsent, AdsConsentStatus } from 'react-native-google-mobile-ads';
+import { AdsConsent, AdsConsentDebugGeography, AdsConsentStatus } from 'react-native-google-mobile-ads';
 
 const Tab = createBottomTabNavigator();
 
@@ -48,44 +48,52 @@ function App() {
   const [consentStatus, setConsentStatus] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // const handleUserConsent = async () => {
-  //   try {
-  //     // Request consent information
-  //     const consentInfo = await AdsConsent.requestInfoUpdate();
-  //     console.log('Consent Info:', consentInfo);
 
-  //     // Check if consent form is available and required
-  //     if (consentInfo.isConsentFormAvailable) {
-  //       if (consentInfo.status === AdsConsentStatus.REQUIRED) {
-  //         const formResult = await AdsConsent.showForm();
-  //         console.log('Consent Form Result:', formResult);
+const handleUserConsent = async () => {
+  try {
+    // Enable debug settings for testing consent
+    await AdsConsent.requestInfoUpdate({
+      debugGeography: AdsConsentDebugGeography.EEA, // Simulate EEA user for testing
+      testDeviceIdentifiers: ['eb5e1b29f61d703a'], // Replace with your test device ID
+    });
 
-  //         // Update the consent status based on the user's action
-  //         setConsentStatus(formResult.status);
+    const consentInfo = await AdsConsent.requestInfoUpdate();
+    // console.log('Consent Info:', consentInfo);
 
-  //         if (formResult.status === AdsConsentStatus.OBTAINED) {
-  //           Alert.alert('Thank You!', 'You have provided your consent.');
-  //         } else {
-  //           Alert.alert('Notice', 'You have chosen limited ad tracking.');
-  //         }
-  //       } else {
-  //         setConsentStatus(consentInfo.status);
-  //         Alert.alert('Notice', 'Your consent is already up to date.');
-  //       }
-  //     } else {
-  //       Alert.alert('Notice', 'Consent form is not available.');
-  //     }
-  //   } catch (error) {
-  //     console.error('Error handling consent:', error);
-  //     Alert.alert('Error', 'Failed to update consent information. Please try again.');
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
+    if (consentInfo.isConsentFormAvailable) {
+      if (consentInfo.status === AdsConsentStatus.REQUIRED) {
+        const formResult = await AdsConsent.showForm();
+        // console.log('Consent Form Result:', formResult);
 
-  // useEffect(() => {
-  //   handleUserConsent();
-  // }, []);
+        // Update the consent status based on the user's action
+        setConsentStatus(formResult.status);
+
+        if (formResult.status === AdsConsentStatus.OBTAINED) {
+          Alert.alert('Thank You!', 'You have provided your consent.');
+        } else {
+          Alert.alert('Notice', 'You have chosen limited ad tracking.');
+        }
+      } else {
+        // Consent not required; update status silently
+        setConsentStatus(consentInfo.status);
+        // console.log('Consent already up to date:', consentInfo.status);
+      }
+    } else {
+      // Handle cases where the consent form is not available
+      // console.log('Consent form is not available.', consentInfo);
+    }
+  } catch (error) {
+    console.error('Error handling consent:', error);
+    // Alert.alert('Error', 'An error occurred while handling consent.');
+  } finally {
+    setLoading(false);
+  }
+};
+
+  
+  useEffect(() => {
+    handleUserConsent();
+  }, []);
 
   if (loading) {
     return (

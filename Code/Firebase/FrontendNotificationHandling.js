@@ -40,6 +40,7 @@ const NotificationHandler = () => {
 
       try {
         const { notification, data } = remoteMessage || {};
+        console.log(notification)
         const title = notification?.title || data?.title || 'Notification';
         const body = notification?.body || data?.body || 'No details available';
         const type = data?.type;

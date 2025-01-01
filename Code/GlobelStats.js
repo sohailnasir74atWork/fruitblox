@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { initializeApp, getApps } from 'firebase/app';
-import { getDatabase, ref, set, onValue, get } from 'firebase/database';
+import { getDatabase, ref, set, onValue, get, off, onDisconnect } from 'firebase/database';
 import auth from '@react-native-firebase/auth';
 import messaging from '@react-native-firebase/messaging';
 import { Platform } from 'react-native';
@@ -48,8 +48,27 @@ export const GlobalStateProvider = ({ children }) => {
   const [userId, setUserId] = useState(null);
   const [isFetchingUserData, setIsFetchingUserData] = useState(false);
   const [dataloading, setDataLoading] = useState(true);
+  const [onlineMembersCount, setOnlineMembersCount] = useState(0);
 
 
+  useEffect(() => {
+    const onlineRef = ref(getDatabase(), 'onlineUser');
+  
+    const handleOnlineUsers = (snapshot) => {
+      const onlineUsers = snapshot.val() || {};
+      const activeUsers = Object.keys(onlineUsers).filter(
+        (key) => onlineUsers[key]?.status === true
+      );
+      setOnlineMembersCount(activeUsers.length);
+    };
+  
+    const unsubscribe = onValue(onlineRef, handleOnlineUsers);
+  
+    return () => {
+      console.log('Removing real-time listener from onlineUser');
+      off(onlineRef, 'value', handleOnlineUsers);
+    };
+  }, []);
 
   // Helper: Get user reference dynamically
   const getUserRef = (key) => ref(database, `users/${userId}/${key}`);
@@ -131,7 +150,7 @@ export const GlobalStateProvider = ({ children }) => {
     }
   };
   
-
+// console.log(userId)
   useEffect(() => {
     const unsubscribe = auth().onAuthStateChanged(async (loggedInUser) => {
       if (loggedInUser) {
@@ -182,6 +201,7 @@ export const GlobalStateProvider = ({ children }) => {
     setIsFetchingUserData(true);
 
     const userRef = ref(database, `users/${userId}`);
+    
     const unsubscribe = onValue(userRef, (snapshot) => {
       const userData = snapshot.val();
       if (userData) {
@@ -196,6 +216,32 @@ export const GlobalStateProvider = ({ children }) => {
 
     return () => unsubscribe();
   }, [userId]);
+  useEffect(() => {
+    if (!user) return;
+  
+    const onlineRef = ref(database, `onlineUser/${userId}`);
+  
+    // Set the user's online status
+    set(onlineRef, { id: userId, status: true, timestamp: Date.now() })
+      .then(() => console.log())
+      .catch((error) => console.error('Error setting online status:', error));
+  
+    // Ensure the user is marked offline on disconnect
+    const onDisconnectRef = onDisconnect(onlineRef);
+    onDisconnectRef
+      .set(null)
+      .then(() => console.log())
+      .catch((error) => console.error('Error setting onDisconnect:', error));
+  
+    // Cleanup function to remove online status
+    return () => {
+      console.log();
+      set(onlineRef, null).catch((error) =>
+        console.error('Error removing online status on unmount:', error)
+      );
+    };
+  }, [user]);
+  
 
   // Fetch public stock data
   useEffect(() => {
@@ -276,9 +322,9 @@ export const GlobalStateProvider = ({ children }) => {
       setIsSelectedReminderEnabled,
       user,
       isFetchingUserData,
-      theme, dataloading
+      theme, dataloading, onlineMembersCount, setOnlineMembersCount
     }),
-    [state, selectedFruits, isReminderEnabled, isSelectedReminderEnabled, user, isFetchingUserData, theme, dataloading]
+    [state, selectedFruits, isReminderEnabled, isSelectedReminderEnabled, user, isFetchingUserData, theme, onlineMembersCount, setOnlineMembersCount, dataloading]
   );
 
 
