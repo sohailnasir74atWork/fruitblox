@@ -45,9 +45,9 @@ const deleteLastThreeMessages = async () => {
       for (const key of keys) {
         await chatRef.child(key).remove();
       }
-      console.log('Last three messages deleted successfully');
+      // console.log('Last three messages deleted successfully');
     } else {
-      console.log('No messages to delete');
+      // console.log('No messages to delete');
     }
   } catch (error) {
     console.error('Error deleting the last three messages:', error);
@@ -62,7 +62,7 @@ export const removeSpecificChatMessage = async (messageId) => {
     const messageRef = ref(db, `chat/${messageId}`); // Reference to the specific chat message
 
     await remove(messageRef); // Remove the message
-    console.log(`Message with ID ${messageId} removed successfully.`);
+    // console.log(`Message with ID ${messageId} removed successfully.`);
   } catch (error) {
     console.error(`Error removing message with ID ${messageId}:`, error);
   }

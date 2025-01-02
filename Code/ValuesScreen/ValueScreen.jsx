@@ -163,9 +163,6 @@ const ValueScreen = ({ selectedTheme }) => {
         <BannerAd
           unitId={bannerAdUnitId}
           size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
-          requestOptions={{
-            requestNonPersonalizedAdsOnly: true,
-          }}
         />
         </View>
     </>

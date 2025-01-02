@@ -11,9 +11,7 @@ import config from '../Helper/Environment';
 import notifee, { AuthorizationStatus } from '@notifee/react-native';
 const bannerAdUnitId = getAdUnitId('banner');
 const interstitialAdUnitId = getAdUnitId('interstitial');
-const interstitial = InterstitialAd.createForAdRequest(interstitialAdUnitId, {
-  requestNonPersonalizedAdsOnly: true,
-});
+const interstitial = InterstitialAd.createForAdRequest(interstitialAdUnitId);
 
 const TimerScreen = ({ selectedTheme }) => {
   const [normalTimer, setNormalTimer] = useState('');
@@ -69,8 +67,6 @@ const TimerScreen = ({ selectedTheme }) => {
   const requestPermission = async () => {
     try {
       const settings = await notifee.requestPermission();
-      console.log(settings)
-
       if (
         settings.authorizationStatus == 0
       ) {
@@ -402,9 +398,6 @@ const TimerScreen = ({ selectedTheme }) => {
         <BannerAd
           unitId={bannerAdUnitId}
           size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
-          requestOptions={{
-            requestNonPersonalizedAdsOnly: true,
-          }}
         />
       </View>
     </>

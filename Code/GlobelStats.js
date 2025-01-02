@@ -65,7 +65,7 @@ export const GlobalStateProvider = ({ children }) => {
     const unsubscribe = onValue(onlineRef, handleOnlineUsers);
   
     return () => {
-      console.log('Removing real-time listener from onlineUser');
+      // console.log('Removing real-time listener from onlineUser');
       off(onlineRef, 'value', handleOnlineUsers);
     };
   }, []);
