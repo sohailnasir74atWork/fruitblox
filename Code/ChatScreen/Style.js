@@ -211,7 +211,7 @@ export  const getStyles = (isDarkMode) =>
           },
           replyText: {
             fontSize: 10,
-            color: isDarkMode ? '#FFF' : '#000',
+            color: isDarkMode ? '#1E88E5' : '#007BFF',
             width:'95%'
 
           },

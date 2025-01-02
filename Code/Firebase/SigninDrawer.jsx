@@ -153,7 +153,7 @@ const SignInDrawer = ({ visible, onClose, selectedTheme }) => {
                     </TouchableOpacity>
 
                     <TextInput
-                        style={styles.input}
+                        style={[styles.input, {color:selectedTheme.colors.text}]}
                         placeholder="Email"
                         value={email}
                         onChangeText={setEmail}
@@ -162,7 +162,7 @@ const SignInDrawer = ({ visible, onClose, selectedTheme }) => {
                     />
 
                     <TextInput
-                        style={styles.input}
+                        style={[styles.input, {color:selectedTheme.colors.text}]}
                         placeholder="Password"
                         value={password}
                         onChangeText={setPassword}

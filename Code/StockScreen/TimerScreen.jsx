@@ -69,10 +69,10 @@ const TimerScreen = ({ selectedTheme }) => {
   const requestPermission = async () => {
     try {
       const settings = await notifee.requestPermission();
+      console.log(settings)
 
       if (
-        settings.authorizationStatus === AuthorizationStatus.DENIED ||
-        settings.authorizationStatus === AuthorizationStatus.NOT_DETERMINED
+        settings.authorizationStatus == 0
       ) {
         Alert.alert(
           'Permission Required',
@@ -89,8 +89,7 @@ const TimerScreen = ({ selectedTheme }) => {
       }
 
       if (
-        settings.authorizationStatus === AuthorizationStatus.AUTHORIZED ||
-        settings.authorizationStatus === AuthorizationStatus.PROVISIONAL
+        settings.authorizationStatus === 1
       ) {
         // console.log('Notification permissions granted:', settings);
         return true; // Permission granted
@@ -116,12 +115,12 @@ const TimerScreen = ({ selectedTheme }) => {
         setIsReminderEnabled((prev) => !prev);
 
         // If iOS, optionally schedule a local notification as a test
-        if (Platform.OS === 'ios') {
-          await notifee.displayNotification({
-            title: 'Reminder Toggled',
-            body: `Reminder has been ${!isReminderEnabled ? 'enabled' : 'disabled'}.`,
-          });
-        }
+        // if (Platform.OS === 'ios') {
+        //   await notifee.displayNotification({
+        //     title: 'Reminder Toggled',
+        //     body: `Reminder has been ${!isReminderEnabled ? 'enabled' : 'disabled'}.`,
+        //   });
+        // }
       }
     } catch (error) {
       console.error('Error handling notification permission or sign-in:', error);
@@ -143,12 +142,12 @@ const TimerScreen = ({ selectedTheme }) => {
         setIsSelectedReminderEnabled((prev) => !prev);
 
         // If iOS, optionally schedule a local notification as a test
-        if (Platform.OS === 'ios') {
-          await notifee.displayNotification({
-            title: 'Selected Reminder Toggled',
-            body: `Selected Reminder has been ${!isSelectedReminderEnabled ? 'enabled' : 'disabled'}.`,
-          });
-        }
+        // if (Platform.OS === 'ios') {
+        //   await notifee.displayNotification({
+        //     title: 'Selected Reminder Toggled',
+        //     body: `Selected Reminder has been ${!isSelectedReminderEnabled ? 'enabled' : 'disabled'}.`,
+        //   });
+        // }
       }
     } catch (error) {
       console.error('Error handling notification permission or sign-in:', error);

@@ -52,10 +52,7 @@ function App() {
 const handleUserConsent = async () => {
   try {
     // Enable debug settings for testing consent
-    await AdsConsent.requestInfoUpdate({
-      debugGeography: AdsConsentDebugGeography.EEA, // Simulate EEA user for testing
-      testDeviceIdentifiers: ['eb5e1b29f61d703a'], // Replace with your test device ID
-    });
+    await AdsConsent.requestInfoUpdate();
 
     const consentInfo = await AdsConsent.requestInfoUpdate();
     // console.log('Consent Info:', consentInfo);
@@ -69,9 +66,9 @@ const handleUserConsent = async () => {
         setConsentStatus(formResult.status);
 
         if (formResult.status === AdsConsentStatus.OBTAINED) {
-          Alert.alert('Thank You!', 'You have provided your consent.');
+          // Alert.alert('Thank You!', 'You have provided your consent.');
         } else {
-          Alert.alert('Notice', 'You have chosen limited ad tracking.');
+          // Alert.alert('Notice', 'You have chosen limited ad tracking.');
         }
       } else {
         // Consent not required; update status silently

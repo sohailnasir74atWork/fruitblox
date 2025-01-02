@@ -17,112 +17,116 @@ import MessageInput from './MessageInput';
 import { getStyles } from './Style';
 import { BannerAd, BannerAdSize } from 'react-native-google-mobile-ads';
 import getAdUnitId from '../Ads/ads';
-import { getDatabase, ref, onDisconnect, set, onValue, off } from 'firebase/database';
-import { removeSpecificChatMessage } from './utils';
 
 const bannerAdUnitId = getAdUnitId('banner');
 
+const PAGE_SIZE = 350; // Number of messages to fetch per load
+
 const ChatComponent = ({ selectedTheme }) => {
-  const { user, theme, onlineMembersCount, setOnlineMembersCount } = useGlobalState();
+  const { user, theme, onlineMembersCount } = useGlobalState();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
-  const [replyTo, setReplyTo] = useState(null); // To track the message being replied to
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false); // For pull-to-refresh
+  const [replyTo, setReplyTo] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [pinnedMessages, setPinnedMessages] = useState([]);
+  const [lastLoadedKey, setLastLoadedKey] = useState(null);
   const [isSigninDrawerVisible, setIsSigninDrawerVisible] = useState(false);
-  const [pinnedMessages, setPinnedMessages] = useState([]); // Array of pinned messages
-
 
   const chatRef = useMemo(() => database().ref('chat'), []);
-  const pinnedMessageRef = useMemo(() => database().ref('pinnedMessage'), []);
   const pinnedMessagesRef = useMemo(() => database().ref('pinnedMessages'), []);
 
   const isAdmin = useMemo(
     () => ['DfQ6JB6YwKcMDipNpfcennqKOtR2', 'RwW7duccerSdxC7luu3ZMI0PAqa2', '3Jyre8jMc5aa90BuIsxAGOJWbkE3'].includes(user?.uid),
     [user]
   );
+
   const styles = useMemo(() => getStyles(theme === 'dark'), [theme]);
-  const validateMessage = (message) => {
-    const defaultSender = "Unknown User"; // Default value for sender
-    const defaultText = "[No content]"; // Default message text if empty
-  
+
+  const validateMessage = useCallback((message) => {
+    const defaultSender = 'Unknown User';
+    const defaultText = '[No content]';
     return {
       ...message,
       sender: message.sender?.trim() || defaultSender,
       text: message.text?.trim() || defaultText,
-      timestamp: message.timestamp || Date.now(), // Ensure timestamp exists
+      timestamp: message.timestamp || Date.now(),
     };
-  };
-  
- 
-  
- 
-  
-  
-  
-  
-  
-  const loadMessages = useCallback(async () => {
+  }, []);
+
+  const loadMessages = useCallback(async (reset = false) => {
     try {
       setLoading(true);
-  
-      // Load normal messages
-      const chatSnapshot = await chatRef.orderByKey().limitToLast(50).once('value');
-      const chatData = chatSnapshot.val() || {};
-      const parsedMessages = Object.keys(chatData)
-        .map((key) => validateMessage({ id: `chat-${key}`, ...chatData[key] }))
+
+      const query = reset
+        ? chatRef.orderByKey().limitToLast(PAGE_SIZE)
+        : chatRef.orderByKey().endAt(lastLoadedKey).limitToLast(PAGE_SIZE);
+
+      const snapshot = await query.once('value');
+      const data = snapshot.val() || {};
+      const parsedMessages = Object.entries(data)
+        .map(([key, value]) => validateMessage({ id: `chat-${key}`, ...value }))
         .sort((a, b) => b.timestamp - a.timestamp);
-  
-      setMessages(parsedMessages);
-  
-      // Load pinned messages
-      const pinnedSnapshot = await pinnedMessagesRef.once('value');
-      const pinnedData = pinnedSnapshot.val() || {};
-      const parsedPinnedMessages = Object.keys(pinnedData).map((key) => ({
-        ...pinnedData[key],
-        id: `pinned-${key}`, // Prefix ID for pinned messages
-      }));
-  
-      setPinnedMessages(parsedPinnedMessages);
+
+      if (parsedMessages.length > 0) {
+        setMessages((prev) => {
+          const seenKeys = new Set(prev.map((msg) => msg.id));
+          const newMessages = parsedMessages.filter((msg) => !seenKeys.has(msg.id));
+          return reset ? parsedMessages : [...newMessages, ...prev]; // Prepend new messages
+        });
+
+        setLastLoadedKey(Object.keys(data)[0]);
+      }
     } catch (error) {
       console.error('Error loading messages:', error);
     } finally {
       setLoading(false);
     }
-  }, [chatRef, pinnedMessagesRef]);
-  
-  
-  
-  const handlePinMessage = async (message) => {
-    try {
-      const pinnedMessage = {
-        ...message,
-        id: `pinned-${message.id}`, // Prefix the ID for pinned messages
-        pinnedAt: Date.now(),
-      };
-  
-      // Push the pinned message to Firebase
-      const result = await pinnedMessagesRef.push(pinnedMessage);
-  
-      // Update local state
-      setPinnedMessages((prev) => [...prev, { id: result.key, ...pinnedMessage }]);
-    } catch (error) {
-      console.error("Error pinning message:", error);
-      Alert.alert("Error", "Could not pin the message. Please try again.");
+  }, [chatRef, lastLoadedKey, validateMessage]);
+
+  const handleLoadMore = async () => {
+    if (!loading && lastLoadedKey) {
+      await loadMessages(false);
     }
   };
-  
-  
+
+
+  const loadPinnedMessages = useCallback(async () => {
+    try {
+      const snapshot = await pinnedMessagesRef.once('value');
+      const data = snapshot.val() || {};
+      const parsedPinnedMessages = Object.entries(data).map(([key, value]) => ({
+        id: `pinned-${key}`,
+        ...value,
+      }));
+      setPinnedMessages(parsedPinnedMessages);
+    } catch (error) {
+      console.error('Error loading pinned messages:', error);
+    }
+  }, [pinnedMessagesRef]);
+
+  const handlePinMessage = async (message) => {
+    try {
+      const pinnedMessage = { ...message, pinnedAt: Date.now() };
+      const newRef = await pinnedMessagesRef.push(pinnedMessage);
+      setPinnedMessages((prev) => [...prev, { id: `pinned-${newRef.key}`, ...pinnedMessage }]);
+    } catch (error) {
+      console.error('Error pinning message:', error);
+      Alert.alert('Error', 'Could not pin the message. Please try again.');
+    }
+  };
 
   const unpinSingleMessage = async (messageId) => {
     try {
-      await pinnedMessagesRef.child(messageId).remove();
+      const id = messageId.replace('pinned-', '');
+      await pinnedMessagesRef.child(id).remove();
       setPinnedMessages((prev) => prev.filter((msg) => msg.id !== messageId));
     } catch (error) {
       console.error('Error unpinning message:', error);
       Alert.alert('Error', 'Could not unpin the message. Please try again.');
     }
   };
+
   const clearAllPinnedMessages = async () => {
     try {
       await pinnedMessagesRef.remove();
@@ -132,31 +136,28 @@ const ChatComponent = ({ selectedTheme }) => {
       Alert.alert('Error', 'Could not clear pinned messages. Please try again.');
     }
   };
-  
+
   useEffect(() => {
-    loadMessages();
-  
+    loadMessages(true);
+    loadPinnedMessages();
+
     const listener = chatRef.limitToLast(1).on('child_added', (snapshot) => {
-      const newMessage = validateMessage({ id: snapshot.key, ...snapshot.val() });
+      const newMessage = validateMessage({ id: `chat-${snapshot.key}`, ...snapshot.val() });
       setMessages((prevMessages) =>
         prevMessages.some((msg) => msg.id === newMessage.id) ? prevMessages : [newMessage, ...prevMessages]
       );
     });
-  
-    return () => {
-      chatRef.off('child_added', listener);
-      pinnedMessagesRef.off(); // Clean up pinned messages listener if added
-    };
-  }, [chatRef, pinnedMessagesRef, loadMessages]);
-  
+
+    return () => chatRef.off('child_added', listener);
+  }, [loadMessages, loadPinnedMessages, validateMessage]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await loadMessages();
+    await loadMessages(true);
     setRefreshing(false);
   };
 
-  const handleSendMessage = useCallback(async () => {
+  const handleSendMessage = async () => {
     if (!user) {
       Alert.alert('Error', 'You must be logged in to send messages.');
       return;
@@ -165,65 +166,58 @@ const ChatComponent = ({ selectedTheme }) => {
       Alert.alert('Error', 'Message cannot be empty.');
       return;
     }
-  
     try {
-      // Prepare and validate the message before sending
       const newMessage = validateMessage({
         text: input.trim(),
         timestamp: Date.now(),
         sender: user.displayName,
         senderId: user.uid,
-        replyTo: replyTo ? { id: replyTo.id, text: replyTo.text } : null,
-        isReply: !!replyTo,
+        replyTo: replyTo ? { id: replyTo.id, text: replyTo.text } : null, // Attach reply context
       });
-  
-      await chatRef.push(newMessage); // Push validated message to the database
-      setInput(''); // Clear the input
-      setReplyTo(null); // Reset reply state
+      await chatRef.push(newMessage);
+      setInput('');
+      setReplyTo(null); // Clear reply context after sending
     } catch (error) {
       console.error('Error sending message:', error);
       Alert.alert('Error', 'Could not send your message. Please try again.');
     }
-  }, [input, user, chatRef, replyTo]);
-  
-  
+  };
   return (
-    <>
     <GestureHandlerRootView>
       <View style={styles.container}>
-            <AdminHeader
-            pinnedMessages={pinnedMessages}
-            onClearPin={clearAllPinnedMessages}
-            onUnpinMessage={unpinSingleMessage}
-            isAdmin={isAdmin}
-            selectedTheme={selectedTheme}
-            onlineMembersCount={onlineMembersCount}
-          />
-
+        <AdminHeader
+          pinnedMessages={pinnedMessages}
+          onClearPin={clearAllPinnedMessages}
+          onUnpinMessage={unpinSingleMessage}
+          isAdmin={isAdmin}
+          selectedTheme={selectedTheme}
+          onlineMembersCount={onlineMembersCount}
+        />
         {loading ? (
           <ActivityIndicator size="large" color="#1E88E5" style={{ flex: 1 }} />
         ) : (
           <MessagesList
-              messages={messages}
-              user={user}
-              isDarkMode={theme === 'dark'}
-              onPinMessage={handlePinMessage}
-              onDeleteMessage={(messageId) => chatRef.child(messageId).remove()}
-              isAdmin={isAdmin}
-              refreshing={refreshing}
-              onRefresh={handleRefresh}
-              onReply={(message) => setReplyTo(message)}
-            />
+          messages={messages}
+          user={user}
+          isDarkMode={theme === 'dark'}
+          onPinMessage={handlePinMessage}
+          onDeleteMessage={(messageId) => chatRef.child(messageId.replace('chat-', '')).remove()}
+          isAdmin={isAdmin}
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
+          handleLoadMore={handleLoadMore}
+          onReply={(message) => setReplyTo(message)} // Pass selected message to MessageInput
+        />
         )}
         {user ? (
           <MessageInput
-            input={input}
-            setInput={setInput}
-            handleSendMessage={handleSendMessage}
-            selectedTheme={selectedTheme}
-            replyTo={replyTo} // Pass reply context
-            onCancelReply={() => setReplyTo(null)} // Allow canceling reply
-          />
+          input={input}
+          setInput={setInput}
+          handleSendMessage={handleSendMessage}
+          selectedTheme={selectedTheme}
+          replyTo={replyTo} // Pass reply context to MessageInput
+          onCancelReply={() => setReplyTo(null)} // Clear reply context
+        />
         ) : (
           <TouchableOpacity
             style={styles.login}
@@ -238,17 +232,14 @@ const ChatComponent = ({ selectedTheme }) => {
           selectedTheme={selectedTheme}
         />
       </View>
-      
+      <View style={{ alignSelf: 'center' }}>
+        <BannerAd
+          unitId={bannerAdUnitId}
+          size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+          requestOptions={{ requestNonPersonalizedAdsOnly: true }}
+        />
+      </View>
     </GestureHandlerRootView>
-    <View style={{ alignSelf: 'center' }}>
-    <BannerAd
-      unitId={bannerAdUnitId}
-      size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
-      requestOptions={{
-        requestNonPersonalizedAdsOnly: true,
-      }}
-    />
-  </View></>
   );
 };
 

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, TextInput, TouchableOpacity, Text } from 'react-native';
 import { getStyles } from './Style';
 import Icon from 'react-native-vector-icons/Ionicons'; // Import Icon
+import config from '../Helper/Environment';
 
 const MessageInput = ({
   input,
@@ -34,15 +35,16 @@ const MessageInput = ({
     <View style={styles.inputWrapper}>
       {/* Reply context UI */}
       {replyTo && (
-        <View style={styles.replyContainer}>
-          <Text style={styles.replyText}>
-            Replying to: {replyTo.text}
-          </Text>
-          <TouchableOpacity onPress={onCancelReply} style={styles.cancelReplyButton}>
-          <Icon name="close-circle" size={24} color="#e74c3c"/>
-          </TouchableOpacity>
-        </View>
-      )}
+  <View style={styles.replyContainer}>
+    <Text style={styles.replyText}>
+      Replying to: {replyTo.text}
+    </Text>
+    <TouchableOpacity onPress={onCancelReply} style={styles.cancelReplyButton}>
+      <Icon name="close-circle" size={24} color="#e74c3c" />
+    </TouchableOpacity>
+  </View>
+)}
+
       <View style={styles.inputContainer}>
         <TextInput
           style={[styles.input, { color: selectedTheme.colors.text }]}
@@ -55,7 +57,7 @@ const MessageInput = ({
         <TouchableOpacity
           style={[
             styles.sendButton,
-            { backgroundColor: input.trim() && !isSending ? '#1E88E5' : '#ccc' },
+            { backgroundColor: input.trim() && !isSending ? '#1E88E5' : config.colors.primary },
           ]}
           onPress={handleSend}
           disabled={!input.trim() || isSending}

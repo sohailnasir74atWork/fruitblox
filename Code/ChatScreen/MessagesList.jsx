@@ -12,6 +12,7 @@ import { formatDate, generateShortDisplayName, getColorForName } from './utils';
 
 const MessagesList = ({
   messages,
+  handleLoadMore,
   user,
   userColors,
   isDarkMode,
@@ -64,15 +65,18 @@ const MessagesList = ({
               {generateShortDisplayName(item.sender)}
             </Text>
           </View>
+
           <View style={styles.messageTextBox}>
-            {item.isReply && item.replyTo && (
+            {/* Render reply context if present */}
+            {item.replyTo && (
               <View style={styles.replyContainer}>
-                <Text>
-                  <Text style={styles.replyText}>Replying to:{'\n'} </Text>
-                  {item.replyTo.text}
+                <Text style={styles.replyText}>
+                  Replying to: {'\n'}{item.replyTo.text || '[Deleted message]'}
                 </Text>
               </View>
             )}
+
+            {/* Render main message */}
             <TouchableOpacity
               onLongPress={() => handleReply(item)} // Use handleReply
               delayLongPress={300}
@@ -127,6 +131,8 @@ const MessagesList = ({
       renderItem={({ item, index }) => renderMessage({ item, index })}
       contentContainerStyle={styles.chatList}
       inverted
+      onEndReachedThreshold={0.3}
+      onEndReached={handleLoadMore}
       refreshControl={
         <RefreshControl
           refreshing={refreshing}

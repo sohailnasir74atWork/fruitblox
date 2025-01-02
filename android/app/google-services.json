@@ -84,6 +84,14 @@
           }
         },
         {
+          "client_id": "409137828081-qdq5652rhja4crfnuhq0f9chhjukkbfn.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.bloxfruitevalues",
+            "certificate_hash": "d195a122f91d23f1b1ad2221fccbf09993087af1"
+          }
+        },
+        {
           "client_id": "409137828081-ig2uul01r95lj9fu6l1jgbgrp1es9060.apps.googleusercontent.com",
           "client_type": 3
         }
