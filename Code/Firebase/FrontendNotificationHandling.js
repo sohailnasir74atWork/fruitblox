@@ -85,7 +85,18 @@ const NotificationHandler = () => {
             },
           });
         } else {
-          console.warn('Unknown notification type:', type);
+          await notifee.displayNotification({
+            title: title,
+            body: body,
+            android: {
+              channelId: 'default',
+              smallIcon: 'ic_notification',
+              color: '#36454F',
+              pressAction: {
+                id: 'default',
+              },
+            },
+          });
         }
       } catch (error) {
         console.error('Error processing notification:', error);

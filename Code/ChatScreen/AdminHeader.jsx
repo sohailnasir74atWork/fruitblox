@@ -5,19 +5,25 @@ import {
   TouchableOpacity,
   StyleSheet,
   Animated,
-  PanResponder,
+  PanResponder, Modal
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import config from '../Helper/Environment';
 import { useGlobalState } from '../GlobelStats';
+import { ScrollView } from 'react-native-gesture-handler';
+import { rules } from './utils';
 
 const AdminHeader = ({
   pinnedMessages = [], // Array of pinned messages
   onClearPin,         // Function to clear all pinned messages
   onUnpinMessage,     // Function to unpin a single message
   isAdmin,
+  isOwner,
   selectedTheme,
   onlineMembersCount,
+  modalVisibleChatinfo, 
+  setModalVisibleChatinfo
+
 }) => {
   const [expanded, setExpanded] = useState(false);
   const [randomBase, setRandomBase] = useState(0); // Random base for online count
@@ -25,6 +31,7 @@ const AdminHeader = ({
   const [contentHeight, setContentHeight] = useState(0);
   const { theme } = useGlobalState();
   const isDarkMode = theme === 'dark';
+
 
   useEffect(() => {
     const base = Math.floor(Math.random() * 6) + 5; // Random value between 5 and 10
@@ -66,7 +73,7 @@ const AdminHeader = ({
     },
     [setContentHeight]
   );
-
+  const styles = getStyles(isDarkMode)
   return (
     <Animated.View
       style={[
@@ -78,7 +85,11 @@ const AdminHeader = ({
         },
       ]}
       {...panResponder.panHandlers}
-    >
+    ><TouchableOpacity
+    style={styles.button}
+    onPress={() => setModalVisibleChatinfo(true)}
+  >
+</TouchableOpacity>
       <View style={styles.topRow}>
         <Text style={[styles.onlineText, { color: config.colors.hasBlockGreen }]}>Online {onlineMembersCount + randomBase}</Text>
       </View>
@@ -97,7 +108,7 @@ const AdminHeader = ({
               >
                 📌 {message.text}
               </Text>
-              {isAdmin && (
+              {isAdmin || isOwner && (
                 <TouchableOpacity
                   onPress={() => onUnpinMessage(message.id)}
                   style={styles.clearIcon}
@@ -109,6 +120,7 @@ const AdminHeader = ({
                   />
                 </TouchableOpacity>
               )}
+              <View style={{height:10}}></View>
             </View>
           ))}
           {isAdmin && (
@@ -116,6 +128,7 @@ const AdminHeader = ({
               <Text style={styles.clearAllText}>Clear All Pinned</Text>
             </TouchableOpacity>
           )}
+          
         </View>
       ) : (
         <View style={styles.noPinnedContainer}>
@@ -142,11 +155,40 @@ const AdminHeader = ({
           color={config.colors.hasBlockGreen}
         />
       </TouchableOpacity>
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisibleChatinfo}
+        onRequestClose={() => setModalVisibleChatinfo(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Chat Rules</Text>
+
+            <ScrollView style={styles.rulesContainer}>
+              {rules.map((rule, index) => (
+                <Text key={index} style={styles.ruleText}>
+                  {index + 1}. {rule}
+                </Text>
+              ))}
+            </ScrollView>
+
+            {/* Close button */}
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setModalVisibleChatinfo(false)}
+            >
+              <Text style={styles.closeButtonText}>Got it</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </Animated.View>
   );
 };
 
-const styles = StyleSheet.create({
+export  const getStyles = (isDarkMode) =>
+StyleSheet.create({
   headerContainer: {
     overflow: 'hidden',
     borderBottomWidth: 1,
@@ -154,6 +196,12 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   topRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+  },
+  bottomRow: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
     alignItems: 'center',
@@ -180,6 +228,8 @@ const styles = StyleSheet.create({
     lineHeight:24,
     fontFamily: 'Lato-Regular',
     flex: 1,
+    marginBottom: 10,
+
   },
   noPinnedContainer: {
     alignItems: 'center',
@@ -206,6 +256,49 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: -5,
   },
+  icon:{
+    alignSelf: 'left',
+    position: 'absolute',
+    marginLeft:5
+    // bottom: -5,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    width: '80%',
+    backgroundColor: isDarkMode ? '#121212' : '#f2f2f7',
+    borderRadius: 10,
+    padding: 20,
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontFamily:'Lato-Bold',
+    marginBottom: 20,
+  },
+  closeButton: {
+    backgroundColor: config.colors.hasBlockGreen,
+    padding: 10,
+    borderRadius: 5,
+    width: '100%',
+    alignItems: 'center',
+    marginTop:20
+  },
+  closeButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontFamily:'Lato-Bold',
+  },
+  ruleText:{
+    fontFamily:'Lato-Regular',
+    color: isDarkMode ? 'white' : 'black',
+    lineHeight:24
+  }
+  
 });
 
 export default AdminHeader;

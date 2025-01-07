@@ -15,7 +15,7 @@ const interstitialAdUnitId = getAdUnitId('interstitial');
 const interstitial = InterstitialAd.createForAdRequest(interstitialAdUnitId);
 
 const HomeScreen = ({ selectedTheme }) => {
-  const { data, theme } = useGlobalState();
+  const { state, theme } = useGlobalState();
   const initialItems = [null, null];
   const [hasItems, setHasItems] = useState(initialItems);
   const [fruitRecords, setFruitRecords] = useState([]);
@@ -32,15 +32,14 @@ const HomeScreen = ({ selectedTheme }) => {
   const isDarkMode = theme === 'dark'
   const viewRef = useRef();
   useEffect(() => {
-    if (data && Object.keys(data).length > 0) {
-      setFruitRecords(Object.values(data));
+    if (state.data && Object.keys(state.data).length > 0) {
+      setFruitRecords(Object.values(state.data));
       setLoading(false)
     } else {
       setFruitRecords([]);
     }
-  }, [data]);
+  }, [state.data]);
 
-  // Interstitial ad logic
   useEffect(() => {
     interstitial.load();
 
@@ -255,13 +254,13 @@ const HomeScreen = ({ selectedTheme }) => {
                     <Text style={[styles.summaryText]}>You</Text>
                     <View style={{ width: '90%', backgroundColor: '#e0e0e0', height: 1, alignSelf: 'center' }} />
                     <Text style={styles.priceValue}>Price: ${hasTotal.price.toLocaleString()}</Text>
-                    <Text style={styles.priceValue}>Value: ${hasTotal.value.toLocaleString()}</Text>
+                    <Text style={styles.priceValue}>Value: {hasTotal.value.toLocaleString()}</Text>
                   </View>
                   <View style={[styles.summaryBox, styles.wantsBox]}>
                     <Text style={styles.summaryText}>Them</Text>
                     <View style={{ width: '90%', backgroundColor: '#e0e0e0', height: 1, alignSelf: 'center' }} />
                     <Text style={styles.priceValue}>Price: ${wantsTotal.price.toLocaleString()}</Text>
-                    <Text style={styles.priceValue}>Value: ${wantsTotal.value.toLocaleString()}</Text>
+                    <Text style={styles.priceValue}>Value: {wantsTotal.value.toLocaleString()}</Text>
                   </View>
                 </View>
                 <View style={styles.profitLossBox}>
@@ -298,7 +297,10 @@ const HomeScreen = ({ selectedTheme }) => {
                           {item.Type.toUpperCase() !== 'PREMIUM' && (
                             <TouchableOpacity style={styles.switchValue} onPress={() => toggleItemValueMode(index, 'has')}>
                               <Icon name="repeat-outline" size={14} />
-                              <Text style={styles.switchValueText}>Physical</Text>
+                              <Text style={styles.switchValueText}>
+    {item.usePermanent ? 'Permanent' : 'Physical'}
+</Text>
+
                             </TouchableOpacity>
                           )}
 
@@ -332,12 +334,15 @@ const HomeScreen = ({ selectedTheme }) => {
                             source={{ uri: `https://bloxfruitscalc.com/wp-content/uploads/2024/09/${formatName(item.Name)}_Icon.webp` }}
                             style={styles.itemImageOverlay}
                           />
-                          <Text style={styles.itemText}>${item.Value.toLocaleString()}</Text>
+                          <Text style={styles.itemText}>${item.usePermanent ? item.Permanent.toLocaleString() : item.Value.toLocaleString()}</Text>
                           <Text style={styles.itemText}>{item.Name}</Text>
                           {item.Type.toUpperCase() !== 'PREMIUM' && (
                             <TouchableOpacity style={styles.switchValue} onPress={() => toggleItemValueMode(index, 'want')}>
                               <Icon name="repeat-outline" size={14} />
-                              <Text style={styles.switchValueText}>Physical</Text>
+                              <Text style={styles.switchValueText}>
+    {item.usePermanent ? 'Permanent' : 'Physical'}
+</Text>
+
                             </TouchableOpacity>
                           )}
                           <TouchableOpacity onPress={() => removeItem(index, false)} style={styles.removeButton}>
@@ -436,7 +441,7 @@ const getStyles = (isDarkMode) =>
       backgroundColor: config.colors.wantBlockRed,
     },
     summaryText: {
-      fontSize: 20,
+      fontSize: 18,
       color: 'white',
       textAlign: 'center',
       fontFamily: 'Lato-Bold',
@@ -450,7 +455,7 @@ const getStyles = (isDarkMode) =>
 
     },
     sectionTitle: {
-      fontSize: 18,
+      fontSize: 16,
       marginVertical: 10,
       fontFamily: 'Lato-Bold',
 
@@ -525,13 +530,13 @@ const getStyles = (isDarkMode) =>
     },
 
     drawerTitle: {
-      fontSize: 20,
+      fontSize: 18,
       textAlign: 'center',
       fontFamily: 'Lato-Bold'
     },
     profitLossBox: { flexDirection: 'row', justifyContent: 'center', marginVertical: 10, alignItems: 'center' },
-    profitLossText: { fontSize: 18, fontFamily: 'Lato-Bold' },
-    profitLossValue: { fontSize: 18, marginLeft: 5, fontFamily: 'Lato-Bold' },
+    profitLossText: { fontSize: 16, fontFamily: 'Lato-Bold' },
+    profitLossValue: { fontSize: 16, marginLeft: 5, fontFamily: 'Lato-Bold' },
     modalOverlay: {
       backgroundColor: 'rgba(0, 0, 0, 0.5)',
       flex: 1,
@@ -585,13 +590,13 @@ const getStyles = (isDarkMode) =>
       alignItems: 'center'
     },
     switchValueText: {
-      fontSize: 12,
+      fontSize: 10,
       padding: 3,
       fontFamily: 'Lato-Regular'
 
     },
     captureButton: { backgroundColor: '#3E8BFC', padding: 10, borderRadius: 8, alignItems: 'center', marginTop: 20, alignSelf: 'center' },
-    captureButtonText: { color: 'white', fontFamily: 'Lato-Bold', fontSize: 16 },
+    captureButtonText: { color: 'white', fontFamily: 'Lato-Bold', fontSize: 14 },
     captureView: { backgroundColor: '#fff', padding: 10, borderRadius: 10 },
 
     screenshotView: {
@@ -611,7 +616,7 @@ const getStyles = (isDarkMode) =>
     },
     titleText: {
       fontFamily: 'Lato-Regular',
-      fontSize: 12
+      fontSize: 10
     },
     loaderContainer: {
       flex: 1,
@@ -619,7 +624,7 @@ const getStyles = (isDarkMode) =>
       alignItems: 'center',
     },
     loaderText: {
-      fontSize: 18,
+      fontSize: 16,
       fontFamily: 'Lato-Bold',
     },
     noDataContainer: {
@@ -629,7 +634,7 @@ const getStyles = (isDarkMode) =>
       backgroundColor: '#f9f9f9',
     },
     noDataText: {
-      fontSize: 18,
+      fontSize: 16,
       color: 'gray',
       fontFamily: 'Lato-Bold',
     },

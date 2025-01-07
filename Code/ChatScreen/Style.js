@@ -58,6 +58,11 @@ export  const getStyles = (isDarkMode) =>
       messageTextBox: {
         flex: 1,
       },
+      messageTextBoxAdmin: {
+        flexDirection:'column',
+        flex: 1,
+
+      },
       myMessageText: {
         fontSize: 14,
         color: isDarkMode ? 'white' : 'black',
@@ -128,8 +133,11 @@ export  const getStyles = (isDarkMode) =>
         marginVertical: 10,
       },
       admin: {
-        marginTop: 5,
-        alignSelf: 'flex-start',
+        // alignSelf: 'flex-start',
+        color:config.colors.hasBlockGreen,
+        fontSize: 12,
+        fontFamily:'Lato-Bold'
+
       },
       adminText: {
         fontSize: 12,
@@ -219,6 +227,27 @@ export  const getStyles = (isDarkMode) =>
             fontSize: 12,
             fontFamily: 'Lato-Bold',
             color: isDarkMode ? '#FFF' : '#000',
+          },
+          profileImage:{
+            height:20,
+            width:20
+          },
+          userName:{
+            color: '#bbb',
+            fontSize:12
+
+          },
+          adminActions:{
+            flexDirection:'column',
+          },
+          dot:{
+            color: '#bbb',
+            marginHorizontal:5,
+            fontSize:14
+          },
+          linkText: {
+            color: '#1E90FF', // Blue color for links
+            textDecorationLine: 'underline', // Underline to indicate a link
           },
        
       

@@ -9,8 +9,12 @@ const config = {
   appName: isNoman ? 'Blox Fruit Values' : 'Blox Fruit Stock',
   andriodBanner: isNoman ? 'ca-app-pub-5740215782746766/5225162749' : 'ca-app-pub-3701208411582706/4133745803',
   andriodIntestial: isNoman ? 'ca-app-pub-5740215782746766/1206026687' : 'ca-app-pub-3701208411582706/2820664136',
+  andriodRewarded: isNoman ? 'ca-app-pub-5740215782746766/6313459657' : '',
+  andriodOpenApp: isNoman ? 'ca-app-pub-5740215782746766/9015676434' : '',
   IOsIntestial: isNoman ? 'ca-app-pub-5740215782746766/3209373499' : '',
   IOsBanner: isNoman ? 'ca-app-pub-5740215782746766/4522455164' : '',
+  IOsRewarded: isNoman ? 'ca-app-pub-5740215782746766/9755679519' : '',
+  IOsOpenApp: isNoman ? 'ca-app-pub-5740215782746766/1499878996' : '',
 
   supportEmail: isNoman ? 'thesolanalabs@gmail.com' : 'mindfusionio.help@gmail.com',
   andriodShareLink: isNoman ? 'https://play.google.com/store/apps/details?id=com.bloxfruitevalues' : 'https://play.google.com/store/apps/details?id=com.bloxfruitstock',

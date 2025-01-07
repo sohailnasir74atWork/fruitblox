@@ -12,7 +12,7 @@
 		13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB01A68108700A75B9A /* AppDelegate.mm */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
-		183904372D2449D9007AF685 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 183904362D2449D9007AF685 /* GoogleService-Info.plist */; };
+		1841D69C2D2C27A50045BDDF /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1841D69B2D2C27A50045BDDF /* GoogleService-Info.plist */; };
 		1BE5FA148BF280A14B87B241 /* Pods_bloxfruitevalues.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 04DCEC894E3840B313C6323E /* Pods_bloxfruitevalues.framework */; };
 		2A5FDCA878EB91D4CF078379 /* Pods_bloxfruitevalues_bloxfruitevaluesTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4FC7B3E3F57C8A06475BC673 /* Pods_bloxfruitevalues_bloxfruitevaluesTests.framework */; };
 		65F4BD3341CF4925A2EAB7AD /* Lato-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = B9B370B783CB4FAAAAE28695 /* Lato-Bold.ttf */; };
@@ -30,6 +30,18 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		188FFFA12D2C141A00BAEFD1 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 7;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		00E356EE1AD99517003FC87E /* bloxfruitevaluesTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = bloxfruitevaluesTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		00E356F11AD99517003FC87E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -44,7 +56,9 @@
 		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = bloxfruitevalues/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		183904352D230C10007AF685 /* bloxfruitevalues.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = bloxfruitevalues.entitlements; path = bloxfruitevalues/bloxfruitevalues.entitlements; sourceTree = "<group>"; };
 		183904362D2449D9007AF685 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		1841D69B2D2C27A50045BDDF /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		18654E0A2D22FBC7009AA05E /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		188FFFA22D2C145300BAEFD1 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		36A207C95FB148BC80EC3899 /* Lato-Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Lato-Regular.ttf"; path = "../assets/fonts/Lato-Regular.ttf"; sourceTree = "<group>"; };
 		4FC7B3E3F57C8A06475BC673 /* Pods_bloxfruitevalues_bloxfruitevaluesTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_bloxfruitevalues_bloxfruitevaluesTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		6AB46EB7E07B774CC3BFF7B4 /* Pods-bloxfruitevalues.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-bloxfruitevalues.release.xcconfig"; path = "Target Support Files/Pods-bloxfruitevalues/Pods-bloxfruitevalues.release.xcconfig"; sourceTree = "<group>"; };
@@ -139,6 +153,8 @@
 			isa = PBXGroup;
 			children = (
 				183904362D2449D9007AF685 /* GoogleService-Info.plist */,
+				188FFFA22D2C145300BAEFD1 /* GoogleService-Info.plist */,
+				1841D69B2D2C27A50045BDDF /* GoogleService-Info.plist */,
 				13B07FAE1A68108700A75B9A /* bloxfruitevalues */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				00E356EF1AD99517003FC87E /* bloxfruitevaluesTests */,
@@ -209,6 +225,7 @@
 				9AD88E938A5397F562273847 /* [CP] Copy Pods Resources */,
 				904BD52052DD506D1B2FB43E /* [CP-User] [RNGoogleMobileAds] Configuration */,
 				90AD7E617820153479830B9E /* [CP-User] [RNFB] Core Configuration */,
+				188FFFA12D2C141A00BAEFD1 /* CopyFiles */,
 			);
 			buildRules = (
 			);
@@ -267,7 +284,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				183904372D2449D9007AF685 /* GoogleService-Info.plist in Resources */,
+				1841D69C2D2C27A50045BDDF /* GoogleService-Info.plist in Resources */,
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				B895730BEA1B9AD9FE2CD7E1 /* PrivacyInfo.xcprivacy in Resources */,
@@ -522,7 +539,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = bloxfruitevalues/bloxfruitevalues.entitlements;
-				CURRENT_PROJECT_VERSION = 9;
+				CURRENT_PROJECT_VERSION = 10;
 				DEVELOPMENT_TEAM = P32FX5FC6Z;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = bloxfruitevalues/Info.plist;
@@ -532,7 +549,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.0.103;
+				MARKETING_VERSION = 4.0.104;
 				NEW_SETTING = "";
 				OTHER_LDFLAGS = (
 					"$(inherited)",
@@ -559,7 +576,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = bloxfruitevalues/bloxfruitevalues.entitlements;
-				CURRENT_PROJECT_VERSION = 9;
+				CURRENT_PROJECT_VERSION = 10;
 				DEVELOPMENT_TEAM = P32FX5FC6Z;
 				INFOPLIST_FILE = bloxfruitevalues/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Fruit Values";
@@ -568,7 +585,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.0.103;
+				MARKETING_VERSION = 4.0.104;
 				NEW_SETTING = "";
 				OTHER_LDFLAGS = (
 					"$(inherited)",

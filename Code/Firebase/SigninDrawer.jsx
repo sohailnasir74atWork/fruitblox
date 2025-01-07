@@ -10,15 +10,17 @@ import {
     useColorScheme,
     ActivityIndicator,
     Alert,
+    Platform,
 } from 'react-native';
 import { createUserWithEmail, loginUserWithEmail } from './UserLogics';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import auth from '@react-native-firebase/auth';
 import Icon from 'react-native-vector-icons/FontAwesome'; // Ensure FontAwesome is installed
+import appleAuth, { AppleButton } from '@invertase/react-native-apple-authentication';
 
 
 
-const SignInDrawer = ({ visible, onClose, selectedTheme }) => {
+const SignInDrawer = ({ visible, onClose, selectedTheme, message }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isRegisterMode, setIsRegisterMode] = useState(false);
@@ -36,7 +38,36 @@ const SignInDrawer = ({ visible, onClose, selectedTheme }) => {
     }, [])
     
     
-
+    async function onAppleButtonPress() {
+        try {
+          // Start the sign-in request
+          const appleAuthRequestResponse = await appleAuth.performRequest({
+            requestedOperation: appleAuth.Operation.LOGIN,
+            requestedScopes: [appleAuth.Scope.FULL_NAME, appleAuth.Scope.EMAIL],
+          });
+      
+          const { identityToken, nonce } = appleAuthRequestResponse;
+      
+          if (!identityToken) {
+            throw new Error('Apple Sign-In failed - no identity token returned');
+          }
+      
+          // Create a Firebase credential with the token
+          const appleCredential = auth.AppleAuthProvider.credential(identityToken, nonce);
+      
+          // Sign in with Firebase using the credential
+          const userCredential = await auth().signInWithCredential(appleCredential);
+          await onClose()
+          // Login successful, show alert and close drawer
+          Alert.alert('Login Successful', `Welcome, ${userCredential.user.displayName || 'User'}!`);
+         
+          console.log('User signed in:', userCredential);
+        } catch (error) {
+          // Login failed, show error alert
+          Alert.alert('Login Failed', error.message || 'An unknown error occurred.');
+          console.error('Error during Apple Sign-In:', error);
+        }
+      }
     async function signInWithGoogle() {
         // Check if your device supports Google Play
         await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
@@ -64,7 +95,7 @@ const SignInDrawer = ({ visible, onClose, selectedTheme }) => {
     
     const handleSignInOrRegister = async () => {
         if (!email || !password) {
-            Alert.alert('Input Error', 'Please enter both email and password.');
+            alert('Input Error', 'Please enter both email and password.');
             return;
         }
     
@@ -133,26 +164,11 @@ const SignInDrawer = ({ visible, onClose, selectedTheme }) => {
                     <Text style={[styles.title, { color: selectedTheme.colors.text }]}>{isRegisterMode ? 'Register' : 'Sign In'}</Text>
                     <View>
                         <Text style={[styles.text, { color: selectedTheme.colors.text }]}>
-                            {`To activate notifications, you need to ${isRegisterMode ? 'register' : 'sign in'}.`}
+                            {message}
                         </Text>
                     </View>
 
-                    <TouchableOpacity
-                        style={styles.googleButton}
-                        onPress={handleGoogleSignIn}
-                        disabled={isLoading} // Disable button while loading
-                    >
-                        {isLoading ? (
-                            <ActivityIndicator size="small" color="white" />
-                        ) : (
-                            <>
-                                <Icon name="google" size={24} color="white" style={styles.googleIcon} />
-                                <Text style={styles.googleButtonText}>One Click Google Sign-In</Text>
-                            </>
-                        )}
-                    </TouchableOpacity>
-
-                    <TextInput
+                                      <TextInput
                         style={[styles.input, {color:selectedTheme.colors.text}]}
                         placeholder="Email"
                         value={email}
@@ -174,6 +190,8 @@ const SignInDrawer = ({ visible, onClose, selectedTheme }) => {
                         onPress={handleSignInOrRegister}
                         disabled={isLoadingSecondary}
                     >
+
+
                          {isLoadingSecondary ? (
                             <ActivityIndicator size="small" color="white" />
                         ) : (
@@ -185,6 +203,36 @@ const SignInDrawer = ({ visible, onClose, selectedTheme }) => {
                         )}
                       
                     </TouchableOpacity>
+                    <View style={styles.container}>
+      <View style={styles.line} />
+      <Text style={[styles.textoR, {color:selectedTheme.colors.text}]}>OR</Text>
+      <View style={styles.line} />
+    </View>
+
+                    <TouchableOpacity
+                        style={styles.googleButton}
+                        onPress={handleGoogleSignIn}
+                        disabled={isLoading} // Disable button while loading
+                    >
+                        {isLoading ? (
+                            <ActivityIndicator size="small" color="white" />
+                        ) : (
+                            <>
+                                <Icon name="google" size={24} color="white" style={styles.googleIcon} />
+                                <Text style={styles.googleButtonText}>Sign in with Google</Text>
+                            </>
+                        )}
+                    </TouchableOpacity>
+                    {Platform.OS === 'ios' &&
+                    
+                    <AppleButton
+                    buttonStyle={AppleButton.Style.WHITE}
+                    buttonType={AppleButton.Type.SIGN_IN}
+                    style={styles.applebUUTON}
+                    onPress={() => onAppleButtonPress().then(() => console.log('Apple sign-in complete!'))}
+                  />}
+
+
 
                     <TouchableOpacity
                         style={styles.secondaryButton}
@@ -211,7 +259,7 @@ const styles = StyleSheet.create({
         borderTopRightRadius: 10,
         paddingHorizontal: 20,
         paddingTop: 20,
-        height: 400,
+        // height: 400,
         position: 'absolute',
         bottom: 0,
         left: 0,
@@ -259,7 +307,14 @@ const styles = StyleSheet.create({
         padding: 10,
         borderRadius: 5,
         marginBottom: 10,
+        height:50,
 
+
+    },
+    applebUUTON:{
+        height:50,
+       width: '100%',
+       marginBottom:10
     },
     googleIcon: {
         marginRight: 10, // Space between the icon and the text
@@ -277,7 +332,22 @@ const styles = StyleSheet.create({
         fontSize: 12,
         paddingVertical: 3,
         marginBottom: 10
-    }
+    },
+    container: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginVertical: 10, // Adjust spacing
+      },
+      line: {
+        flex: 1,
+        height: 1,
+        backgroundColor: '#ccc', // Adjust color
+      },
+      textoR: {
+        marginHorizontal: 10, // Spacing around the text
+        fontSize: 16,
+        fontWeight: 'bold',
+      },
 });
 
 export default SignInDrawer;

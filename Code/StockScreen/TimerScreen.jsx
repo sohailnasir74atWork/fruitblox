@@ -16,22 +16,21 @@ const interstitial = InterstitialAd.createForAdRequest(interstitialAdUnitId);
 const TimerScreen = ({ selectedTheme }) => {
   const [normalTimer, setNormalTimer] = useState('');
   const [mirageTimer, setMirageTimer] = useState('');
-  const { normalStock, mirageStock, selectedFruits, setSelectedFruits, isReminderEnabled, setIsReminderEnabled, isSelectedReminderEnabled, setIsSelectedReminderEnabled, user, dataloading } = useGlobalState();
+  const { state, setState, user, updateLocalStateAndDatabase, theme } = useGlobalState();
   const [hasAdBeenShown, setHasAdBeenShown] = useState(false);
   const [isAdLoaded, setIsAdLoaded] = useState(false);
   const [isShowingAd, setIsShowingAd] = useState(false);
   const [fruitRecords, setFruitRecords] = useState([]);
-  const { data, theme } = useGlobalState();
   const [isDrawerVisible, setDrawerVisible] = useState(false);
   const [isSigninDrawerVisible, setisSigninDrawerVisible] = useState(false);
   const isDarkMode = theme === 'dark';
   useEffect(() => {
-    if (data && Object.keys(data).length > 0) {
-      setFruitRecords(Object.values(data));
+    if (state.data && Object.keys(state.data).length > 0) {
+      setFruitRecords(Object.values(state.data));
     } else {
       setFruitRecords([]);
     }
-  }, [data]);
+  }, [state.data]);
 
   const openDrawer = () => {
     if (!hasAdBeenShown) {
@@ -50,16 +49,48 @@ const TimerScreen = ({ selectedTheme }) => {
   const closeDrawerSignin = () => setisSigninDrawerVisible(false);
 
   const handleFruitSelect = (fruit) => {
-    setSelectedFruits((prev) => {
-      const isAlreadySelected = prev.some((item) => item.Name === fruit.Name);
-      if (isAlreadySelected) return prev; // Return the previous state if the fruit already exists
-      return [...prev, fruit]; // Add the fruit only if it's not already in the list
-    });
-    closeDrawer();
+    const userPoints = user.points || 0; // Ensure `points` exists and default to 0 if undefined
+    const selectedFruits = user.selectedFruits || []; // Ensure `selectedFruits` is always an array
+    const isAlreadySelected = selectedFruits.some((item) => item.Name === fruit.Name);
+  
+    if (isAlreadySelected) {
+      Alert.alert('Notice', `${fruit.Name} is already selected.`);
+      return; // Exit if the fruit is already selected
+    }
+  
+    if (selectedFruits.length === 0) {
+      // First selection is free
+      const updatedFruits = [...selectedFruits, fruit];
+      updateLocalStateAndDatabase('selectedFruits', updatedFruits); // Update selected fruits locally and remotely
+      Alert.alert('Success', `${fruit.Name} selected successfully for free!`);
+    } else if (userPoints >= 50) {
+      // Deduct 50 points for additional selections
+      const updatedPoints = userPoints - 50;
+      updateLocalStateAndDatabase('points', updatedPoints); // Update points locally and remotely
+  
+      const updatedFruits = [...selectedFruits, fruit];
+      updateLocalStateAndDatabase('selectedFruits', updatedFruits); // Update selected fruits locally and remotely
+      Alert.alert('Success', `${fruit.Name} selected successfully for 50 points!`);
+    } else {
+      Alert.alert('Insufficient Points', 'You need at least 50 points to select more fruits.');
+    }
+  
+    closeDrawer(); // Close the drawer after selection
   };
+  
+  
+  
   const handleRemoveFruit = (fruit) => {
-    setSelectedFruits((prev) => prev.filter((item) => item.Name !== fruit.Name));
+    const selectedFruits = user.selectedFruits || []; // Ensure `selectedFruits` is always an array
+  
+    // Remove the selected fruit and update state/database
+    const updatedFruits = selectedFruits.filter((item) => item.Name !== fruit.Name);
+    updateLocalStateAndDatabase('selectedFruits', updatedFruits);
   };
+  
+  
+  
+  
 
   // const toggleSwitch = () => setIsReminderEnabled((prev) => !prev);
 
@@ -104,19 +135,11 @@ const TimerScreen = ({ selectedTheme }) => {
       if (!permissionGranted) return;
 
       // Check user authentication
-      if (user?.uid == null) {
+      if (user.id == null) {
         setisSigninDrawerVisible(true); // Show sign-in drawer
       } else {
-        // Toggle the reminder state
-        setIsReminderEnabled((prev) => !prev);
-
-        // If iOS, optionally schedule a local notification as a test
-        // if (Platform.OS === 'ios') {
-        //   await notifee.displayNotification({
-        //     title: 'Reminder Toggled',
-        //     body: `Reminder has been ${!isReminderEnabled ? 'enabled' : 'disabled'}.`,
-        //   });
-        // }
+        const newReminderState = !user.isReminderEnabled;
+        await updateLocalStateAndDatabase('isReminderEnabled', newReminderState)
       }
     } catch (error) {
       console.error('Error handling notification permission or sign-in:', error);
@@ -131,19 +154,12 @@ const TimerScreen = ({ selectedTheme }) => {
       if (!permissionGranted) return;
 
       // Check user authentication
-      if (user?.uid == null) {
+      if (user?.id == null) {
         setisSigninDrawerVisible(true); // Show sign-in drawer
       } else {
         // Toggle the selected reminder state
-        setIsSelectedReminderEnabled((prev) => !prev);
-
-        // If iOS, optionally schedule a local notification as a test
-        // if (Platform.OS === 'ios') {
-        //   await notifee.displayNotification({
-        //     title: 'Selected Reminder Toggled',
-        //     body: `Selected Reminder has been ${!isSelectedReminderEnabled ? 'enabled' : 'disabled'}.`,
-        //   });
-        // }
+        const newReminderState = !user.isSelectedReminderEnabled;
+        updateLocalStateAndDatabase('isSelectedReminderEnabled', newReminderState)
       }
     } catch (error) {
       console.error('Error handling notification permission or sign-in:', error);
@@ -175,7 +191,6 @@ const TimerScreen = ({ selectedTheme }) => {
     return secondsLeft;
   };
 
-
   useEffect(() => {
     const updateTimers = () => {
       const normalSecondsLeft = calculateTimeLeft(4);
@@ -189,18 +204,18 @@ const TimerScreen = ({ selectedTheme }) => {
 
     const timerId = setInterval(updateTimers, 1000);
     return () => clearInterval(timerId);
-  }, [isReminderEnabled, isSelectedReminderEnabled, selectedFruits, normalStock, mirageStock]);
+  }, [state.normalStock, state.mirageStock]);
 
 
   // Memoized List Data
-  const listData = useMemo(() => {
-    return [
-      { id: 'header-normal', header: 'Normal', timer: normalTimer },
-      ...normalStock?.map((item, index) => ({ ...item, id: `normal-${index}` })),
-      { id: 'header-mirage', header: 'Mirage', timer: mirageTimer },
-      ...mirageStock?.map((item, index) => ({ ...item, id: `mirage-${index}` })),
-    ];
-  }, [normalStock, mirageStock, normalTimer, mirageTimer]);
+  // const listData = useMemo(() => {
+  //   return [
+  //     { id: 'header-normal', header: 'Normal', timer: normalTimer },
+  //     ...normalStock?.map((item, index) => ({ ...item, id: `normal-${index}` })),
+  //     { id: 'header-mirage', header: 'Mirage', timer: mirageTimer },
+  //     ...mirageStock?.map((item, index) => ({ ...item, id: `mirage-${index}` })),
+  //   ];
+  // }, [normalStock, mirageStock, normalTimer, mirageTimer]);
 
   // Render FlatList Item
   const renderItem = ({ item, index, isLastItem }) => {
@@ -274,7 +289,7 @@ const TimerScreen = ({ selectedTheme }) => {
       callback(); // If ad is not loaded, proceed immediately
     }
   };
-  const styles = getStyles(isDarkMode);
+  const styles = getStyles(isDarkMode, user);
 
   return (
     <>
@@ -288,11 +303,11 @@ const TimerScreen = ({ selectedTheme }) => {
               <View style={styles.row}>
                 <Text style={styles.title}>Stock Updates</Text>
                 <View style={styles.rightSide}>
-                  <Switch value={isReminderEnabled} onValueChange={toggleSwitch} />
+                  <Switch value={user.isReminderEnabled} onValueChange={toggleSwitch} />
                   <Icon
-                    name={isReminderEnabled ? "notifications" : "notifications-outline"}
+                    name={user.isReminderEnabled ? "notifications" : "notifications-outline"}
                     size={24}
-                    color={isReminderEnabled ? config.colors.hasBlockGreen : config.colors.primary}
+                    color={user.isReminderEnabled ? config.colors.hasBlockGreen : config.colors.primary}
                     style={styles.iconNew}
                   />
                 </View>
@@ -301,11 +316,11 @@ const TimerScreen = ({ selectedTheme }) => {
               <View style={styles.row2}>
                 <Text style={[styles.title]}>Selected Fruit Updates</Text>
                 <View style={styles.rightSide}>
-                  <Switch value={isSelectedReminderEnabled} onValueChange={toggleSwitch2} />
+                  <Switch value={user.isSelectedReminderEnabled} onValueChange={toggleSwitch2} />
                   <TouchableOpacity
                     onPress={openDrawer}
                     style={styles.selectedContainericon}
-                    disabled={!isSelectedReminderEnabled}
+                    disabled={!user.isSelectedReminderEnabled}
                   >
                     <Icon name="add" size={24} color="white" />
                   </TouchableOpacity>
@@ -313,7 +328,7 @@ const TimerScreen = ({ selectedTheme }) => {
               </View>
             </View>
             <View style={styles.listContentSelected}>
-              {selectedFruits?.map((item) => (
+              {user.selectedFruits?.map((item) => (
                 <View key={item.Name} style={styles.selectedContainer}>
                   <Image
                     source={{
@@ -340,20 +355,17 @@ const TimerScreen = ({ selectedTheme }) => {
                   Reset in: <Text style={styles.time}>{normalTimer}</Text>
                 </Text>
               </View>
-              {dataloading && <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-  <ActivityIndicator size="large" color="#1E88E5" />
-</View>
-}
-              {!dataloading && <View style={styles.stockContainer}>
-                {normalStock?.map((item, index) => {
-                  const isLastItem = index === normalStock.length - 1;
+
+              <View style={styles.stockContainer}>
+                {state.normalStock?.map((item, index) => {
+                  const isLastItem = index === state.normalStock.length - 1;
                   return (
                     <View key={item.id || index}>
                       {renderItem({ item, index, isLastItem })}
                     </View>
                   );
                 })}
-              </View>}
+              </View>
 
               {/* Mirage Stock Section */}
               <View style={styles.headerContainer}>
@@ -362,20 +374,16 @@ const TimerScreen = ({ selectedTheme }) => {
                   Reset in: <Text style={styles.time}>{mirageTimer}</Text>
                 </Text>
               </View>
-              {dataloading && <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-  <ActivityIndicator size="large" color="#1E88E5" />
-</View>
-}
-              {!dataloading && <View style={styles.stockContainer}>
-                {mirageStock?.map((item, index) => {
-                  const isLastItem = index === mirageStock.length - 1;
+          <View style={styles.stockContainer}>
+                {state.mirageStock?.map((item, index) => {
+                  const isLastItem = index === state.mirageStock.length - 1;
                   return (
                     <View key={item.id || index}>
                       {renderItem({ item, index, isLastItem })}
                     </View>
                   );
                 })}
-              </View>}
+              </View>
             </View>
             <FruitSelectionDrawer
               visible={isDrawerVisible}
@@ -389,6 +397,7 @@ const TimerScreen = ({ selectedTheme }) => {
               visible={isSigninDrawerVisible}
               onClose={closeDrawerSignin}
               selectedTheme={selectedTheme}
+              message='To activate notifications, you need to sign in'
             />
           </ScrollView>
         </View>
@@ -406,13 +415,13 @@ const TimerScreen = ({ selectedTheme }) => {
 
   );
 };
-const getStyles = (isDarkMode) =>
+const getStyles = (isDarkMode, user) =>
   StyleSheet.create({
     container: {
       flex: 1, paddingHorizontal: 10, backgroundColor: isDarkMode ? '#121212' : '#f2f2f7',
     },
     description: { fontSize: 14, marginVertical: 10, fontFamily: 'Lato-Regular' },
-    headerContainer: { flexDirection:  'row', justifyContent: 'space-between', marginVertical: 10, paddingHorizontal: 10 },
+    headerContainer: { flexDirection: 'row', justifyContent: 'space-between', marginVertical: 10, paddingHorizontal: 10 },
 
     timer: { fontSize: 16, fontFamily: 'Lato-Bold' },
     time: { fontSize: 16, fontFamily: 'Lato-Bold' },
@@ -484,7 +493,7 @@ const getStyles = (isDarkMode) =>
     selectedContainericon: {
       // flexDirection: 'column',
       alignItems: 'center',
-      backgroundColor: config.colors.primary,
+      backgroundColor: user.isReminderEnabled ? config.colors.hasBlockGreen : config.colors.primary,
       borderRadius: 20,
       marginLeft: 10
     },

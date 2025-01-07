@@ -7,6 +7,7 @@ import {
   SafeAreaView,
   Alert,
   ActivityIndicator,
+  AppState,
 } from 'react-native';
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -20,8 +21,13 @@ import NotificationHandler from './Code/Firebase/FrontendNotificationHandling';
 import config from './Code/Helper/Environment';
 import { GlobalStateProvider, useGlobalState } from './Code/GlobelStats';
 import { AdsConsent, AdsConsentDebugGeography, AdsConsentStatus } from 'react-native-google-mobile-ads';
-
+import mobileAds from 'react-native-google-mobile-ads';
+import { AppOpenAd, TestIds, AdEventType } from 'react-native-google-mobile-ads';
+import getAdUnitId from './Code/Ads/ads';
+const adUnitId =  getAdUnitId('openapp');
 const Tab = createBottomTabNavigator();
+
+
 
 const MyLightTheme = {
   ...DefaultTheme,
@@ -43,11 +49,21 @@ const MyDarkTheme = {
 };
 
 function App() {
-  const { theme } = useGlobalState();
+  const { theme, user } = useGlobalState();
   const selectedTheme = theme === 'dark' ? MyDarkTheme : MyLightTheme;
   const [consentStatus, setConsentStatus] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [lastAdShownTime, setLastAdShownTime] = useState(0);
+  const [isAdLoaded, setIsAdLoaded] = useState(false);
+  const [chatFocused, setChatFocused] = useState(true);
+  const [modalVisibleChatinfo, setModalVisibleChatinfo] = useState(false);
 
+  const adCooldown = 300000;
+  useEffect(() => {
+    mobileAds()
+      .initialize()
+      .then(() => console.log('AdMob initialized'));
+  }, []);
 
 const handleUserConsent = async () => {
   try {
@@ -86,7 +102,47 @@ const handleUserConsent = async () => {
     setLoading(false);
   }
 };
+const loadAppOpenAd = async () => {
+  const now = Date.now();
+  if (now - lastAdShownTime < adCooldown || isAdLoaded) {
+    // console.log('Skipping ad due to cooldown or ad already loaded.');
+    return;
+  }
 
+  try {
+    const appOpenAd = AppOpenAd.createForAdRequest(adUnitId);
+
+    appOpenAd.addAdEventListener(AdEventType.LOADED, () => {
+      // console.log('App Open Ad Loaded');
+      appOpenAd.show();
+      setLastAdShownTime(Date.now());
+      setIsAdLoaded(false); // Reset after showing
+    });
+
+    appOpenAd.addAdEventListener(AdEventType.ERROR, (error) => {
+      console.error('App Open Ad Error:', error);
+      setIsAdLoaded(false);
+    });
+
+    setIsAdLoaded(true);
+    await appOpenAd.load();
+  } catch (error) {
+    console.error('Error loading App Open Ad:', error);
+    setIsAdLoaded(false);
+  }
+};
+
+// Handle App State Changes
+useEffect(() => {
+  const handleAppStateChange = (state) => {
+    if (state === 'active') {
+      loadAppOpenAd(); // Load ad when app comes to foreground
+    }
+  };
+
+  const subscription = AppState.addEventListener('change', handleAppStateChange);
+  return () => subscription.remove();
+}, [lastAdShownTime, isAdLoaded]);
   
   useEffect(() => {
     handleUserConsent();
@@ -184,6 +240,7 @@ const handleUserConsent = async () => {
               tabBarActiveTintColor: selectedTheme.colors.primary,
               tabBarInactiveTintColor: theme === 'dark' ? '#888' : 'gray',
               headerTitleStyle: { fontFamily: 'Lato-Bold', fontSize: 24 },
+              tabBarBadge: route.name === 'Chat' && chatFocused ? '●' : null,
               headerStyle: {
                 backgroundColor: selectedTheme.colors.background,
               },
@@ -199,8 +256,22 @@ const handleUserConsent = async () => {
             <Tab.Screen name="Stock">
               {() => <TimerScreen selectedTheme={selectedTheme} />}
             </Tab.Screen>
-            <Tab.Screen name="Chat">
-              {() => <UpcomingFeaturesScreen selectedTheme={selectedTheme} />}
+            <Tab.Screen
+    name="Chat"
+    options={{
+      headerTitleAlign: 'left', // Align title to the left
+      headerRight: () => (
+        <Icon
+          name="information-circle-outline" // Icon to show
+          size={24}
+          color={selectedTheme.colors.text}
+          style={{ marginRight: 15 }} // Add right margin
+          onPress={() => setModalVisibleChatinfo(true)} // Handle icon press
+        />
+      ),
+    }}
+  >
+              {() => <UpcomingFeaturesScreen selectedTheme={selectedTheme} setChatFocused={setChatFocused} modalVisibleChatinfo={modalVisibleChatinfo} setModalVisibleChatinfo={setModalVisibleChatinfo}/>}
             </Tab.Screen>
             <Tab.Screen name="Setting">
               {() => <SettingsScreen selectedTheme={selectedTheme} />}

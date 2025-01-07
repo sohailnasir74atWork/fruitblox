@@ -15,11 +15,17 @@ const adUnits = {
   android: {
     banner: config.andriodBanner,       
     interstitial: config.andriodIntestial, 
+    rewarded:config.andriodRewarded,
+    openapp:config.andriodOpenApp,
+
   },
   ios: {
     banner: config.IOsBanner,      
     interstitial: config.IOsIntestial, 
-  }
+    rewarded:config.andriodRewarded,
+    openapp:config.andriodOpenApp,
+  },
+  
 };
 
 const getAdUnitId = (type) => {

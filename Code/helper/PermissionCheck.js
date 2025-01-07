@@ -7,10 +7,8 @@ const requestPermission = async () => {
     //   console.log('Permission denied. Updating state.');
       return authorizationStatus
     } else {
-    //   console.log('Permission granted or provisional.');
     }
   } catch (error) {
-    // console.error('Error requesting permission:', error);
   }
 };
 

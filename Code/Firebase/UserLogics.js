@@ -49,14 +49,16 @@ export const loginUserWithEmail = async (email, password) => {
 
 
 // Logout the current user
-export const logoutUser = async () => {
+export const logoutUser = async (setUser) => {
     try {
-        await auth().signOut();
-        // console.log('User logged out');
+      await auth().signOut();
+      console.log('User logged out');
+      resetUserState(setUser); // Reset the user state only after logout is complete
     } catch (error) {
-        // console.error('Error logging out:', error.message);
+      console.error('Error logging out:', error.message);
     }
-};
+  };
+  
 
 // Delete the current user
 export const deleteUser = async () => {
@@ -124,6 +126,7 @@ export const isFruitAvailable = async (fruitName) => {
 
 // Send a push notification to the user (using Firebase Cloud Messaging)
 import messaging from '@react-native-firebase/messaging';
+import { resetUserState } from '../Globelhelper';
 
 export const sendPushNotification = async (title, body, token) => {
     try {

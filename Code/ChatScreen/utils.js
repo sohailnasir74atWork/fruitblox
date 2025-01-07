@@ -1,14 +1,11 @@
-import { getDatabase, ref, get, query, orderByChild, remove } from 'firebase/database';
+import { getDatabase, ref, update, get, query, orderByChild, remove } from 'firebase/database';
+import { Alert } from 'react-native';
 
+// Initialize the database reference
+const database = getDatabase();
+const usersRef = ref(database, 'users'); // Base reference to the "users" node
 
-export const generateShortDisplayName = (name) => {
-  if (!name || typeof name !== 'string' || !name.trim()) return 'AN'; // Return 'AN' for invalid or undefined name
-  const parts = name.trim().split(/\s+/); // Split by whitespace
-  return parts.length === 1
-    ? parts[0].slice(0, 2).toUpperCase() // Use first 2 letters if a single part
-    : `${parts[0][0]}${parts[1][0]}`.toUpperCase(); // Use initials of first two parts
-};
-
+// Format Date Utility
 export const formatDate = (dateString) => {
   const date = new Date(dateString);
   return isNaN(date)
@@ -16,54 +13,70 @@ export const formatDate = (dateString) => {
     : date.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
 };
 
-export const getColorForName = (name, userColors = {}) => {
-  if (!name || typeof name !== 'string') return '#BDC3C7'; // Default color for invalid or undefined name
-  if (!userColors[name]) {
-    const hash = Array.from(name).reduce((acc, char) => acc + char.charCodeAt(0), 0); // Generate a hash
-    const colors = [
-      '#FF5733', '#33A1FD', '#8E44AD', '#27AE60', '#F1C40F', '#9B59B6', '#1ABC9C', '#E67E22',
-      '#C0392B', '#2980B9', '#34495E', '#E74C3C', '#16A085', '#F39C12', '#BDC3C7', '#D4AC0D',
-    ];
-    userColors[name] = colors[hash % colors.length]; // Assign color based on hash
-  }
-  return userColors[name];
-};
-
-
-
-
-////////////////////////////
-const deleteLastThreeMessages = async () => {
+// Ban User
+export const banUser = async (userId) => {
   try {
-    const chatRef = database().ref('chat');
-    const snapshot = await chatRef.orderByKey().limitToLast(3).once('value');
-    
-    const messages = snapshot.val();
-
-    if (messages) {
-      const keys = Object.keys(messages);
-      for (const key of keys) {
-        await chatRef.child(key).remove();
-      }
-      // console.log('Last three messages deleted successfully');
-    } else {
-      // console.log('No messages to delete');
-    }
+    const userToUpdateRef = ref(usersRef, userId); // Reference to the specific user
+    await update(userToUpdateRef, { isBanned: true });
+    Alert.alert('Success', 'User has been banned.');
   } catch (error) {
-    console.error('Error deleting the last three messages:', error);
+    console.error('Error banning user:', error);
+    Alert.alert('Error', 'Failed to ban the user.');
   }
 };
 
-//////////
-
-export const removeSpecificChatMessage = async (messageId) => {
+// Unban User
+export const unbanUser = async (userId) => {
   try {
-    const db = getDatabase();
-    const messageRef = ref(db, `chat/${messageId}`); // Reference to the specific chat message
-
-    await remove(messageRef); // Remove the message
-    // console.log(`Message with ID ${messageId} removed successfully.`);
+    const userToUpdateRef = ref(usersRef, userId); // Reference to the specific user
+    await update(userToUpdateRef, { isBanned: false });
+    Alert.alert('Success', 'User has been unbanned.');
   } catch (error) {
-    console.error(`Error removing message with ID ${messageId}:`, error);
+    console.error('Error unbanning user:', error);
+    Alert.alert('Error', 'Failed to unban the user.');
   }
 };
+
+// Remove Admin
+export const removeAdmin = async (userId) => {
+  try {
+    const userToUpdateRef = ref(usersRef, userId); // Reference to the specific user
+    await update(userToUpdateRef, { isAdmin: false });
+    Alert.alert('Success', 'Admin privileges removed from the user.');
+  } catch (error) {
+    console.error('Error removing admin:', error);
+    Alert.alert('Error', 'Failed to remove admin privileges.');
+  }
+};
+
+// Make Admin
+export const makeAdmin = async (userId) => {
+  try {
+    const userToUpdateRef = ref(usersRef, userId); // Reference to the specific user
+    await update(userToUpdateRef, { isAdmin: true });
+    Alert.alert('Success', 'User has been made an admin.');
+  } catch (error) {
+    console.error('Error making admin:', error);
+    Alert.alert('Error', 'Failed to make the user an admin.');
+  }
+};
+
+// Make Owner
+export const makeOwner = async (userId) => {
+  try {
+    const userToUpdateRef = ref(usersRef, userId); // Reference to the specific user
+    await update(userToUpdateRef, { isOwner: true });
+    Alert.alert('Success', 'User has been made an owner.');
+  } catch (error) {
+    console.error('Error making owner:', error);
+    Alert.alert('Error', 'Failed to make the user an owner.');
+  }
+};
+export const rules = [
+  "Chat data older than 1 week will be automatically deleted.",
+  "Be respectful and courteous to others in the chat.",
+  "Do not share personal or sensitive information.",
+  "Avoid spamming or sending irrelevant messages. Spammers will be banned.",
+  "Follow community guidelines.",
+];
+

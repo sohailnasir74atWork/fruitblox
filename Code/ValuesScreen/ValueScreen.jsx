@@ -24,21 +24,16 @@ const ValueScreen = ({ selectedTheme }) => {
   const [selectedFilter, setSelectedFilter] = useState('ALL');
   const [filterDropdownVisible, setFilterDropdownVisible] = useState(false);
   const [filteredData, setFilteredData] = useState([]);
-
-
-  const { data, dataloading } = useGlobalState();
-  const valuesData = useMemo(() => (data ? Object.values(data) : []), [data]);
+  const { state } = useGlobalState();
+  const valuesData = useMemo(() => (state.data ? Object.values(state.data) : []), [state.data]);
   const filters = ['ALL', 'COMMON', 'UNCOMMON', 'RARE', 'LEGENDARY', 'MYTHICAL', 'GAME PASS'];
-
   const displayedFilter = selectedFilter === 'PREMIUM' ? 'GAME PASS' : selectedFilter;
-
   const formatName = (name) => name.replace(/^\+/, '').replace(/\s+/g, '-');
 
   const handleFilterChange = (filter) => {
     setSelectedFilter(filter === 'GAME PASS' ? 'PREMIUM' : filter);
     setFilterDropdownVisible(false);
   };
-  // console.log(dataloading)
 
   const handleSearchChange = debounce((text) => {
     setSearchText(text);
@@ -55,8 +50,8 @@ const ValueScreen = ({ selectedTheme }) => {
       );
     });
     setFilteredData(filtered);
-  }, [valuesData, searchText, selectedFilter]); 
-  
+  }, [valuesData, searchText, selectedFilter]);
+
   const renderItem = React.useCallback(({ item }) => (
     <View style={styles.itemContainer}>
       <View style={styles.imageContainer}>
@@ -86,9 +81,9 @@ const ValueScreen = ({ selectedTheme }) => {
 
   return (
     <>
-        <GestureHandlerRootView>
+      <GestureHandlerRootView>
 
-    <View style={styles.container}>
+        <View style={styles.container}>
           <Text style={[styles.description, { color: selectedTheme.colors.text }]}>
             Live Blox Fruits values updated hourly. Find accurate item values here and visit the trade feed for fruits or game passes.
           </Text>
@@ -133,49 +128,46 @@ const ValueScreen = ({ selectedTheme }) => {
             </View>
           )}
 
-{dataloading ? (
- <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-  <ActivityIndicator size="large" color="#1E88E5" />
-</View>
 
-) : (
-  filteredData.length > 0 ? (
-    <FlatList
-      data={filteredData}
-      keyExtractor={(item) => item.Name}
-      renderItem={renderItem}
-      showsVerticalScrollIndicator={false}
-      removeClippedSubviews={true}
-      numColumns={!config.isNoman ? 1 : 2}
-      columnWrapperStyle={!config.isNoman ? null : styles.columnWrapper}
-    />
-  ) : (
-    <Text style={[styles.description, { textAlign: 'center', marginTop: 20, color: 'gray' }]}>
-      No items match your search criteria.
-    </Text>
-  )
-)}
+          {filteredData.length > 0 ? (
+            <FlatList
+              data={filteredData}
+              keyExtractor={(item) => item.Name}
+              renderItem={renderItem}
+              showsVerticalScrollIndicator={false}
+              removeClippedSubviews={true}
+              numColumns={!config.isNoman ? 1 : 2}
+              columnWrapperStyle={!config.isNoman ? null : styles.columnWrapper}
+            />
+          ) : (
+            <Text style={[styles.description, { textAlign: 'center', marginTop: 20, color: 'gray' }]}>
+              No items match your search criteria.
+            </Text>
+          )
+          }
 
-      </View>
+        </View>
 
       </GestureHandlerRootView>
-      <View style={{ alignSelf:'center'}}>
+      <View style={{ alignSelf: 'center' }}>
         <BannerAd
           unitId={bannerAdUnitId}
           size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
         />
-        </View>
+      </View>
     </>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {  paddingHorizontal: 8, marginHorizontal: 2, flex:1 },
+  container: { paddingHorizontal: 8, marginHorizontal: 2, flex: 1 },
   searchFilterContainer: { flexDirection: 'row', marginBottom: 10, alignItems: 'center' },
   searchInput: { flex: 1, backgroundColor: '#E0E0E0', padding: 10, borderRadius: 10, marginRight: 10, height: 48 },
   filterDropdown: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#E0E0E0', padding: 10, borderRadius: 10, height: 48 },
-  filterDropdownContainer: { position: 'absolute', top: 80, right: 10, width: 120, backgroundColor: '#FFF', borderRadius: 8, 
-     zIndex: 1 },
+  filterDropdownContainer: {
+    position: 'absolute', top: 80, right: 10, width: 120, backgroundColor: '#FFF', borderRadius: 8,
+    zIndex: 1
+  },
   filterOption: { padding: 10, borderBottomWidth: 1, borderBottomColor: '#E0E0E0' },
   filterTextOption: { fontSize: 14 },
   // itemContainer: { alignItems: 'flex-start', backgroundColor: 'red', borderRadius: 10, padding: 10, 
@@ -214,8 +206,6 @@ const styles = StyleSheet.create({
     marginBottom: 70
   }
   , flateListContainer: {
-    // margin: 10,
-    // marginVertical:10,
     marginBottom: 120
   },
   row: {
@@ -236,7 +226,7 @@ const styles = StyleSheet.create({
   columnWrapper: {
     justifyContent: 'space-between', // Distribute items evenly in each row
     marginBottom: 10, // Add space between rows  
-    flex:1  
+    flex: 1
   },
   itemContainer: {
     alignItems: 'flex-start',
@@ -244,7 +234,7 @@ const styles = StyleSheet.create({
     padding: 10,
     backgroundColor: config.colors.primary,
     width: !config.isNoman ? '99%' : '49%',
-    marginBottom:!config.isNoman ? 10 : 0,
+    marginBottom: !config.isNoman ? 10 : 0,
     ...(!config.isNoman && {
       borderWidth: 5,
       borderColor: config.colors.hasBlockGreen,
