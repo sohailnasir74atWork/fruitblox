@@ -26,6 +26,12 @@ export const getStyles = (isDarkMode) =>
         borderRadius: 30,
         marginRight: 10,
       },
+      profileImage2: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        marginRight: 10,
+      },
       userName: {
         fontSize: 18,
         fontWeight: '600',

@@ -16,7 +16,6 @@ import HomeScreen from './Code/Homescreen/HomeScreen';
 import ValueScreen from './Code/ValuesScreen/ValueScreen';
 import TimerScreen from './Code/StockScreen/TimerScreen';
 import SettingsScreen from './Code/SettingScreen/Setting';
-import UpcomingFeaturesScreen from './Code/ChatScreen/Trader';
 import NotificationHandler from './Code/Firebase/FrontendNotificationHandling';
 import config from './Code/Helper/Environment';
 import { GlobalStateProvider, useGlobalState } from './Code/GlobelStats';
@@ -24,6 +23,8 @@ import { AdsConsent, AdsConsentDebugGeography, AdsConsentStatus } from 'react-na
 import mobileAds from 'react-native-google-mobile-ads';
 import { AppOpenAd, TestIds, AdEventType } from 'react-native-google-mobile-ads';
 import getAdUnitId from './Code/Ads/ads';
+import { ChatStack } from './Code/ChatScreen/ChatNavigator';
+
 const adUnitId =  getAdUnitId('openapp');
 const Tab = createBottomTabNavigator();
 
@@ -49,7 +50,7 @@ const MyDarkTheme = {
 };
 
 function App() {
-  const { theme, user } = useGlobalState();
+  const { theme } = useGlobalState();
   const selectedTheme = theme === 'dark' ? MyDarkTheme : MyLightTheme;
   const [consentStatus, setConsentStatus] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -57,6 +58,7 @@ function App() {
   const [isAdLoaded, setIsAdLoaded] = useState(false);
   const [chatFocused, setChatFocused] = useState(true);
   const [modalVisibleChatinfo, setModalVisibleChatinfo] = useState(false);
+
 
   const adCooldown = 300000;
   useEffect(() => {
@@ -240,7 +242,7 @@ useEffect(() => {
               tabBarActiveTintColor: selectedTheme.colors.primary,
               tabBarInactiveTintColor: theme === 'dark' ? '#888' : 'gray',
               headerTitleStyle: { fontFamily: 'Lato-Bold', fontSize: 24 },
-              tabBarBadge: route.name === 'Chat' && chatFocused ? '●' : null,
+              tabBarBadge: route.name === 'Chat' && chatFocused ? '' : null,
               headerStyle: {
                 backgroundColor: selectedTheme.colors.background,
               },
@@ -256,23 +258,22 @@ useEffect(() => {
             <Tab.Screen name="Stock">
               {() => <TimerScreen selectedTheme={selectedTheme} />}
             </Tab.Screen>
-            <Tab.Screen
-    name="Chat"
-    options={{
-      headerTitleAlign: 'left', // Align title to the left
-      headerRight: () => (
-        <Icon
-          name="information-circle-outline" // Icon to show
-          size={24}
-          color={selectedTheme.colors.text}
-          style={{ marginRight: 15 }} // Add right margin
-          onPress={() => setModalVisibleChatinfo(true)} // Handle icon press
-        />
-      ),
-    }}
-  >
-              {() => <UpcomingFeaturesScreen selectedTheme={selectedTheme} setChatFocused={setChatFocused} modalVisibleChatinfo={modalVisibleChatinfo} setModalVisibleChatinfo={setModalVisibleChatinfo}/>}
-            </Tab.Screen>
+            <Tab.Screen 
+  name="Chat"
+  options={{ headerShown: false }}
+>
+  {() => (
+    <ChatStack 
+      selectedTheme={selectedTheme}
+      setChatFocused={setChatFocused}
+      modalVisibleChatinfo={modalVisibleChatinfo}
+      setModalVisibleChatinfo={setModalVisibleChatinfo}
+    />
+  )}
+</Tab.Screen>
+
+         
+
             <Tab.Screen name="Setting">
               {() => <SettingsScreen selectedTheme={selectedTheme} />}
             </Tab.Screen>

@@ -5,6 +5,7 @@ import auth from '@react-native-firebase/auth';
 import messaging from '@react-native-firebase/messaging';
 import { Appearance } from 'react-native';
 import { createNewUser, firebaseConfig, registerForNotifications, saveTokenToDatabase } from './Globelhelper';
+import { act } from 'react-test-renderer';
 
 // Initialize Firebase
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
@@ -40,7 +41,9 @@ export const GlobalStateProvider = ({ children }) => {
   });
 
   const [onlineMembersCount, setOnlineMembersCount] = useState(0);
-
+  const [activeUser, setActiveUser] = useState([]);
+  const [bannedUsers, setBannedUsers] = useState([]);
+  
   // Track theme changes
   useEffect(() => {
     const listener = Appearance.addChangeListener(({ colorScheme }) => {
@@ -49,16 +52,48 @@ export const GlobalStateProvider = ({ children }) => {
     return () => listener.remove();
   }, []);
 
-  useEffect(() => {
 
+
+  useEffect(() => {
+    if (!user?.id) return; // Ensure user is logged in
+
+    const bannedRef = ref(database, `bannedUsers/${user.id}`); // Access current user's ban list
+
+    const unsubscribe = onValue(bannedRef, (snapshot) => {
+      const bannedData = snapshot.val() || {};
+      const bannedUserIds = Object.keys(bannedData); // Extract banned user IDs
+      setBannedUsers(bannedUserIds);
+    });
+
+    return () => unsubscribe(); // Clean up listener on component unmount
+  }, [user?.id]);
+
+  useEffect(() => {
     const onlineRef = ref(database, 'onlineUser');
-    const unsubscribe = onValue(onlineRef, (snapshot) => {
+  
+    const unsubscribe = onValue(onlineRef, async (snapshot) => {
       const onlineUsers = snapshot.val() || {};
       const activeUsers = Object.values(onlineUsers).filter((user) => user.status);
-      setOnlineMembersCount(activeUsers.length);
+  
+      // Fetch metadata for new users
+      const userMetadataPromises = activeUsers.map((active) =>
+        get(ref(database, `users/${active.id}`)).then((snap) => snap.val())
+      );
+  
+      const usersWithMetadata = await Promise.all(userMetadataPromises);
+  
+      const enrichedActiveUsers = activeUsers.map((active, index) => ({
+        ...active,
+        ...usersWithMetadata[index],
+      }));
+  
+      setActiveUser(enrichedActiveUsers);
+      setOnlineMembersCount(enrichedActiveUsers.length);
     });
+  
     return () => unsubscribe();
   }, []);
+  
 
   // Unified Update Function
   const updateLocalStateAndDatabase = async (keyOrUpdates, value) => {
@@ -183,6 +218,42 @@ export const GlobalStateProvider = ({ children }) => {
 
     fetchStockData();
   }, []);
+
+  const setOnlineStatus = (() => {
+    let lastStatus = null;
+    let timeout = null;
+  
+    return (status) => {
+      if (user.id && status !== lastStatus) {
+        if (timeout) clearTimeout(timeout);
+  
+        timeout = setTimeout(() => {
+          const userRef = ref(database, `onlineUser/${user.id}`);
+          set(userRef, {
+            id: user.id,
+            status,
+            timestamp: Date.now(),
+          });
+          lastStatus = status;
+        }, 1000); // Update status every 1 second if it changes
+      }
+    };
+  })();
+  
+  
+  useEffect(() => {
+    if (user.id) {
+      setOnlineStatus(true); // Set online status on login
+    }
+  
+    return () => {
+      if (user.id) {
+        setOnlineStatus(false); // Set offline status on logout or app close
+      }
+    };
+  }, [user.id]);
+  
+  
   const contextValue = useMemo(
     () => ({
       state,
@@ -192,10 +263,11 @@ export const GlobalStateProvider = ({ children }) => {
       theme,
       setUser,
       setOnlineMembersCount,
-      updateLocalStateAndDatabase,
+      activeUser,
+      updateLocalStateAndDatabase,bannedUsers
       
     }),
-    [state, user, onlineMembersCount, theme]
+    [state, user, onlineMembersCount, theme, activeUser, bannedUsers]
   );
 
   return (

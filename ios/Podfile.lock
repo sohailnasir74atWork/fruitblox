@@ -1344,7 +1344,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-safe-area-context (4.14.1):
+  - react-native-safe-area-context (5.0.0):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1357,8 +1357,8 @@ PODS:
     - React-featureflags
     - React-graphics
     - React-ImageManager
-    - react-native-safe-area-context/common (= 4.14.1)
-    - react-native-safe-area-context/fabric (= 4.14.1)
+    - react-native-safe-area-context/common (= 5.0.0)
+    - react-native-safe-area-context/fabric (= 5.0.0)
     - React-NativeModulesApple
     - React-RCTFabric
     - React-rendererdebug
@@ -1367,7 +1367,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-safe-area-context/common (4.14.1):
+  - react-native-safe-area-context/common (5.0.0):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1388,7 +1388,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-safe-area-context/fabric (4.14.1):
+  - react-native-safe-area-context/fabric (5.0.0):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1701,18 +1701,18 @@ PODS:
   - RecaptchaInterop (100.0.0)
   - RNAppleAuthentication (2.4.0):
     - React-Core
-  - RNFBApp (21.6.1):
+  - RNFBApp (21.6.2):
     - Firebase/CoreOnly (= 11.5.0)
     - React-Core
-  - RNFBAuth (21.6.1):
+  - RNFBAuth (21.6.2):
     - Firebase/Auth (= 11.5.0)
     - React-Core
     - RNFBApp
-  - RNFBDatabase (21.6.1):
+  - RNFBDatabase (21.6.2):
     - Firebase/Database (= 11.5.0)
     - React-Core
     - RNFBApp
-  - RNFBMessaging (21.6.1):
+  - RNFBMessaging (21.6.2):
     - Firebase/Messaging (= 11.5.0)
     - FirebaseCoreExtension
     - React-Core
@@ -1877,7 +1877,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - RNScreens (3.35.0):
+  - RNScreens (4.4.0):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1898,9 +1898,9 @@ PODS:
     - ReactCodegen
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
-    - RNScreens/common (= 3.35.0)
+    - RNScreens/common (= 4.4.0)
     - Yoga
-  - RNScreens/common (3.35.0):
+  - RNScreens/common (4.4.0):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1922,7 +1922,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - RNShare (11.1.0):
+  - RNShare (12.0.3):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -2296,7 +2296,7 @@ SPEC CHECKSUMS:
   React-logger: 697873f06b8ba436e3cddf28018ab4741e8071b6
   React-Mapbuffer: c79216258c659d70cdebaf76f8c110cc46dce8db
   React-microtasksnativemodule: 8d918db5d7c4526de2a0a4692d878a21b338c3f0
-  react-native-safe-area-context: d71edcee579673b370c053804f34c40c1f250976
+  react-native-safe-area-context: 16c455e62ad9dae353281f8099a4f93800adabe6
   react-native-view-shot: 117e56ce4b813b20046d24b0013aca1122a858c2
   React-nativeconfig: 565ebf4340d9ede95b523f0e3640f48286985ef5
   React-NativeModulesApple: ea083a4663dae82c99fe4c2186b11504ac4147e1
@@ -2327,18 +2327,18 @@ SPEC CHECKSUMS:
   ReactCommon: 858d61cce81635d57be89348568b603e838b3cac
   RecaptchaInterop: 7d1a4a01a6b2cb1610a47ef3f85f0c411434cb21
   RNAppleAuthentication: e00c76acb03351f5544373c78fa7f359bef6d5d3
-  RNFBApp: a3c9c3b23aa2d77001ce62b5a997325927593c12
-  RNFBAuth: 15a007eecd6ba7b9e52b45e2b41cdf6fe9f13968
-  RNFBDatabase: abb0d91778ea1ee81d62d0a2a03fa13f0dbbb1c6
-  RNFBMessaging: dd213f66f36b249f9ab035efe24dc2a3ede8f8c5
+  RNFBApp: c0543476dee81ed5fc34d06db2f37b8e7e353cf3
+  RNFBAuth: 72ee7309849392611bb4e12a00eb3057f9f68168
+  RNFBDatabase: 692e02ed3c6b0d7b7e2d1f9a07308da0e76cb983
+  RNFBMessaging: aab4dcf6d121cfe338c9ac45631d90e125b3a5ef
   RNFS: 4ac0f0ea233904cb798630b3c077808c06931688
   RNGestureHandler: 15ee1ab573a954c92641877ca946e2680f2e58da
   RNGoogleMobileAds: 065aa2f964f07b0d56b2a9111829c107f795eca8
   RNGoogleSignin: 27c2199f487ee08cc692d8d2c035bc9c154ddc22
   RNNotifee: 4a6ee5c7deaf00e005050052d73ee6315dff7ec9
   RNReanimated: 77a04017cdf54b9da500ccefde56d9d15b8ddff6
-  RNScreens: f493b156fe5de2434806b5a2c410800b2cd76c0e
-  RNShare: 0cc7cc40681d2a858390552cf8b757f9bb4d460c
+  RNScreens: 8ae716a7e26b9ecee7f2856e6ff47b8e7e253ee8
+  RNShare: f2a0352158e1a6d68ab28dde458f8d6375616833
   RNVectorIcons: 8c7af262a73890caabbac2bb081ddbaa1b8a768c
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
   Yoga: 7548e4449365bf0ef60db4aefe58abff37fcabec

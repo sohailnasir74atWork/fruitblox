@@ -67,19 +67,31 @@ async function onAppleButtonPress() {
   }, [user]);
 
   const handleSaveChanges = async () => {
-    if (user.id) {
-      
-      try {
-
-        await updateLocalStateAndDatabase({'displayName': newDisplayName, 'avatar' : selectedImage})
-        alert('Profile updated successfully!');
-        setDrawerVisible(false)
-      } catch (error) {
-        console.error('Error updating profile:', error);
-        alert('Failed to update profile. Please try again.');
-      }
+    const MAX_NAME_LENGTH = 20; // Define the maximum length for the display name
+  
+    if (!user.id) return;
+  
+    if (newDisplayName.length > MAX_NAME_LENGTH) {
+      Alert.alert(
+        'Error',
+        `Display name cannot exceed ${MAX_NAME_LENGTH} characters.`
+      );
+      return;
+    }
+  
+    try {
+      await updateLocalStateAndDatabase({
+        displayName: newDisplayName,
+        avatar: selectedImage,
+      });
+      Alert.alert('Success', 'Profile updated successfully!');
+      setDrawerVisible(false);
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      Alert.alert('Error', 'Failed to update profile. Please try again.');
     }
   };
+  
   
   const displayName = user.id ? newDisplayName || user.displayName || 'Anonymous' : 'Guest User';
   

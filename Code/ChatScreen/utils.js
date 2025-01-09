@@ -1,4 +1,4 @@
-import { getDatabase, ref, update, get, query, orderByChild, remove } from 'firebase/database';
+import { getDatabase, ref, update, get, query, orderByChild, remove, set } from 'firebase/database';
 import { Alert } from 'react-native';
 
 // Initialize the database reference
@@ -80,3 +80,58 @@ export const rules = [
   "Follow community guidelines.",
 ];
 
+
+export const banUserInChat = async (currentUserId, selectedUserId) => {
+  const confirmBan = () => {
+    try {
+      const database = getDatabase();
+      const bannedRef = ref(database, `bannedUsers/${currentUserId}/${selectedUserId}`);
+
+      // Update ban status
+      set(bannedRef, {
+        banned: true,
+        timestamp: Date.now(),
+      });
+
+      Alert.alert('Success', 'You have banned this user.');
+    } catch (error) {
+      console.error('Error banning user:', error);
+      Alert.alert('Error', 'Could not ban the user. Please try again.');
+    }
+  };
+
+  Alert.alert(
+    'Ban User',
+    'Are you sure you want to ban this user? You will no longer receive messages from them.',
+    [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Proceed', onPress: confirmBan },
+    ]
+  );
+};
+
+export const unbanUserInChat = async (currentUserId, selectedUserId) => {
+  const confirmUnban = () => {
+    try {
+      const database = getDatabase();
+      const bannedRef = ref(database, `bannedUsers/${currentUserId}/${selectedUserId}`);
+
+      // Remove ban status
+      remove(bannedRef);
+
+      Alert.alert('Success', 'You have unbanned this user.');
+    } catch (error) {
+      console.error('Error unbanning user:', error);
+      Alert.alert('Error', 'Could not unban the user. Please try again.');
+    }
+  };
+
+  Alert.alert(
+    'Unban User',
+    'Are you sure you want to unban this user? You will start receiving messages from them again.',
+    [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Proceed', onPress: confirmUnban },
+    ]
+  );
+};

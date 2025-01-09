@@ -29,13 +29,17 @@ const MessagesList = ({
   makeadmin,
   removeAdmin,
   unbanUser,
-  isOwner
+  isOwner,
+  toggleDrawer
 }) => {
   const styles = getStyles(isDarkMode);
 
   const handleReply = (item) => {
     Vibration.vibrate(50); // Vibrate for feedback
     onReply(item); // Trigger reply with selected message
+  };
+  const handleProfileClick = (item) => {
+    toggleDrawer(item); // Open the drawer with the user's details
   };
 
 
@@ -46,6 +50,8 @@ const MessagesList = ({
       ? new Date(previousMessage.timestamp).toDateString()
       : null;
     const shouldShowDateHeader = currentDate !== previousDate;
+
+    
     return (
       <View>
         {/* Display the date header if it's a new day */}
@@ -68,14 +74,16 @@ const MessagesList = ({
             ]}
           >
 
+      <TouchableOpacity onPress={() => handleProfileClick(item)} style={styles.profileImagecontainer}>
             <Image
               source={{
                 uri: item.avatar
                   ? item.avatar
                   : 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png',
               }}
-              style={styles.senderName}
+              style={styles.profileImage}
             />
+          </TouchableOpacity>
 
           </View>
 

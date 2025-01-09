@@ -19,13 +19,14 @@ import { BannerAd, BannerAdSize } from 'react-native-google-mobile-ads';
 import getAdUnitId from '../Ads/ads';
 import { banUser, makeAdmin, markMessagesAsSeen, removeAdmin, unbanUser } from './utils';
 import { useNavigation } from '@react-navigation/native';
+import ProfileBottomDrawer from './BottomDrawer';
 const bannerAdUnitId = getAdUnitId('banner');
 const PAGE_SIZE = 250; // Number of messages to fetch per load
 let lastMessageTimestamp = 0; // To track the time of the last sent message
 
-const ChatComponent = ({ selectedTheme, setChatFocused,   modalVisibleChatinfo, 
+const ChatScreen = ({ selectedTheme, bannedUsers,   modalVisibleChatinfo, 
   setModalVisibleChatinfo }) => {
-  const { user, theme, onlineMembersCount, updateLocalStateAndDatabase } = useGlobalState();
+  const { user, theme, onlineMembersCount, activeUser } = useGlobalState();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [replyTo, setReplyTo] = useState(null);
@@ -34,52 +35,83 @@ const ChatComponent = ({ selectedTheme, setChatFocused,   modalVisibleChatinfo,
   const [pinnedMessages, setPinnedMessages] = useState([]);
   const [lastLoadedKey, setLastLoadedKey] = useState(null);
   const [isSigninDrawerVisible, setIsSigninDrawerVisible] = useState(false);
+  const [isDrawerVisible, setIsDrawerVisible] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null); // Store the selected user's details
+  const userId = selectedUser?.senderId || null;
+const isOnline = activeUser.some((activeUser) => activeUser.id === userId);
+
+
+  const navigation = useNavigation()
+  const toggleDrawer = (userData = null) => {
+    setSelectedUser(userData);
+    setIsDrawerVisible(!isDrawerVisible);
+  };
+  const startPrivateChat = () => {
+    toggleDrawer();
+    navigation.navigate('PrivateChat', { selectedUser, selectedTheme, isOnline });
+  };
+ 
   const chatRef = useMemo(() => database().ref('chat'), []);
   const pinnedMessagesRef = useMemo(() => database().ref('pinnedMessages'), []);
+  
   const isAdmin = user?.isAdmin || false;
   const isOwner = user?.isOwner || false;
   const styles = useMemo(() => getStyles(theme === 'dark'), [theme]);
-  const navigation = useNavigation()
-  const validateMessage = useCallback((message) => {
-    const defaultSender = 'Anonymous';
-    const defaultText = '[No content]';
-    return {
-      ...message,
-      sender: message.sender?.trim() || defaultSender,
-      text: message.text?.trim() || defaultText,
-      timestamp: message.timestamp || Date.now(),
-    };
-  }, []);
+  
 
+  const validateMessage = useCallback((message) => ({
+    ...message,
+    sender: message.sender?.trim() || 'Anonymous',
+    text: message.text?.trim() || '[No content]',
+    timestamp: message.timestamp || Date.now(),
+  }), []);
+  
   const loadMessages = useCallback(async (reset = false) => {
     try {
-      setLoading(true);
-
+      if (reset) setLoading(true);
+  
       const query = reset
         ? chatRef.orderByKey().limitToLast(PAGE_SIZE)
         : chatRef.orderByKey().endAt(lastLoadedKey).limitToLast(PAGE_SIZE);
-
+  
       const snapshot = await query.once('value');
       const data = snapshot.val() || {};
       const parsedMessages = Object.entries(data)
         .map(([key, value]) => validateMessage({ id: `chat-${key}`, ...value }))
+        .filter((msg) => !bannedUsers.includes(msg.senderId)) // Exclude banned users
         .sort((a, b) => b.timestamp - a.timestamp);
-
+  
       if (parsedMessages.length > 0) {
         setMessages((prev) => {
           const seenKeys = new Set(prev.map((msg) => msg.id));
           const newMessages = parsedMessages.filter((msg) => !seenKeys.has(msg.id));
-          return reset ? parsedMessages : [...newMessages, ...prev]; // Prepend new messages
+          return reset ? parsedMessages : [...newMessages, ...prev];
         });
-
-        setLastLoadedKey(Object.keys(data)[0]);
+  
+        setLastLoadedKey(Object.keys(data)[0]); // Save the key for pagination
       }
     } catch (error) {
       console.error('Error loading messages:', error);
     } finally {
-      setLoading(false);
+      if (reset) setLoading(false);
     }
-  }, [chatRef, lastLoadedKey, validateMessage]);
+  }, [chatRef, lastLoadedKey, validateMessage, bannedUsers]);
+  
+  useEffect(() => {
+    loadMessages(true); // Initial load
+  
+    const listener = chatRef.limitToLast(1).on('child_added', (snapshot) => {
+      const newMessage = validateMessage({ id: `chat-${snapshot.key}`, ...snapshot.val() });
+      if (!bannedUsers.includes(newMessage.senderId)) {
+        setMessages((prev) =>
+          prev.some((msg) => msg.id === newMessage.id) ? prev : [newMessage, ...prev]
+        );
+      }
+    });
+  
+    return () => chatRef.off('child_added', listener); // Cleanup listener
+  }, [chatRef, bannedUsers, validateMessage, loadMessages]);
+  
 
   const handleLoadMore = async () => {
     if (!loading && lastLoadedKey) {
@@ -134,19 +166,19 @@ const ChatComponent = ({ selectedTheme, setChatFocused,   modalVisibleChatinfo,
     }
   };
   useEffect(() => {
-    loadMessages(true);
-    loadPinnedMessages();
-    setChatFocused(false)
-
     const listener = chatRef.limitToLast(1).on('child_added', (snapshot) => {
       const newMessage = validateMessage({ id: `chat-${snapshot.key}`, ...snapshot.val() });
-      setMessages((prevMessages) =>
-        prevMessages.some((msg) => msg.id === newMessage.id) ? prevMessages : [newMessage, ...prevMessages]
-      );
+      if (!bannedUsers.includes(newMessage.senderId)) { // Filter out banned user messages
+        setMessages((prev) =>
+          prev.some((msg) => msg.id === newMessage.id) ? prev : [newMessage, ...prev]
+        );
+      }
     });
-
+  
     return () => chatRef.off('child_added', listener);
-  }, [loadMessages, loadPinnedMessages, validateMessage]);
+  }, [bannedUsers, chatRef, validateMessage]);
+  
+  
   
   
   const handleRefresh = async () => {
@@ -212,7 +244,7 @@ const ChatComponent = ({ selectedTheme, setChatFocused,   modalVisibleChatinfo,
   };
   
  
-  
+  // console.log(selectedUser)
   // Function to ban a user
  
   
@@ -256,6 +288,7 @@ const ChatComponent = ({ selectedTheme, setChatFocused,   modalVisibleChatinfo,
           removeAdmin={removeAdmin}
           unbanUser = {unbanUser}
           isOwner={isOwner}
+          toggleDrawer={toggleDrawer}
         />
         )}
         {user.id ? (
@@ -283,6 +316,13 @@ const ChatComponent = ({ selectedTheme, setChatFocused,   modalVisibleChatinfo,
 
         />
       </View>
+      <ProfileBottomDrawer
+       isVisible={isDrawerVisible}
+       toggleModal={toggleDrawer}
+       startChat={startPrivateChat}
+       selectedUser={selectedUser}
+       isOnline={isOnline}
+      />
       <View style={{ alignSelf: 'center' }}>
         <BannerAd
           unitId={bannerAdUnitId}
@@ -293,4 +333,4 @@ const ChatComponent = ({ selectedTheme, setChatFocused,   modalVisibleChatinfo,
   );
 };
 
-export default ChatComponent;
+export default ChatScreen;

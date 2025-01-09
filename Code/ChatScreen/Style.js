@@ -229,9 +229,17 @@ export  const getStyles = (isDarkMode) =>
             color: isDarkMode ? '#FFF' : '#000',
           },
           profileImage:{
-            height:20,
-            width:20
+            height:34,
+            width:34,
+            borderRadius:17
           },
+          profileImagePvtChat:{
+            height:30,
+            width:30,
+            borderRadius:15, 
+            marginHorizontal:5
+          },
+         
           userName:{
             color: '#bbb',
             fontSize:12
@@ -249,6 +257,11 @@ export  const getStyles = (isDarkMode) =>
             color: '#1E90FF', // Blue color for links
             textDecorationLine: 'underline', // Underline to indicate a link
           },
+          emptyContainer:{
+            flex:1,
+            justifyContent:'center',
+            alignItems:'center'
+          }
        
       
     });
