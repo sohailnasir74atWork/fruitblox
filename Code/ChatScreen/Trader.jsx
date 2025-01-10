@@ -125,19 +125,31 @@ const isOnline = activeUser.some((activeUser) => activeUser.id === userId);
   };
 
 
-  const loadPinnedMessages = useCallback(async () => {
-    try {
-      const snapshot = await pinnedMessagesRef.once('value');
-      const data = snapshot.val() || {};
-      const parsedPinnedMessages = Object.entries(data).map(([key, value]) => ({
-        id: `pinned-${key}`,
-        ...value,
-      }));
-      setPinnedMessages(parsedPinnedMessages);
-    } catch (error) {
-      console.error('Error loading pinned messages:', error);
-    }
+  useEffect(() => {
+    const loadPinnedMessages = async () => {
+      try {
+        const snapshot = await pinnedMessagesRef.once('value'); 
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          const parsedPinnedMessages = Object.entries(data).map(([key, value]) => ({
+            id: `pinned-${key}`,
+            ...value,
+          }));
+          setPinnedMessages(parsedPinnedMessages); 
+        } else {
+          setPinnedMessages([]); // No pinned messages
+        }
+      } catch (error) {
+        console.error('Error loading pinned messages:', error);
+        Alert.alert('Error', 'Could not load pinned messages. Please try again.');
+      }
+    };
+  
+    loadPinnedMessages();
   }, [pinnedMessagesRef]);
+  
+  
+  
 
   const handlePinMessage = async (message) => {
     try {
@@ -183,7 +195,7 @@ const isOnline = activeUser.some((activeUser) => activeUser.id === userId);
     return () => chatRef.off('child_added', listener);
   }, [bannedUsers, chatRef, validateMessage]);
   
-  
+  console.log(pinnedMessages)
   
   
   const handleRefresh = async () => {

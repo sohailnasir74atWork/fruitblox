@@ -156,7 +156,9 @@ const MessagesList = ({
                   })}
                 </Text>
               </MenuTrigger>
-              <MenuOptions style={styles.menuoptions}>
+              <MenuOptions  customStyles={{
+                    optionsContainer: styles.menuoptions,
+                  }}>
                 <MenuOption
                   onSelect={() => onReply(item)}
                   text="Reply"
