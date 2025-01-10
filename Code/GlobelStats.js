@@ -153,7 +153,6 @@ export const GlobalStateProvider = ({ children }) => {
 
 
 
-
   // Unified Update Function
   const updateLocalStateAndDatabase = async (keyOrUpdates, value) => {
     if (!user.id) return; // Prevent updates if user is not logged in

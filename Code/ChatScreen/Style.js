@@ -262,9 +262,12 @@ export  const getStyles = (isDarkMode) =>
             justifyContent:'center',
             alignItems:'center'
           },
+          menu:{
+// borderRadius:10
+          },
           menuoptions:{
-            flexDirection:'row',
-            justifyContent:'space-evenly',
+            // flexDirection:'row',
+            // justifyContent:'space-evenly',
           },
           menuOption: {
             padding: 10,

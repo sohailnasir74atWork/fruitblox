@@ -121,7 +121,7 @@ const MessagesList = ({
 
             {/* Render main message */}
 
-            <Menu>
+            <Menu style={styles.menu}>
               <MenuTrigger
                 onLongPress={() => handleLongPress(item)} // Set the message for context menu
                 customStyles={{
