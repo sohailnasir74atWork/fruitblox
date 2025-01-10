@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,107 +7,115 @@ import {
   StyleSheet,
   ActivityIndicator,
   Image,
+  Alert,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import database from '@react-native-firebase/database';
 import { useGlobalState } from '../GlobelStats';
+import Icon from 'react-native-vector-icons/Ionicons';
+import config from '../Helper/Environment';
 
-const InboxScreen = () => {
+const InboxScreen = ({ route }) => {
   const navigation = useNavigation();
-  const { user, activeUser } = useGlobalState(); // Global state for logged-in user and active users
+  const { user, activeUser } = useGlobalState();
   const [chats, setChats] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [bannedUsers, setBannedUsers] = useState([]);
+  const bannedUsers = route?.params?.bannedUsers;
 
-  // Fetch banned users for the logged-in user
-  useEffect(() => {
+  const fetchChats = useCallback(async () => {
     if (!user?.id) return;
 
-    const bannedRef = database().ref(`bannedUsers/${user.id}`);
-    const unsubscribe = bannedRef.on('value', (snapshot) => {
-      const bannedData = snapshot?.val() || {};
-      setBannedUsers(Object.keys(bannedData));
-    });
-
-    return () => unsubscribe();
-  }, [user?.id]);
-
-  // Fetch chat list for the logged-in user
-  useEffect(() => {
-    if (!user?.id) return;
-
+    setLoading(true);
     const privateChatsRef = database().ref('privateChats');
-    const fetchChats = async () => {
-      try {
-        setLoading(true);
-        const snapshot = await privateChatsRef.once('value');
-        const chatsData = snapshot.val() || {};
+    const lastReadRef = database().ref(`lastseen/${user.id}`);
 
-        const userChats = Object.keys(chatsData).reduce((acc, chatKey) => {
-          const [userId1, userId2] = chatKey.split('_');
-          const otherUserId = userId1 === user.id ? userId2 : userId1;
+    try {
+      const [chatsSnapshot, lastReadSnapshot] = await Promise.all([
+        privateChatsRef.once('value'),
+        lastReadRef.once('value'),
+      ]);
 
-          if (userId1 === user.id || userId2 === user.id) {
-            const messages = Object.entries(chatsData[chatKey]).sort(
-              (a, b) => b[1].timestamp - a[1].timestamp
-            ); // Sort messages by timestamp descending
+      const chatsData = chatsSnapshot.val() || {};
+      const lastReadData = lastReadSnapshot.val() || {};
 
-            if (messages.length > 0) {
-              const lastMessage = messages[0][1];
+      const userChats = Object.keys(chatsData).reduce((acc, chatKey) => {
+        const [userId1, userId2] = chatKey.split('_');
+        const otherUserId = userId1 === user.id ? userId2 : userId1;
 
-              // Check if the other user is online
-              const isOnline = activeUser?.some((active) => active.id === otherUserId);
+        if (userId1 === user.id || userId2 === user.id) {
+          const messages = Object.entries(chatsData[chatKey]).sort(
+            (a, b) => b[1].timestamp - a[1].timestamp
+          );
 
-              acc.push({
-                chatKey,
-                userName:
-                  lastMessage.receiverId === otherUserId
-                    ? lastMessage.receiverName
-                    : lastMessage.senderName,
-                avatar:
-                  lastMessage.receiverId === otherUserId
-                    ? lastMessage.receiverAvatar
-                    : lastMessage.senderAvatar || 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png',
-                lastMessage: lastMessage.text,
-                otherUserId,
-                isOnline,
-                isBanned: bannedUsers.includes(otherUserId), // Check if the user is banned
-              });
-            }
+          if (messages.length > 0) {
+            const lastMessage = messages[0][1];
+            const unreadCount = messages.filter(
+              (msg) => msg[1].timestamp > (lastReadData[chatKey] || 0)
+            ).length;
+
+            const isOnline = activeUser?.some((active) => active.id === otherUserId);
+
+            acc.push({
+              chatKey,
+              userName:
+                lastMessage.receiverId === otherUserId
+                  ? lastMessage.receiverName
+                  : lastMessage.senderName,
+              avatar:
+                lastMessage.receiverId === otherUserId
+                  ? lastMessage.receiverAvatar
+                  : lastMessage.senderAvatar || 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png',
+              lastMessage: lastMessage.text,
+              unreadCount,
+              otherUserId,
+              isOnline,
+              isBanned: bannedUsers?.includes(otherUserId),
+            });
           }
+        }
 
-          return acc;
-        }, []);
+        return acc;
+      }, []);
 
-        setChats(userChats);
-      } catch (error) {
-        console.error('Error fetching chats:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+      setChats(userChats);
+    } catch (error) {
+      console.error('Error fetching chats:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-    fetchChats();
-  }, [user?.id, JSON.stringify(activeUser), JSON.stringify(bannedUsers)]); // Use stable dependencies
-
-  const navigateToPrivateChat = useCallback(
-    (chatKey, otherUserId, userName, avatar, isOnline, isBanned) => {
-      navigation.navigate('PrivateChat', {
-        selectedUser: { senderId: otherUserId, sender: userName, avatar },
-        selectedTheme: { colors: { text: '#000' } }, // Replace with actual theme
-        isOnline,
-        isBanned,
-      });
-    },
-    [navigation]
+  useFocusEffect(
+    useCallback(() => {
+      fetchChats();
+    }, [fetchChats])
   );
+
+  const handleDeleteChat = async (chatKey) => {
+    Alert.alert('Delete Chat', 'Are you sure you want to delete this chat?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            const chatRef = database().ref(`privateChats/${chatKey}`);
+            await chatRef.remove();
+            setChats((prevChats) => prevChats.filter((chat) => chat.chatKey !== chatKey));
+          } catch (error) {
+            console.error('Error deleting chat:', error);
+          }
+        },
+      },
+    ]);
+  };
 
   const memoizedChats = useMemo(() => chats, [chats]);
 
   return (
     <View style={styles.container}>
       {loading ? (
-        <ActivityIndicator size="large" color="#1E88E5" />
+        <ActivityIndicator size="large" color="#1E88E5" style={{ flex: 1 }} />
       ) : chats.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyText}>No chats available. Start a conversation!</Text>
@@ -117,30 +125,56 @@ const InboxScreen = () => {
           data={memoizedChats}
           keyExtractor={(item) => item.chatKey}
           renderItem={({ item }) => (
-            <TouchableOpacity
-              style={[styles.chatItem, item.isBanned && styles.bannedChatItem]}
-              onPress={() =>
-                navigateToPrivateChat(item.chatKey, item.otherUserId, item.userName, item.avatar, item.isOnline, item.isBanned)
-              }
-            >
-              <Image source={{ uri: item.avatar }} style={styles.avatar} />
-              <View style={styles.textContainer}>
-                <View style={{ flex: 1, justifyContent: 'space-between', flexDirection: 'row' }}>
-                  <Text style={styles.userName}>{item.userName}</Text>
-                  {item.isOnline && <Text style={styles.onlineIndicator}>Online</Text>}
-                  {item.isBanned && <Text style={styles.bannedIndicator}>Banned</Text>}
+            <View style={styles.chatItem}>
+              <TouchableOpacity
+                onPress={() =>
+                  navigation.navigate('PrivateChat', {
+                    selectedUser: {
+                      senderId: item.otherUserId,
+                      sender: item.userName,
+                      avatar: item.avatar,
+                    },
+                    isOnline: item.isOnline,
+                    isBanned: item.isBanned,
+                  })
+                }
+                style={styles.chatContent}
+              >
+                <Image source={{ uri: item.avatar }} style={styles.avatar} />
+                <View style={styles.textContainer}>
+                  <Text style={styles.userName}>
+                    {item.userName}
+                    {item.isOnline && (
+                      <Text style={{ color: config.colors.hasBlockGreen }}> - Online</Text>
+                    )}
+                    {item.isBanned && (
+                      <Text style={{ color: config.colors.wantBlockRed }}> - Banned</Text>
+                    )}
+                  </Text>
+                  <Text style={styles.lastMessage} numberOfLines={1}>
+                    {item.lastMessage}
+                  </Text>
                 </View>
-                <Text style={styles.lastMessage} numberOfLines={1}>
-                  {item.lastMessage}
-                </Text>
-              </View>
-            </TouchableOpacity>
+                {item.unreadCount > 0 && (
+                  <View style={styles.unreadBadge}>
+                    <Text style={styles.unreadBadgeText}>{item.unreadCount}</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => handleDeleteChat(item.chatKey)}
+                style={styles.delete}
+              >
+                <Icon name="trash-outline" size={24} color={config.colors.wantBlockRed} />
+              </TouchableOpacity>
+            </View>
           )}
         />
       )}
     </View>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {
@@ -154,7 +188,11 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#ccc',
   },
-  bannedChatItem: {
+  chatContent: {
+    flexDirection: 'row',
+    flex: 1,
+    alignItems: 'center',
+    justifyContent:'center'
   },
   avatar: {
     width: 50,
@@ -178,7 +216,13 @@ const styles = StyleSheet.create({
     color: '#28a745',
   },
   bannedIndicator: {
-    color: '#dc3545', // Red color for banned users
+    color: '#dc3545',
+  },
+  deleteButton: {
+    color: 'red',
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginLeft: 10,
   },
   emptyContainer: {
     flex: 1,
@@ -189,6 +233,25 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#555',
   },
+  delete:{
+// alignItems:'center',
+// justifyContent:'center',
+  },
+  unreadBadge: {
+    backgroundColor: config.colors.primary, // Badge color
+    borderRadius: 12,
+    minWidth: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 10,
+  },
+  unreadBadgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  
 });
 
 export default InboxScreen;

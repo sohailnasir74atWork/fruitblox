@@ -314,7 +314,9 @@ const styles = StyleSheet.create({
     applebUUTON:{
         height:50,
        width: '100%',
-       marginBottom:10
+       marginBottom:10,
+       borderWidth:1,
+       borderRadius:5
     },
     googleIcon: {
         marginRight: 10, // Space between the icon and the text

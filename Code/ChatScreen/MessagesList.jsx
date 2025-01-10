@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   FlatList,
   View,
@@ -8,11 +8,12 @@ import {
   Vibration,
   Image,
   Linking,
+  Alert,
 } from 'react-native';
 import { getStyles } from './Style';
-import { formatDate, generateShortDisplayName, getColorForName } from './utils';
-import { imageOptions } from '../SettingScreen/settinghelper';
-import { ref } from 'firebase/database';
+import { Menu, MenuOptions, MenuOption, MenuTrigger } from 'react-native-popup-menu';
+import ReportPopup from './ReportPopUp';
+
 
 const MessagesList = ({
   messages,
@@ -30,16 +31,37 @@ const MessagesList = ({
   removeAdmin,
   unbanUser,
   isOwner,
-  toggleDrawer
+  toggleDrawer,
 }) => {
   const styles = getStyles(isDarkMode);
+  const [selectedMessage, setSelectedMessage] = useState(null);
+  const [showReportPopup, setShowReportPopup] = useState(false);
 
-  const handleReply = (item) => {
+  const handleLongPress = (item) => {
+    if(!user.id) 
+    return
     Vibration.vibrate(50); // Vibrate for feedback
-    onReply(item); // Trigger reply with selected message
+    setSelectedMessage(item);
   };
+
+  const handleReport = (message) => {
+    setSelectedMessage(message);
+    setShowReportPopup(true);
+  };
+
+  const submitReport = (message, reason) => {
+    console.log("Reported:", { message, reason });
+    Alert.alert(
+      "Report Submitted",
+      `Thank you for reporting this message.\nReason: ${reason}`
+    );
+  };
+
   const handleProfileClick = (item) => {
-    toggleDrawer(item); // Open the drawer with the user's details
+    if(user.id) 
+      {toggleDrawer(item)} 
+    else return
+    
   };
 
 
@@ -51,7 +73,7 @@ const MessagesList = ({
       : null;
     const shouldShowDateHeader = currentDate !== previousDate;
 
-    
+
     return (
       <View>
         {/* Display the date header if it's a new day */}
@@ -74,16 +96,16 @@ const MessagesList = ({
             ]}
           >
 
-      <TouchableOpacity onPress={() => handleProfileClick(item)} style={styles.profileImagecontainer}>
-            <Image
-              source={{
-                uri: item.avatar
-                  ? item.avatar
-                  : 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png',
-              }}
-              style={styles.profileImage}
-            />
-          </TouchableOpacity>
+            <TouchableOpacity onPress={() => handleProfileClick(item)} style={styles.profileImagecontainer}>
+              <Image
+                source={{
+                  uri: item.avatar
+                    ? item.avatar
+                    : 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png',
+                }}
+                style={styles.profileImage}
+              />
+            </TouchableOpacity>
 
           </View>
 
@@ -99,43 +121,60 @@ const MessagesList = ({
 
             {/* Render main message */}
 
-            <TouchableOpacity
-  onLongPress={() => handleReply(item)} // Use handleReply
-  delayLongPress={300}
->
-  <Text
-    style={
-      item.senderId === user?.id
-        ? styles.myMessageText
-        : styles.otherMessageText
-    }
-  >
-    {/* Inline sender name and admin badge */}
-    <Text style={styles.userName}>{item.sender}</Text>
-    {item.isAdmin && <Text style={styles.dot}> • </Text>}
-    {item.isAdmin && <Text style={styles.admin}>Admin</Text>}
-    {'\n'}
-    {/* Parse and render message text with clickable links */}
-    {item.isAdmin
-      ? item.text.split(/(\s+)/).map((part, index) => {
-          // Check if the part is a URL
-          const isLink = /^https?:\/\/\S+$/.test(part);
-          if (isLink) {
-            return (
-              <Text
-                key={index}
-                style={styles.linkText} // Apply a distinct style for links
-                onPress={() => Linking.openURL(part)} // Open link on press
+            <Menu>
+              <MenuTrigger
+                onLongPress={() => handleLongPress(item)} // Set the message for context menu
+                customStyles={{
+                  TriggerTouchableComponent: TouchableOpacity,
+                }}
               >
-                {part}
-              </Text>
-            );
-          }
-          return part; // Render normal text
-        })
-      : item.text}
-  </Text>
-</TouchableOpacity>
+                <Text
+                  style={
+                    item.senderId === user?.id
+                      ? styles.myMessageText
+                      : styles.otherMessageText
+                  }
+                >
+                  <Text style={styles.userName}>{item.sender}</Text>
+                  {item.isAdmin && <Text style={styles.dot}> • </Text>}
+                  {item.isAdmin && <Text style={styles.admin}>Admin</Text>}
+                  {'\n'}
+                  {item.text.split(/(\s+)/).map((part, index) => {
+                    const isLink = /^https?:\/\/\S+$/.test(part);
+                    if (isLink) {
+                      return (
+                        <Text
+                          key={index}
+                          style={styles.linkText}
+                          onPress={() => Linking.openURL(part)}
+                        >
+                          {part}
+                        </Text>
+                      );
+                    }
+                    return part;
+                  })}
+                </Text>
+              </MenuTrigger>
+              <MenuOptions style={styles.menuoptions}>
+                <MenuOption
+                  onSelect={() => onReply(item)}
+                  text="Reply"
+                  customStyles={{
+                    optionWrapper: styles.menuOption,
+                    optionText: styles.menuOptionText,
+                  }}
+                />
+                <MenuOption
+                  onSelect={() => handleReport(item)}
+                  text="Report"
+                  customStyles={{
+                    optionWrapper: styles.menuOption,
+                    optionText: styles.menuOptionText,
+                  }}
+                />
+              </MenuOptions>
+            </Menu>
 
 
           </View>
@@ -191,27 +230,36 @@ const MessagesList = ({
             </View>
           )}
         </View>
+
       </View>
     );
   };
 
   return (
-    <FlatList
-      data={messages}
-      keyExtractor={(item) => item.id}
-      renderItem={({ item, index }) => renderMessage({ item, index })}
-      contentContainerStyle={styles.chatList}
-      inverted
-      onEndReachedThreshold={0.3}
-      onEndReached={handleLoadMore}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-          tintColor={isDarkMode ? '#FFF' : '#000'}
-        />
-      }
-    />
+    <>
+      <FlatList
+        data={messages}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item, index }) => renderMessage({ item, index })}
+        contentContainerStyle={styles.chatList}
+        inverted
+        onEndReachedThreshold={0.3}
+        onEndReached={handleLoadMore}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={isDarkMode ? '#FFF' : '#000'}
+          />
+        }
+      />
+      <ReportPopup
+        visible={showReportPopup}
+        message={selectedMessage}
+        onClose={() => setShowReportPopup(false)}
+        onSubmit={submitReport}
+      />
+    </>
   );
 };
 

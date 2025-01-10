@@ -18,17 +18,21 @@ const PAGE_SIZE = 50;
 const PrivateChatScreen = () => {
   const route = useRoute();
   const { selectedUser, selectedTheme } = route.params || {};
-  const { user, theme } = useGlobalState();
-  const [isBanned, setIsBanned] = useState(false);
-  const {bannedUsers}= useGlobalState()
-  useEffect(() => {
-    setIsBanned(bannedUsers.includes(selectedUserId));
-  }, [bannedUsers, selectedUserId]);
+  const { user, theme, bannedUsers } = useGlobalState();
+  const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastLoadedKey, setLastLoadedKey] = useState(null);
+  const [replyTo, setReplyTo] = useState(null);
+  const [input, setInput] = useState('');
 
+
+
+  const selectedUserId = selectedUser?.senderId;
   const myUserId = user?.id;
+  const isBanned = useMemo(() => bannedUsers.includes(selectedUserId), [bannedUsers, selectedUserId]);
   const isDarkMode = theme === 'dark';
   const styles = useMemo(() => getStyles(isDarkMode), [isDarkMode]);
-  const selectedUserId = selectedUser?.senderId;
 
   // Generate a unique chat key
   const chatKey = useMemo(
@@ -41,12 +45,7 @@ const PrivateChatScreen = () => {
 
   const chatRef = useMemo(() => database().ref(`privateChats/${chatKey}`), [chatKey]);
 
-  const [messages, setMessages] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [lastLoadedKey, setLastLoadedKey] = useState(null);
-
-  // Load messages
+  // Load messages with pagination
   const loadMessages = useCallback(
     async (reset = false) => {
       setLoading(reset);
@@ -77,22 +76,6 @@ const PrivateChatScreen = () => {
     [chatRef, lastLoadedKey]
   );
 
-  // Check ban status
-  const checkBanStatus = useCallback(async () => {
-    const bannedByReceiverRef = database().ref(`bannedUsers/${user?.id}`);
-    const bannedBySenderRef = database().ref(`bannedUsers/${selectedUser?.senderId}`);
-
-    const [bannedByReceiverSnapshot, bannedBySenderSnapshot] = await Promise.all([
-      bannedByReceiverRef.once('value'),
-      bannedBySenderRef.once('value'),
-    ]);
-
-    const isBannedByReceiver = bannedByReceiverSnapshot.exists();
-    const isBannedBySender = bannedBySenderSnapshot.exists();
-
-    return { isBannedByReceiver, isBannedBySender };
-  }, [user?.id, selectedUser?.senderId]);
-
   // Send message
   const sendMessage = useCallback(
     async (text) => {
@@ -112,10 +95,13 @@ const PrivateChatScreen = () => {
           receiverName: selectedUser?.sender,
           receiverAvatar: selectedUser?.avatar || 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png',
           timestamp: Date.now(),
+          replyTo: replyTo ? { id: replyTo.id, text: replyTo.text } : null, // Attach reply context
         };
 
-        // Push the message to the database
+        // Push the message to Firebase
         await chatRef.push(newMessage);
+        setInput('');
+        setReplyTo(null);
       } catch (error) {
         console.error('Error sending message:', error);
         Alert.alert('Error', 'Could not send your message. Please try again.');
@@ -130,11 +116,18 @@ const PrivateChatScreen = () => {
     await loadMessages(true);
     setRefreshing(false);
   }, [loadMessages]);
-
-  // Attach listener for new messages
+  const updateLastRead = useCallback(() => {
+    const lastReadRef = database().ref(`lastseen/${myUserId}/${chatKey}`);
+    lastReadRef.set(Date.now());
+  }, [chatKey, myUserId]);
+  
+  useEffect(() => {
+    updateLastRead(); // Update last seen timestamp when the chat is opened
+  }, [updateLastRead]);
+  
   useEffect(() => {
     loadMessages(true);
-
+  
     const listener = chatRef.limitToLast(1).on('child_added', (snapshot) => {
       const newMessage = { id: snapshot.key, ...snapshot.val() };
       setMessages((prevMessages) =>
@@ -142,10 +135,27 @@ const PrivateChatScreen = () => {
           ? prevMessages
           : [newMessage, ...prevMessages]
       );
+      updateLastRead(); // Update last seen timestamp when a new message is added
     });
-
+  
     return () => chatRef.off('child_added', listener); // Cleanup listener
-  }, [chatRef, loadMessages]);
+  }, [chatRef, loadMessages, updateLastRead]);
+  
+  // Attach listener for new messages
+  // useEffect(() => {
+  //   loadMessages(true);
+
+  //   const listener = chatRef.limitToLast(1).on('child_added', (snapshot) => {
+  //     const newMessage = { id: snapshot.key, ...snapshot.val() };
+  //     setMessages((prevMessages) =>
+  //       prevMessages.some((msg) => msg.id === newMessage.id)
+  //         ? prevMessages
+  //         : [newMessage, ...prevMessages]
+  //     );
+  //   });
+
+  //   return () => chatRef.off('child_added', listener); // Cleanup listener
+  // }, [chatRef, loadMessages]);
 
   return (
     <View style={styles.container}>
@@ -162,10 +172,21 @@ const PrivateChatScreen = () => {
           handleLoadMore={loadMessages}
           refreshing={refreshing}
           onRefresh={handleRefresh}
+          bannedUsers={bannedUsers}
+          onReply={(message) => setReplyTo(message)}
         />
       )}
 
-      <PrivateMessageInput onSend={sendMessage} isBanned={isBanned} />
+      <PrivateMessageInput 
+      onSend={sendMessage} 
+      isBanned={isBanned} 
+      bannedUsers={bannedUsers} 
+      replyTo={replyTo} 
+    onCancelReply={() => setReplyTo(null)}
+    input={input}
+    setInput={setInput}
+    selectedTheme={selectedTheme}    
+    />
     </View>
   );
 };

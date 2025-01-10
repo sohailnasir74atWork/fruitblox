@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { initializeApp, getApps } from 'firebase/app';
-import { getDatabase, ref, set, onValue, get, update } from 'firebase/database';
+import { getDatabase, ref, set, onValue, get, update, off, query, orderByKey, limitToLast, remove } from 'firebase/database';
 import auth from '@react-native-firebase/auth';
 import messaging from '@react-native-firebase/messaging';
 import { Appearance } from 'react-native';
@@ -43,6 +43,8 @@ export const GlobalStateProvider = ({ children }) => {
   const [onlineMembersCount, setOnlineMembersCount] = useState(0);
   const [activeUser, setActiveUser] = useState([]);
   const [bannedUsers, setBannedUsers] = useState([]);
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0); // Total unread messages
+
   
   // Track theme changes
   useEffect(() => {
@@ -67,6 +69,60 @@ export const GlobalStateProvider = ({ children }) => {
 
     return () => unsubscribe(); // Clean up listener on component unmount
   }, [user?.id]);
+
+
+  useEffect(() => {
+    if (!user?.id) return;
+  
+    const privateChatsRef = ref(database, 'privateChats');
+    const lastReadRef = ref(database, `lastseen/${user.id}`);
+  
+    const fetchUnreadMessages = async () => {
+      try {
+        const [chatsSnapshot, lastReadSnapshot] = await Promise.all([
+          get(privateChatsRef),
+          get(lastReadRef),
+        ]);
+  
+        const chatsData = chatsSnapshot.val() || {};
+        const lastReadData = lastReadSnapshot.val() || {};
+  
+        // Calculate total unread messages
+        const totalUnread = Object.keys(chatsData).reduce((total, chatKey) => {
+          const messages = Object.entries(chatsData[chatKey] || {});
+          const unreadCount = messages.filter(
+            ([, msg]) => msg.timestamp > (lastReadData[chatKey] || 0)
+          ).length;
+  
+          return total + unreadCount;
+        }, 0);
+  
+        setUnreadMessagesCount(totalUnread); // Update unread messages count
+      } catch (error) {
+        console.error('Error fetching unread messages:', error);
+      }
+    };
+  
+    // Real-time listeners for updates
+    const handleChatsUpdate = () => fetchUnreadMessages();
+    const handleLastReadUpdate = () => fetchUnreadMessages();
+  
+    const chatsListener = onValue(privateChatsRef, handleChatsUpdate, {
+      onlyOnce: false,
+    });
+    const lastReadListener = onValue(lastReadRef, handleLastReadUpdate, {
+      onlyOnce: false,
+    });
+  
+    // Fetch unread messages initially
+    fetchUnreadMessages();
+  
+    return () => {
+      off(privateChatsRef, 'value', chatsListener);
+      off(lastReadRef, 'value', lastReadListener);
+    };
+  }, [user?.id]);
+  
 
   useEffect(() => {
     const onlineRef = ref(database, 'onlineUser');
@@ -94,6 +150,9 @@ export const GlobalStateProvider = ({ children }) => {
     return () => unsubscribe();
   }, []);
   
+
+
+
 
   // Unified Update Function
   const updateLocalStateAndDatabase = async (keyOrUpdates, value) => {
@@ -134,6 +193,8 @@ export const GlobalStateProvider = ({ children }) => {
       console.error('Error updating user state or database:', error);
     }
   };
+
+
 
 
 
@@ -264,10 +325,10 @@ export const GlobalStateProvider = ({ children }) => {
       setUser,
       setOnlineMembersCount,
       activeUser,
-      updateLocalStateAndDatabase,bannedUsers
+      updateLocalStateAndDatabase,bannedUsers, unreadMessagesCount
       
     }),
-    [state, user, onlineMembersCount, theme, activeUser, bannedUsers]
+    [state, user, onlineMembersCount, theme, activeUser, bannedUsers, unreadMessagesCount]
   );
 
   return (

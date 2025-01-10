@@ -20,6 +20,9 @@ import getAdUnitId from '../Ads/ads';
 import { banUser, makeAdmin, markMessagesAsSeen, removeAdmin, unbanUser } from './utils';
 import { useNavigation } from '@react-navigation/native';
 import ProfileBottomDrawer from './BottomDrawer';
+import { limitToLast, orderByKey, query } from 'firebase/database';
+import { getDatabase, ref, get, remove } from 'firebase/database';
+
 const bannerAdUnitId = getAdUnitId('banner');
 const PAGE_SIZE = 250; // Number of messages to fetch per load
 let lastMessageTimestamp = 0; // To track the time of the last sent message
@@ -57,6 +60,36 @@ const isOnline = activeUser.some((activeUser) => activeUser.id === userId);
   const isAdmin = user?.isAdmin || false;
   const isOwner = user?.isOwner || false;
   const styles = useMemo(() => getStyles(theme === 'dark'), [theme]);
+
+  const deleteLast100Messages = async () => {
+    try {
+      const database = getDatabase(); // Initialize Firebase Realtime Database
+      const chatsRef = ref(database, 'chat'); // Reference to the 'chat' node
+      const last100MessagesQuery = query(chatsRef, orderByKey(), limitToLast(10));
+  
+      // Fetch the last 100 messages
+      const snapshot = await get(last100MessagesQuery);
+      const messages = snapshot.val();
+  
+      if (!messages) {
+        console.log('No messages to delete.');
+        return;
+      }
+  
+      // Delete each message
+      const deletePromises = Object.keys(messages).map((messageKey) =>
+        remove(ref(database, `chat/${messageKey}`))
+      );
+  
+      await Promise.all(deletePromises);
+  
+      console.log('Last 100 messages deleted successfully.');
+    } catch (error) {
+      console.error('Error deleting messages:', error);
+    }
+  };
+  // useEffect(()=>{deleteLast100Messages()}, [])
+  
   
 
   const validateMessage = useCallback((message) => ({
@@ -242,19 +275,7 @@ const isOnline = activeUser.some((activeUser) => activeUser.id === userId);
       Alert.alert('Error', 'Could not send your message. Please try again.');
     }
   };
-  
- 
-  // console.log(selectedUser)
-  // Function to ban a user
- 
-  
-  // Function to remove admin privileges
- 
-  
-  // Function to unban a user
-  
-  
-  
+
   return (
     <GestureHandlerRootView>
       <View style={styles.container}>
@@ -285,6 +306,7 @@ const isOnline = activeUser.some((activeUser) => activeUser.id === userId);
           onReply={(message) => setReplyTo(message)} // Pass selected message to MessageInput
           banUser={banUser}
           makeadmin={makeAdmin}
+          // onReport={onReport}
           removeAdmin={removeAdmin}
           unbanUser = {unbanUser}
           isOwner={isOwner}
@@ -322,6 +344,7 @@ const isOnline = activeUser.some((activeUser) => activeUser.id === userId);
        startChat={startPrivateChat}
        selectedUser={selectedUser}
        isOnline={isOnline}
+       bannedUsers={bannedUsers}
       />
       <View style={{ alignSelf: 'center' }}>
         <BannerAd

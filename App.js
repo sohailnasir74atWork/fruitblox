@@ -24,6 +24,8 @@ import mobileAds from 'react-native-google-mobile-ads';
 import { AppOpenAd, TestIds, AdEventType } from 'react-native-google-mobile-ads';
 import getAdUnitId from './Code/Ads/ads';
 import { ChatStack } from './Code/ChatScreen/ChatNavigator';
+import { MenuProvider } from 'react-native-popup-menu';
+
 
 const adUnitId =  getAdUnitId('openapp');
 const Tab = createBottomTabNavigator();
@@ -287,7 +289,9 @@ useEffect(() => {
 const AppWrapper = () => (
   <GlobalStateProvider>
     <NotificationHandler />
+    <MenuProvider>
     <App />
+    </MenuProvider>
   </GlobalStateProvider>
 );
 

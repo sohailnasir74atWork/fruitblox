@@ -261,7 +261,18 @@ export  const getStyles = (isDarkMode) =>
             flex:1,
             justifyContent:'center',
             alignItems:'center'
-          }
+          },
+          menuoptions:{
+            flexDirection:'row',
+            justifyContent:'space-evenly',
+          },
+          menuOption: {
+            padding: 10,
+          },
+          menuOptionText: {
+            fontSize: 16,
+            color: '#000',
+          },
        
       
     });

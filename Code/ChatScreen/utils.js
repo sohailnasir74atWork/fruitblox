@@ -16,8 +16,9 @@ export const formatDate = (dateString) => {
 // Ban User
 export const banUser = async (userId) => {
   try {
-    const userToUpdateRef = ref(usersRef, userId); // Reference to the specific user
-    await update(userToUpdateRef, { isBanned: true });
+    const database = getDatabase(); // Ensure database instance is created
+    const userToUpdateRef = ref(database, `users/${userId}`); // Reference to the specific user in the "users" node
+    await update(userToUpdateRef, { isBanned: true }); // Update the user's `isBanned` property
     Alert.alert('Success', 'User has been banned.');
   } catch (error) {
     console.error('Error banning user:', error);
@@ -28,8 +29,12 @@ export const banUser = async (userId) => {
 // Unban User
 export const unbanUser = async (userId) => {
   try {
-    const userToUpdateRef = ref(usersRef, userId); // Reference to the specific user
+    const database = getDatabase(); // Ensure the database instance is initialized
+    const userToUpdateRef = ref(database, `users/${userId}`); // Reference to the specific user in the "users" node
+
+    // Update the user's `isBanned` property to `false`
     await update(userToUpdateRef, { isBanned: false });
+
     Alert.alert('Success', 'User has been unbanned.');
   } catch (error) {
     console.error('Error unbanning user:', error);
@@ -135,3 +140,35 @@ export const unbanUserInChat = async (currentUserId, selectedUserId) => {
     ]
   );
 };
+
+
+
+
+// const deleteLast100Messages = async () => {
+//   try {
+//     const database = getDatabase(); // Initialize Firebase Realtime Database
+//     const chatsRef = ref(database, 'chat'); // Reference to the 'chat' node
+//     const last100MessagesQuery = query(chatsRef, orderByKey(), limitToLast(10));
+
+//     // Fetch the last 100 messages
+//     const snapshot = await get(last100MessagesQuery);
+//     const messages = snapshot.val();
+
+//     if (!messages) {
+//       console.log('No messages to delete.');
+//       return;
+//     }
+
+//     // Delete each message
+//     const deletePromises = Object.keys(messages).map((messageKey) =>
+//       remove(ref(database, `chat/${messageKey}`))
+//     );
+
+//     await Promise.all(deletePromises);
+
+//     console.log('Last 100 messages deleted successfully.');
+//   } catch (error) {
+//     console.error('Error deleting messages:', error);
+//   }
+// };
+// useEffect(()=>{deleteLast100Messages()}, [])

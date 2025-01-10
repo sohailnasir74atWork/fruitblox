@@ -7,15 +7,14 @@ import {
   TouchableOpacity,
   Pressable,
   Image,
-  Alert,
 } from 'react-native';
 import { getStyles } from '../SettingScreen/settingstyle';
 import { useGlobalState } from '../GlobelStats';
 import config from '../Helper/Environment';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { banUserInChat } from './utils';
+import { banUserInChat, unbanUserInChat } from './utils';
 
-const ProfileBottomDrawer = ({ isVisible, toggleModal, startChat, selectedUser, isOnline }) => {
+const ProfileBottomDrawer = ({ isVisible, toggleModal, startChat, selectedUser, isOnline, bannedUsers }) => {
   const { theme, user } = useGlobalState();
   const userName = selectedUser?.sender || null;
   const avatar = selectedUser?.avatar || null;
@@ -23,24 +22,16 @@ const ProfileBottomDrawer = ({ isVisible, toggleModal, startChat, selectedUser, 
   const isDarkMode = theme === 'dark';
   const styles = getStyles(isDarkMode);
 
-  // Handle Ban Action
-  const handleBanUser = () => {
-    Alert.alert(
-      'Warning',
-      'If you ban this user, you may not see any messages from them again. Do you wish to proceed?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Proceed',
-          onPress: () => {
-          banUserInChat(user.id, selectedUser.senderId)
-          toggleModal()
-            // Add your ban logic here
-          },
-        },
-      ],
-      { cancelable: true }
-    );
+  // Determine if the user is currently banned
+  const isBanned = bannedUsers?.includes(selectedUser?.senderId);
+
+  // Handle Ban/Unban Toggle
+  const handleToggleBan = async () => {
+    if (isBanned) {
+      await unbanUserInChat(user.id, selectedUser.senderId);
+    } else {
+      await banUserInChat(user.id, selectedUser.senderId);
+    }
   };
 
   // Handle Start Chat
@@ -58,7 +49,7 @@ const ProfileBottomDrawer = ({ isVisible, toggleModal, startChat, selectedUser, 
       onRequestClose={toggleModal}
     >
       {/* Overlay */}
-      <Pressable style={styles.overlay} onPress={() => toggleModal()} />
+      <Pressable style={styles.overlay} onPress={toggleModal} />
 
       {/* Drawer Content */}
       <View style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
@@ -98,9 +89,18 @@ const ProfileBottomDrawer = ({ isVisible, toggleModal, startChat, selectedUser, 
                 </Text>
               </View>
             </View>
-            {/* Ban Icon */}
-            <TouchableOpacity onPress={handleBanUser}>
-              <Icon name="ban-outline" size={30} color={config.colors.wantBlockRed} />
+
+            {/* Ban/Unban Icon */}
+            <TouchableOpacity onPress={handleToggleBan}>
+              <Icon
+                name="ban-outline"
+                size={30}
+                color={
+                  isBanned
+                    ? config.colors.wantBlockRed // Banned color
+                    : config.colors.hasBlockGreen // Not banned color
+                }
+              />
             </TouchableOpacity>
           </View>
 
