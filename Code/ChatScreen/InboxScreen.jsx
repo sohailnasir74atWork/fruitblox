@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -37,15 +37,13 @@ const InboxScreen = () => {
     if (!user?.id) return;
 
     const privateChatsRef = database().ref('privateChats');
-    const userChats = [];
-
     const fetchChats = async () => {
       try {
         setLoading(true);
         const snapshot = await privateChatsRef.once('value');
         const chatsData = snapshot.val() || {};
 
-        Object.keys(chatsData).forEach((chatKey) => {
+        const userChats = Object.keys(chatsData).reduce((acc, chatKey) => {
           const [userId1, userId2] = chatKey.split('_');
           const otherUserId = userId1 === user.id ? userId2 : userId1;
 
@@ -58,9 +56,9 @@ const InboxScreen = () => {
               const lastMessage = messages[0][1];
 
               // Check if the other user is online
-              const isOnline = activeUser.some((active) => active.id === otherUserId);
+              const isOnline = activeUser?.some((active) => active.id === otherUserId);
 
-              userChats.push({
+              acc.push({
                 chatKey,
                 userName:
                   lastMessage.receiverId === otherUserId
@@ -77,7 +75,9 @@ const InboxScreen = () => {
               });
             }
           }
-        });
+
+          return acc;
+        }, []);
 
         setChats(userChats);
       } catch (error) {
@@ -88,16 +88,21 @@ const InboxScreen = () => {
     };
 
     fetchChats();
-  }, [user?.id, activeUser, bannedUsers]);
+  }, [user?.id, JSON.stringify(activeUser), JSON.stringify(bannedUsers)]); // Use stable dependencies
 
-  const navigateToPrivateChat = (chatKey, otherUserId, userName, avatar, isOnline, isBanned) => {
-    navigation.navigate('PrivateChat', {
-      selectedUser: { senderId: otherUserId, sender: userName, avatar },
-      selectedTheme: { colors: { text: '#000' } }, // Replace with actual theme
-      isOnline,
-      isBanned
-    });
-  };
+  const navigateToPrivateChat = useCallback(
+    (chatKey, otherUserId, userName, avatar, isOnline, isBanned) => {
+      navigation.navigate('PrivateChat', {
+        selectedUser: { senderId: otherUserId, sender: userName, avatar },
+        selectedTheme: { colors: { text: '#000' } }, // Replace with actual theme
+        isOnline,
+        isBanned,
+      });
+    },
+    [navigation]
+  );
+
+  const memoizedChats = useMemo(() => chats, [chats]);
 
   return (
     <View style={styles.container}>
@@ -109,7 +114,7 @@ const InboxScreen = () => {
         </View>
       ) : (
         <FlatList
-          data={chats}
+          data={memoizedChats}
           keyExtractor={(item) => item.chatKey}
           renderItem={({ item }) => (
             <TouchableOpacity
@@ -118,17 +123,10 @@ const InboxScreen = () => {
                 navigateToPrivateChat(item.chatKey, item.otherUserId, item.userName, item.avatar, item.isOnline, item.isBanned)
               }
             >
-              <Image
-                source={{ uri: item.avatar }}
-                style={styles.avatar}
-              />
+              <Image source={{ uri: item.avatar }} style={styles.avatar} />
               <View style={styles.textContainer}>
-              <View style={{flex:1, justifyContent:'space-between', flexDirection:'row'}}>
-                <Text style={styles.userName}>
-                   
-                  {item.userName}{' '}
-                  
-                  </Text> 
+                <View style={{ flex: 1, justifyContent: 'space-between', flexDirection: 'row' }}>
+                  <Text style={styles.userName}>{item.userName}</Text>
                   {item.isOnline && <Text style={styles.onlineIndicator}>Online</Text>}
                   {item.isBanned && <Text style={styles.bannedIndicator}>Banned</Text>}
                 </View>
@@ -157,7 +155,6 @@ const styles = StyleSheet.create({
     borderBottomColor: '#ccc',
   },
   bannedChatItem: {
-    // backgroundColor: '#f8d7da', // Light red for banned users
   },
   avatar: {
     width: 50,

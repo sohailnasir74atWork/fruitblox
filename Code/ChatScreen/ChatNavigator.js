@@ -37,16 +37,10 @@ const PrivateChatHeader = ({ route, selectedTheme }) => {
   const userName = selectedUser?.sender || 'User';
   const onlineStatusColor = isOnline ? config.colors.hasBlockGreen : config.colors.wantBlockRed;
     const {user} = useGlobalState()
-    const [isBannedNew, setIsBannedNew]  = useState(false)
-
-    useEffect(()=>{setIsBannedNew(isBanned)},[isBanned])
 
 
 
-
-
-
-
+    
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', }}>
       <Image

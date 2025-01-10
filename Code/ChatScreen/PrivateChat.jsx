@@ -17,13 +17,18 @@ const PAGE_SIZE = 50;
 
 const PrivateChatScreen = () => {
   const route = useRoute();
-  const { selectedUser, selectedTheme, isBanned } = route.params;
+  const { selectedUser, selectedTheme } = route.params || {};
   const { user, theme } = useGlobalState();
+  const [isBanned, setIsBanned] = useState(false);
+  const {bannedUsers}= useGlobalState()
+  useEffect(() => {
+    setIsBanned(bannedUsers.includes(selectedUserId));
+  }, [bannedUsers, selectedUserId]);
 
   const myUserId = user?.id;
   const isDarkMode = theme === 'dark';
   const styles = useMemo(() => getStyles(isDarkMode), [isDarkMode]);
-  const selectedUserId = selectedUser.senderId;
+  const selectedUserId = selectedUser?.senderId;
 
   // Generate a unique chat key
   const chatKey = useMemo(
@@ -71,21 +76,23 @@ const PrivateChatScreen = () => {
     },
     [chatRef, lastLoadedKey]
   );
+
+  // Check ban status
   const checkBanStatus = useCallback(async () => {
-    const bannedByReceiverRef = database().ref(`bannedUsers/${user.id}`); // Check if current user is banned by receiver
-    const bannedBySenderRef = database().ref(`bannedUsers/${selectedUser.senderId}`); // Check if receiver is banned by current user
-  
+    const bannedByReceiverRef = database().ref(`bannedUsers/${user?.id}`);
+    const bannedBySenderRef = database().ref(`bannedUsers/${selectedUser?.senderId}`);
+
     const [bannedByReceiverSnapshot, bannedBySenderSnapshot] = await Promise.all([
       bannedByReceiverRef.once('value'),
       bannedBySenderRef.once('value'),
     ]);
-  
+
     const isBannedByReceiver = bannedByReceiverSnapshot.exists();
     const isBannedBySender = bannedBySenderSnapshot.exists();
-  
+
     return { isBannedByReceiver, isBannedBySender };
-  }, [user.id, selectedUser.senderId]);
-  
+  }, [user?.id, selectedUser?.senderId]);
+
   // Send message
   const sendMessage = useCallback(
     async (text) => {
@@ -94,33 +101,29 @@ const PrivateChatScreen = () => {
         Alert.alert('Error', 'Message cannot be empty.');
         return;
       }
-  
+
       try {
-        // Check ban status before sending the message
-      
-  
-        // Construct the new message
         const newMessage = {
           text: trimmedText,
           senderId: myUserId,
           senderName: user?.displayName || 'Anonymous',
           senderAvatar: user?.avatar || 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png',
           receiverId: selectedUserId,
-          receiverName: selectedUser.sender,
-          receiverAvatar: selectedUser.avatar || 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png',
+          receiverName: selectedUser?.sender,
+          receiverAvatar: selectedUser?.avatar || 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png',
           timestamp: Date.now(),
         };
-  
-        // Push the message to the datBAN abase
+
+        // Push the message to the database
         await chatRef.push(newMessage);
       } catch (error) {
         console.error('Error sending message:', error);
         Alert.alert('Error', 'Could not send your message. Please try again.');
       }
     },
-    [chatRef, checkBanStatus, myUserId, selectedUser, selectedUserId, user]
+    [chatRef, myUserId, selectedUser, selectedUserId, user]
   );
-  
+
   // Handle refresh
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -147,7 +150,7 @@ const PrivateChatScreen = () => {
   return (
     <View style={styles.container}>
       {loading && messages.length === 0 ? (
-        <ActivityIndicator size="large" color="#1E88E5" />
+        <ActivityIndicator size="large" color="#1E88E5" style={{ flex: 1, justifyContent: 'center' }} />
       ) : messages.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyText}>No messages yet. Start the conversation!</Text>

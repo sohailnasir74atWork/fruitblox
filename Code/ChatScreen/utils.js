@@ -96,7 +96,7 @@ export const banUserInChat = async (currentUserId, selectedUserId) => {
       Alert.alert('Success', 'You have banned this user.');
     } catch (error) {
       console.error('Error banning user:', error);
-      Alert.alert('Error', 'Could not ban the user. Please try again.');
+     Alert.alert('Error', 'Could not ban the user. Please try again.');
     }
   };
 
@@ -107,7 +107,7 @@ export const banUserInChat = async (currentUserId, selectedUserId) => {
       { text: 'Cancel', style: 'cancel' },
       { text: 'Proceed', onPress: confirmBan },
     ]
-  );
+  )
 };
 
 export const unbanUserInChat = async (currentUserId, selectedUserId) => {

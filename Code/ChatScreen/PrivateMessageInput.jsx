@@ -10,7 +10,6 @@ const PrivateMessageInput = ({ onSend, replyTo, onCancelReply, isBanned }) => {
   const [isSending, setIsSending] = useState(false);
   const { theme } = useGlobalState();
   const isDark = theme === 'dark';
-  console.log(isBanned)
 
   const styles = getStyles(isDark);
 

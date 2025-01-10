@@ -33,8 +33,8 @@ const ProfileBottomDrawer = ({ isVisible, toggleModal, startChat, selectedUser, 
         {
           text: 'Proceed',
           onPress: () => {
-            console.log('User banned:', selectedUser?.senderId);
           banUserInChat(user.id, selectedUser.senderId)
+          toggleModal()
             // Add your ban logic here
           },
         },
