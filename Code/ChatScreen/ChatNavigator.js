@@ -30,114 +30,129 @@ const HeaderRight = ({ selectedTheme, navigateToInbox, setModalVisibleChatinfo, 
     />
   </View>
 );
-
-const PrivateChatHeader = ({ route, selectedTheme }) => {
-  const { selectedUser, isOnline, isBanned } = route.params || {};
-  const avatarUri = selectedUser?.avatar || 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png';
-  const userName = selectedUser?.sender || 'User';
-  const onlineStatusColor = isOnline ? config.colors.hasBlockGreen : config.colors.wantBlockRed;
-    const {user} = useGlobalState()
-
-
-
-    
-  return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', }}>
-      <Image
-        source={{ uri: avatarUri }}
-        style={styles.avatar}
-      />
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent:'space-between', flex:1 }}>
-      <View>
-        <Text style={[styles.userName, { color: selectedTheme.colors.text }]}>{userName}</Text>
-        <Text style={[styles.userStatus, { color: onlineStatusColor }]}>
-          {isBanned ? 'Banned' : (isOnline && !isBanned ? 'Online' : 'Offline')}
-        </Text>
-        
+const PrivateChatHeader = ({ selectedUser, isOnline, selectedTheme, bannedUsers }) => {
+    const avatarUri = selectedUser?.avatar || 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png';
+    const userName = selectedUser?.sender || 'User';
+    const onlineStatusColor = isOnline ? config.colors.hasBlockGreen : config.colors.wantBlockRed;
+    const { user } = useGlobalState();
+  
+    // Determine if the user is currently banned
+    const isBanned = bannedUsers.includes(selectedUser.senderId);
+  
+    const handleBanToggle = async () => {
+      if (isBanned) {
+        await unbanUserInChat(user.id, selectedUser.senderId);
+      } else {
+        await banUserInChat(user.id, selectedUser.senderId);
+      }
+    };
+  
+    return (
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <Image source={{ uri: avatarUri }} style={styles.avatar} />
+        <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <View>
+            <Text style={[styles.userName, { color: selectedTheme.colors.text }]}>{userName}</Text>
+            <Text style={[styles.userStatus, { color: onlineStatusColor }]}>
+              {isBanned ? 'Banned' : isOnline ? 'Online' : 'Offline'}
+            </Text>
+          </View>
+          <Icon
+            name="ban-outline"
+            size={24}
+            color={isBanned ? config.colors.wantBlockRed : config.colors.hasBlockGreen}
+            style={styles.icon2}
+            onPress={handleBanToggle}
+          />
+        </View>
       </View>
-    {isBanned &&  <Icon
-      name="ban-outline"
-      size={24}
-      color={config.colors.wantBlockRed}
-      style={styles.icon2}
-      onPress={() => unbanUserInChat( user.id, selectedUser.senderId)}
-    />}
-     {!isBanned &&  <Icon
-      name="ban-outline"
-      size={24}
-      color={config.colors.hasBlockGreen}
-      style={styles.icon2}
-      onPress={() => banUserInChat( user.id, selectedUser.senderId)}
-    />}
-    </View>
-    </View>
-  );
-};
-
-export const ChatStack = ({ selectedTheme, setChatFocused, modalVisibleChatinfo, setModalVisibleChatinfo }) => {
-  const navigateToInbox = (navigation) => navigation.navigate('Inbox');
-  const {bannedUsers} = useGlobalState()
+    );
+  };
   
 
-
-
-  const headerOptions = useMemo(
-    () => ({
-      headerStyle: { backgroundColor: selectedTheme.colors.background },
-      headerTintColor: selectedTheme.colors.text,
-      headerTitleStyle: { fontFamily: 'Lato-Bold', fontSize: 24 },
-    }),
-    [selectedTheme]
-  );
-
-  return (
-    <Stack.Navigator screenOptions={headerOptions}>
-      <Stack.Screen
-        name="GroupChat"
-        options={({ navigation }) => ({
-          headerTitleAlign: 'left',
-          headerTitle: 'Chat',
-          headerRight: () => (
-            <HeaderRight
+  export const ChatStack = ({ selectedTheme, setChatFocused, modalVisibleChatinfo, setModalVisibleChatinfo }) => {
+    const { user } = useGlobalState();
+    const [bannedUsers, setBannedUsers] = useState([]);
+  
+    useEffect(() => {
+      if (!user?.id) return;
+  
+      const database = getDatabase();
+      const bannedRef = ref(database, `bannedUsers/${user.id}`);
+  
+      const unsubscribe = onValue(bannedRef, (snapshot) => {
+        const data = snapshot.val() || {};
+        setBannedUsers(Object.keys(data));
+      });
+  
+      return () => unsubscribe();
+    }, [user?.id]);
+  
+    const headerOptions = useMemo(
+      () => ({
+        headerStyle: { backgroundColor: selectedTheme.colors.background },
+        headerTintColor: selectedTheme.colors.text,
+        headerTitleStyle: { fontFamily: 'Lato-Bold', fontSize: 24 },
+      }),
+      [selectedTheme]
+    );
+  
+    return (
+      <Stack.Navigator screenOptions={headerOptions}>
+        <Stack.Screen
+          name="GroupChat"
+          options={({ navigation }) => ({
+            headerTitleAlign: 'left',
+            headerTitle: 'Chat',
+            headerRight: () => (
+              <HeaderRight
+                selectedTheme={selectedTheme}
+                navigateToInbox={(nav) => nav.navigate('Inbox')}
+                setModalVisibleChatinfo={setModalVisibleChatinfo}
+                navigation={navigation}
+              />
+            ),
+          })}
+        >
+          {() => (
+            <ChatScreen
               selectedTheme={selectedTheme}
-              navigateToInbox={navigateToInbox}
+              setChatFocused={setChatFocused}
+              modalVisibleChatinfo={modalVisibleChatinfo}
               setModalVisibleChatinfo={setModalVisibleChatinfo}
-              navigation={navigation}
-
+              bannedUsers={bannedUsers}
             />
-          ),
-        })}
-      >
-        {() => (
-          <ChatScreen
-            selectedTheme={selectedTheme}
-            setChatFocused={setChatFocused}
-            modalVisibleChatinfo={modalVisibleChatinfo}
-            setModalVisibleChatinfo={setModalVisibleChatinfo}
-            bannedUsers={bannedUsers}
-            />
-        )}
-      </Stack.Screen>
-
-      <Stack.Screen
-        name="Inbox"
-        component={InboxScreen}
-        options={{ title: 'Inbox' }}
-        initialParams={{ bannedUsers }}
-
-      />
-
-      <Stack.Screen
-        name="PrivateChat"
-        component={PrivateChatScreen}
-        initialParams={{ bannedUsers }}
-        options={({ route }) => ({
-          headerTitle: () => <PrivateChatHeader route={route} selectedTheme={selectedTheme} />,
-        })}
-      />
-    </Stack.Navigator>
-  );
-};
+          )}
+        </Stack.Screen>
+  
+        <Stack.Screen
+          name="Inbox"
+          component={InboxScreen}
+          options={{ title: 'Inbox' }}
+          initialParams={{ bannedUsers }}
+        />
+  
+        <Stack.Screen
+          name="PrivateChat"
+          component={PrivateChatScreen}
+          options={({ route }) => {
+            const { selectedUser, isOnline } = route.params;
+            return {
+              headerTitle: () => (
+                <PrivateChatHeader
+                  selectedUser={selectedUser}
+                  isOnline={isOnline}
+                  selectedTheme={selectedTheme}
+                  bannedUsers={bannedUsers} // Pass bannedUsers dynamically
+                />
+              ),
+            };
+          }}
+        />
+      </Stack.Navigator>
+    );
+  };
+  
 
 const styles = StyleSheet.create({
   icon: {
