@@ -20,7 +20,7 @@ const HeaderRight = ({ selectedTheme, navigateToInbox, setModalVisibleChatinfo, 
         name="chatbox-ellipses-outline"
         size={24}
         color={selectedTheme.colors.text}
-        style={styles.icon}
+        style={styles.icon2}
         onPress={() => navigateToInbox(navigation)}
       />
       {unreadMessagesCount > 0 && (

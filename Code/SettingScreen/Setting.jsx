@@ -16,10 +16,13 @@ import { getStyles } from './settingstyle';
 import { handleGetSuggestions, handleOpenFacebook, handleOpenWebsite, handleRateApp, handleShareApp, imageOptions } from './settinghelper';
 import { logoutUser } from '../Firebase/UserLogics';
 import SignInDrawer from '../Firebase/SigninDrawer';
+import auth from '@react-native-firebase/auth';
 
 import { RewardedAd, RewardedAdEventType } from 'react-native-google-mobile-ads';
 import getAdUnitId from '../Ads/ads';
 import { appleAuth } from '@invertase/react-native-apple-authentication';
+import { deleteUser } from '@react-native-firebase/auth';
+import { resetUserState } from '../Globelhelper';
 
 const adUnitId = getAdUnitId('rewarded')
 
@@ -35,31 +38,15 @@ export default function SettingsScreen({ selectedTheme }) {
   const [selectedImage, setSelectedImage] = useState(null);
   const [loaded, setLoaded] = useState(false);
   const [openSingnin, setOpenSignin] = useState(false);
-  const { user, theme,  updateLocalStateAndDatabase, setUser} = useGlobalState()
+  const { user, theme, updateLocalStateAndDatabase, setUser } = useGlobalState()
   const isDarkMode = theme === 'dark';
 
-async function onAppleButtonPress() {
-  // performs login request
-  const appleAuthRequestResponse = await appleAuth.performRequest({
-    requestedOperation: appleAuth.Operation.LOGIN,
-    // Note: it appears putting FULL_NAME first is important, see issue #293
-    requestedScopes: [appleAuth.Scope.FULL_NAME, appleAuth.Scope.EMAIL],
-  });
-
-  // get current authentication state for user
-  // /!\ This method must be tested on a real device. On the iOS simulator it always throws an error.
-  const credentialState = await appleAuth.getCredentialStateForUser(appleAuthRequestResponse.user);
-
-  // use credentialState response to ensure the user is authenticated
-  if (credentialState === appleAuth.State.AUTHORIZED) {
-    // user is authenticated
-  }
-}
+  console.log(user)
   // Fetch user data on component mount
   useEffect(() => {
-    if (user && user.id) {
-      setNewDisplayName(user.displayName || 'Anonymous');
-      setSelectedImage(user.avatar || 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png');
+    if (user && user?.id) {
+      setNewDisplayName(user?.displayname || 'Anonymous');
+      setSelectedImage(user?.avatar || 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png');
     } else {
       setNewDisplayName('Guest User');
       setSelectedImage('https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png');
@@ -68,9 +55,9 @@ async function onAppleButtonPress() {
 
   const handleSaveChanges = async () => {
     const MAX_NAME_LENGTH = 20; // Define the maximum length for the display name
-  
-    if (!user.id) return;
-  
+
+    if (!user?.id) return;
+
     if (newDisplayName.length > MAX_NAME_LENGTH) {
       Alert.alert(
         'Error',
@@ -78,7 +65,7 @@ async function onAppleButtonPress() {
       );
       return;
     }
-  
+
     try {
       await updateLocalStateAndDatabase({
         displayName: newDisplayName,
@@ -91,10 +78,10 @@ async function onAppleButtonPress() {
       Alert.alert('Error', 'Failed to update profile. Please try again.');
     }
   };
-  
-  
-  const displayName = user.id ? newDisplayName || user.displayName || 'Anonymous' : 'Guest User';
-  
+
+
+  const displayName = user?.id ? newDisplayName || user?.displayname || 'Anonymous' : 'Guest User';
+
   const handleLogout = async () => {
     try {
       await logoutUser(setUser); // Await the logout process
@@ -106,14 +93,63 @@ async function onAppleButtonPress() {
       Alert.alert('Error', 'Failed to log out. Please try again.');
     }
   };
+
+  const handleDeleteUser = async () => {
+    try {
+      if (!user || !user?.id) {
+        Alert.alert('Error', 'No user is currently logged in.');
+        return;
+      }
+
+      Alert.alert(
+        'Delete Account',
+        'Are you sure you want to delete your account? This action is irreversible.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                const currentUser = auth().currentUser; // Get the current logged-in user
+                if (currentUser) {
+                  await currentUser.delete(); // Delete the user account
+
+                  await resetUserState(setUser)
+                  Alert.alert('Success', 'Your account has been deleted.');
+                } else {
+                  Alert.alert('Error', 'User not found. Please log in again.');
+                }
+              } catch (error) {
+                console.error('Error deleting user:', error.message);
+                if (error.code === 'auth/requires-recent-login') {
+                  Alert.alert(
+                    'Session Expired',
+                    'Please log in again to delete your account.',
+                    [{ text: 'OK' }]
+                  );
+                } else {
+                  Alert.alert('Error', 'Failed to delete account. Please try again.');
+                }
+              }
+            },
+          },
+        ]
+      );
+    } catch (error) {
+      console.error('Error deleting user:', error.message);
+      Alert.alert('Error', 'An error occurred while trying to delete the account.');
+    }
+  };
+
   const handleProfileUpdate = () => {
-    if (user.id) {
+    if (user?.id) {
       setDrawerVisible(true); // Open the profile drawer if the user is logged in
     } else {
       Alert.alert('Notice', 'Please log in to customize your profile.'); // Show alert if user is not logged in
     }
   };
-  
+
   useEffect(() => {
     const unsubscribeLoaded = rewarded.addAdEventListener(RewardedAdEventType.LOADED, () => {
       setLoaded(true);
@@ -122,12 +158,12 @@ async function onAppleButtonPress() {
       RewardedAdEventType.EARNED_REWARD,
       reward => {
         // console.log('User earned reward of ', reward);
-        const newPoints = (user.points || 0) + reward.amount;
+        const newPoints = (user?.points || 0) + reward.amount;
         // console.log(newPoints)
         updateLocalStateAndDatabase('points', newPoints);
         const now = new Date().getTime(); // Current time in milliseconds
         updateLocalStateAndDatabase('lastRewardtime', now);
-    
+
         alert('Reward Granted', `You earned ${reward.amount} points!`);
       },
     );
@@ -143,26 +179,26 @@ async function onAppleButtonPress() {
   }, []);
   const canClaimReward = () => {
     const now = new Date().getTime();
-    const lastRewardTime = user.lastRewardtime;
-  
+    const lastRewardTime = user?.lastRewardtime;
+
     if (!lastRewardTime) {
       return true; // No reward claimed yet, eligible
     }
-  
+
     const oneHourInMs = 1 * 30 * 1000; // 1 hour in milliseconds
     const timeDifference = now - lastRewardTime;
-  
+
     return timeDifference >= oneHourInMs; // Eligible if more than 1 hour has passed
   };
-// console.log(user)
+  // console.log(user)
   const showAd = async () => {
     try {
       if (!canClaimReward()) {
-        const remainingTime = 60 - Math.floor((new Date().getTime() - user.lastRewardtime) / 60000);
+        const remainingTime = 60 - Math.floor((new Date().getTime() - user?.lastRewardtime) / 60000);
         Alert.alert('Not Eligible', `Please wait ${remainingTime} minutes to claim the next reward.`);
         return;
       }
-  
+
       if (loaded) {
         await rewarded.show(); // Attempt to show the ad
         setLoaded(false); // Reset ad availability
@@ -172,27 +208,27 @@ async function onAppleButtonPress() {
       }
     } catch (error) {
       console.error('Error displaying ad:', error);
-      const newPoints = (user.points || 0) + 100;
+      const newPoints = (user?.points || 0) + 100;
       updateLocalStateAndDatabase('points', newPoints);
-  
+
       // Update the last reward time
       const now = new Date().getTime(); // Current time in milliseconds
       updateLocalStateAndDatabase('lastRewardtime', now);
-  
+
       Alert.alert('Reward Granted', `You earned 100 points!`);
     }
   };
-  
-  
+
+
 
   const handleGetPoints = () => {
-    if (!user.id) {
+    if (!user?.id) {
       setOpenSignin(true);
     } else {
       setIsAdsDrawerVisible(true)
     }
   };
-  
+
   const styles = getStyles(isDarkMode);
   return (
     <View style={styles.container}>
@@ -200,23 +236,23 @@ async function onAppleButtonPress() {
       <View style={styles.cardContainer}>
         <View style={styles.optionuserName}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <Image
-  source={
-    typeof selectedImage === 'string' && selectedImage.trim()
-      ? { uri: selectedImage }
-      : { uri: 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png' }
-  }
-  style={styles.profileImage}
-/>
-            <TouchableOpacity onPress={user.id ? ()=>{} : ()=>{setOpenSignin(true)}}>
+            <Image
+              source={
+                typeof selectedImage === 'string' && selectedImage.trim()
+                  ? { uri: selectedImage }
+                  : { uri: 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png' }
+              }
+              style={styles.profileImage}
+            />
+            <TouchableOpacity onPress={user?.id ? () => { } : () => { setOpenSignin(true) }}>
               <Text style={styles.userName}>
-                {!user.id ? 'Login / Register' : (newDisplayName || displayName)}
+                {!user?.id ? 'Login / Register' : (newDisplayName || displayName)}
               </Text>
-              <Text style={styles.reward}>My Points: {user.points}</Text>
+              <Text style={styles.reward}>My Points: {user?.points}</Text>
             </TouchableOpacity>
           </View>
           <TouchableOpacity onPress={handleProfileUpdate}>
-           {user.id && <Icon name="create-outline" size={24} color={'#566D5D'} />}
+            {user?.id && <Icon name="create-outline" size={24} color={'#566D5D'} />}
           </TouchableOpacity>
         </View>
       </View>
@@ -243,15 +279,19 @@ async function onAppleButtonPress() {
           <Icon name="logo-facebook" size={24} color={'#566D5D'} />
           <Text style={styles.optionText}>Visit Facebook Group</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={user.id ? styles.option :styles.optionLast }onPress={handleOpenWebsite}>
+        <TouchableOpacity style={user?.id ? styles.option : styles.optionLast} onPress={handleOpenWebsite}>
           <Icon name="link-outline" size={24} color={'#4B4453'} />
           <Text style={styles.optionText}>Visit Website</Text>
         </TouchableOpacity>
-        {user.id && <TouchableOpacity style={styles.optionLast}onPress={()=>{handleLogout()}} >
+        {user?.id && <TouchableOpacity style={styles.option} onPress={() => { handleLogout() }} >
           <Icon name="person-outline" size={24} color={'#4B4453'} />
-          <Text style={styles.optionText}>Logout</Text>
+          <Text style={styles.optionTextLogout}>Logout</Text>
         </TouchableOpacity>}
-        
+        {user?.id && <TouchableOpacity style={styles.optionDelete} onPress={handleDeleteUser} >
+          <Icon name="warning-outline" size={24} color={'#4B4453'} />
+          <Text style={styles.optionTextDelete}>Delete My Account</Text>
+        </TouchableOpacity>}
+
       </View>
 
       {/* Bottom Drawer */}
@@ -290,9 +330,9 @@ async function onAppleButtonPress() {
                     setSelectedImage(item);
                   }}
                 >
-                  <Image  source={{
-    uri: item,
-  }} style={styles.imageOption} />
+                  <Image source={{
+                    uri: item,
+                  }} style={styles.imageOption} />
                 </TouchableOpacity>
               )}
             />
@@ -331,17 +371,17 @@ async function onAppleButtonPress() {
               style={styles.saveButton}
               onPress={showAd}
             >
-             <Text style={styles.saveButtonText}>Earn Reward</Text>
+              <Text style={styles.saveButtonText}>Earn Reward</Text>
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
       <SignInDrawer
-          visible={openSingnin}
-          onClose={() => setOpenSignin(false)}
-          selectedTheme={selectedTheme}
-          message='To collect points, you need to sign in'
-        />
+        visible={openSingnin}
+        onClose={() => setOpenSignin(false)}
+        selectedTheme={selectedTheme}
+        message='To collect points, you need to sign in'
+      />
     </View>
   );
 }

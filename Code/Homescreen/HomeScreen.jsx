@@ -27,7 +27,7 @@ const HomeScreen = ({ selectedTheme }) => {
   const [wantsTotal, setWantsTotal] = useState({ price: 0, value: 0 });
   const [isAdLoaded, setIsAdLoaded] = useState(false);
   const [isShowingAd, setIsShowingAd] = useState(false);
-  const [hasAdBeenShown, setHasAdBeenShown] = useState(false);
+  const [hasAdBeenShown, setHasAdBeenShown] = useState(0);
   const [loading, setLoading] = useState(true);
   const isDarkMode = theme === 'dark'
   const viewRef = useRef();
@@ -84,9 +84,9 @@ const HomeScreen = ({ selectedTheme }) => {
 
   const openDrawer = (section) => {
     // Show ad only if it's the "wants" section and the ad hasn't been shown yet
-    if (section === 'wants' && !hasAdBeenShown) {
+    if (section === 'wants' && hasAdBeenShown === 1) {
       showInterstitialAd(() => {
-        setHasAdBeenShown(true); // Mark the ad as shown
+        setHasAdBeenShown(hasAdBeenShown + 1); // Mark the ad as shown
         setSelectedSection(section);
         setIsDrawerVisible(true);
       });
@@ -94,6 +94,8 @@ const HomeScreen = ({ selectedTheme }) => {
       // Open drawer without showing the ad
       setSelectedSection(section);
       setIsDrawerVisible(true);
+      setHasAdBeenShown(hasAdBeenShown + 1); // Mark the ad as shown
+
     }
   };
 
@@ -186,33 +188,41 @@ const HomeScreen = ({ selectedTheme }) => {
 
 
   const captureAndSave = async () => {
-
+    if (!viewRef.current) {
+      console.error('View reference is undefined.');
+      return;
+    }
+  
     try {
-
-      const uri = await captureRef(viewRef, {
+      // Capture the view as an image
+      const uri = await captureRef(viewRef.current, {
         format: 'png',
         quality: 0.8,
       });
-
-
+  
+      // Generate a unique file name
+      const timestamp = new Date().getTime(); // Use the current timestamp
+      const uniqueFileName = `screenshot_${timestamp}.png`;
+  
+      // Determine the path to save the screenshot
       const downloadDest = Platform.OS === 'android'
-        ? `${RNFS.ExternalDirectoryPath}/screenshot.png`
-        : `${RNFS.DocumentDirectoryPath}/screenshot.png`;
-
+        ? `${RNFS.ExternalDirectoryPath}/${uniqueFileName}`
+        : `${RNFS.DocumentDirectoryPath}/${uniqueFileName}`;
+  
+      // Save the captured image to the determined path
       await RNFS.copyFile(uri, downloadDest);
-
-
+  
+      console.log(`Screenshot saved to: ${downloadDest}`);
+  
       return downloadDest;
     } catch (error) {
-      // console.log('Error capturing screenshot:', error);
+      console.error('Error capturing screenshot:', error);
+      Alert.alert('Error', 'Failed to capture and save the screenshot. Please try again.');
     }
   };
+  
+  
 
-  const shareScreenshot = async () => {
-    showInterstitialAd(() => {
-      proceedWithScreenshotShare();
-    });
-  };
 
   const proceedWithScreenshotShare = async () => {
     try {
@@ -358,7 +368,7 @@ const HomeScreen = ({ selectedTheme }) => {
                 </View>
               </ViewShot>
             </ScrollView>)}
-          <TouchableOpacity onPress={shareScreenshot} style={styles.float}>
+          <TouchableOpacity onPress={proceedWithScreenshotShare} style={styles.float}>
 
             <Icon name={!config.isNoman ? "chevron-down-circle" : 'arrow-down-circle'} size={60} color={config.colors.hasBlockGreen} />
           </TouchableOpacity>

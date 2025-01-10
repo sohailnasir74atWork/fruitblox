@@ -255,7 +255,7 @@ export const GlobalStateProvider = ({ children }) => {
       }
     });
     return () => unsubscribe();
-  }, [user.id]);
+  }, [user?.id]);
   // Fetch public stock data
   useEffect(() => {
     const fetchStockData = async () => {
@@ -311,7 +311,7 @@ export const GlobalStateProvider = ({ children }) => {
         setOnlineStatus(false); // Set offline status on logout or app close
       }
     };
-  }, [user.id]);
+  }, [user?.id]);
   
   
   const contextValue = useMemo(

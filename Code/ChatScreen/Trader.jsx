@@ -22,9 +22,10 @@ import { useNavigation } from '@react-navigation/native';
 import ProfileBottomDrawer from './BottomDrawer';
 import { limitToLast, orderByKey, query } from 'firebase/database';
 import { getDatabase, ref, get, remove } from 'firebase/database';
+import KeyboardAvoidingWrapper from '../Helper/keyboardAvoidingContainer';
 
 const bannerAdUnitId = getAdUnitId('banner');
-const PAGE_SIZE = 250; // Number of messages to fetch per load
+const PAGE_SIZE = 100; // Number of messages to fetch per load
 let lastMessageTimestamp = 0; // To track the time of the last sent message
 
 const ChatScreen = ({ selectedTheme, bannedUsers,   modalVisibleChatinfo, 
@@ -262,6 +263,7 @@ const isOnline = activeUser.some((activeUser) => activeUser.id === userId);
 
   return (
     <GestureHandlerRootView>
+      <KeyboardAvoidingWrapper>
       <View style={styles.container}>
         <AdminHeader
           pinnedMessages={pinnedMessages}
@@ -322,6 +324,7 @@ const isOnline = activeUser.some((activeUser) => activeUser.id === userId);
 
         />
       </View>
+      </KeyboardAvoidingWrapper>
       <ProfileBottomDrawer
        isVisible={isDrawerVisible}
        toggleModal={toggleDrawer}

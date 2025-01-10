@@ -113,6 +113,23 @@ export const getStyles = (isDarkMode) =>
         color: isDarkMode ? '#fff' : '#000',
         fontFamily:'Lato-Regular'
 
-      }
+      },
+      optionTextLogout:{
+        fontSize: 16,
+        marginLeft: 10,
+        color:config.colors.wantBlockRed
+      },
+      optionTextDelete:{
+        fontSize: 16,
+        marginLeft: 10,
+        color:!isDarkMode ? '#5A1F1F' : '#FFE5E5'
+      },
+      optionDelete: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 15,
+        borderBottomColor: isDarkMode ? '#333333' : '#cccccc',
+        backgroundColor: isDarkMode ? '#5A1F1F' : '#FFE5E5'
+      },
     });
   

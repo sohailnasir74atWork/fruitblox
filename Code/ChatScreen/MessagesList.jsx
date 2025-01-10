@@ -245,7 +245,7 @@ const MessagesList = ({
         renderItem={({ item, index }) => renderMessage({ item, index })}
         contentContainerStyle={styles.chatList}
         inverted
-        onEndReachedThreshold={0.3}
+        onEndReachedThreshold={0.1}
         onEndReached={handleLoadMore}
         refreshControl={
           <RefreshControl
