@@ -41,23 +41,24 @@ export default function SettingsScreen({ selectedTheme }) {
   const { user, theme, updateLocalStateAndDatabase, setUser } = useGlobalState()
   const isDarkMode = theme === 'dark';
 
-  console.log(user)
   // Fetch user data on component mount
   useEffect(() => {
     if (user && user?.id) {
-      setNewDisplayName(user?.displayname || 'Anonymous');
-      setSelectedImage(user?.avatar || 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png');
+      setNewDisplayName(user?.displayName?.trim() || user?.displayname?.trim() || 'Anonymous');
+      setSelectedImage(user?.avatar?.trim() || 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png');
     } else {
       setNewDisplayName('Guest User');
       setSelectedImage('https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png');
     }
   }, [user]);
+  
+  
 
   const handleSaveChanges = async () => {
-    const MAX_NAME_LENGTH = 20; // Define the maximum length for the display name
-
+    const MAX_NAME_LENGTH = 20;
+  
     if (!user?.id) return;
-
+  
     if (newDisplayName.length > MAX_NAME_LENGTH) {
       Alert.alert(
         'Error',
@@ -65,22 +66,30 @@ export default function SettingsScreen({ selectedTheme }) {
       );
       return;
     }
-
+  
     try {
       await updateLocalStateAndDatabase({
-        displayName: newDisplayName,
-        avatar: selectedImage,
+        displayName: newDisplayName.trim(),
+        displayname: newDisplayName.trim(), // Sync both properties
+        avatar: selectedImage.trim(),
       });
-      Alert.alert('Success', 'Profile updated successfully!');
+  
       setDrawerVisible(false);
+      Alert.alert('Success', 'Profile updated successfully!');
     } catch (error) {
       console.error('Error updating profile:', error);
       Alert.alert('Error', 'Failed to update profile. Please try again.');
     }
   };
+  
 
 
-  const displayName = user?.id ? newDisplayName || user?.displayname || 'Anonymous' : 'Guest User';
+  const displayName = user?.id
+  ? newDisplayName?.trim() || user?.displayName?.trim() || user?.displayname?.trim() || 'Anonymous'
+  : 'Guest User';
+
+
+
 
   const handleLogout = async () => {
     try {
@@ -93,7 +102,7 @@ export default function SettingsScreen({ selectedTheme }) {
       Alert.alert('Error', 'Failed to log out. Please try again.');
     }
   };
-
+console.log(user)
   const handleDeleteUser = async () => {
     try {
       if (!user || !user?.id) {
@@ -180,16 +189,13 @@ export default function SettingsScreen({ selectedTheme }) {
   const canClaimReward = () => {
     const now = new Date().getTime();
     const lastRewardTime = user?.lastRewardtime;
-
-    if (!lastRewardTime) {
-      return true; // No reward claimed yet, eligible
-    }
-
-    const oneHourInMs = 1 * 30 * 1000; // 1 hour in milliseconds
+  
+    if (!lastRewardTime) return true;
+  
     const timeDifference = now - lastRewardTime;
-
-    return timeDifference >= oneHourInMs; // Eligible if more than 1 hour has passed
+    return timeDifference >= 30 * 1000; // 30 seconds as defined
   };
+  
   // console.log(user)
   const showAd = async () => {
     try {
@@ -245,9 +251,10 @@ export default function SettingsScreen({ selectedTheme }) {
               style={styles.profileImage}
             />
             <TouchableOpacity onPress={user?.id ? () => { } : () => { setOpenSignin(true) }}>
-              <Text style={styles.userName}>
-                {!user?.id ? 'Login / Register' : (newDisplayName || displayName)}
-              </Text>
+            <Text style={styles.userName}>
+  {!user?.id ? 'Login / Register' : displayName}
+</Text>
+
               <Text style={styles.reward}>My Points: {user?.points}</Text>
             </TouchableOpacity>
           </View>

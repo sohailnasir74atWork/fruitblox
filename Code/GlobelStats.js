@@ -87,11 +87,14 @@ export const GlobalStateProvider = ({ children }) => {
         const chatsData = chatsSnapshot.val() || {};
         const lastReadData = lastReadSnapshot.val() || {};
   
-        // Calculate total unread messages
+        // Calculate unread messages for the logged-in user
         const totalUnread = Object.keys(chatsData).reduce((total, chatKey) => {
           const messages = Object.entries(chatsData[chatKey] || {});
+  
           const unreadCount = messages.filter(
-            ([, msg]) => msg.timestamp > (lastReadData[chatKey] || 0)
+            ([, msg]) =>
+              msg.receiverId === user.id && // Only messages for the current user
+              msg.timestamp > (lastReadData[chatKey] || 0) // Messages sent after the last read timestamp
           ).length;
   
           return total + unreadCount;

@@ -15,14 +15,8 @@ const KeyboardAvoidingWrapper = ({ children, customStyles }) => {
       style={[styles.container, customStyles]} // Merge custom styles if provided
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <ScrollView
-        contentContainerStyle={styles.scrollViewContent}
-        keyboardShouldPersistTaps="handled"
-      >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+    
           <View style={styles.inner}>{children}</View>
-        </TouchableWithoutFeedback>
-      </ScrollView>
     </KeyboardAvoidingView>
   );
 };
@@ -36,7 +30,7 @@ const styles = StyleSheet.create({
   },
   inner: {
     flex: 1,
-    justifyContent: 'center', // Center content vertically
+    // justifyContent: 'center', // Center content vertically
     // Uncomment the line below for additional padding if needed
     // paddingHorizontal: 20,
   },

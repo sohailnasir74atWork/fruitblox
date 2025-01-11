@@ -20,7 +20,7 @@ export const getStyles = (isDarkMode) =>
       paddingVertical: 5,
     },
     mymessageBubble: {
-      maxWidth: '90%',
+      maxWidth: '95%',
       paddingHorizontal: 10,
       borderRadius: 15,
       flexDirection: "row-reverse",
@@ -28,7 +28,7 @@ export const getStyles = (isDarkMode) =>
       alignItems: 'flex-end'
     },
     othermessageBubble: {
-      maxWidth: '90%',
+      maxWidth: '95%',
       paddingHorizontal: 10,
       borderRadius: 15,
       flexDirection: 'row',
@@ -77,7 +77,7 @@ export const getStyles = (isDarkMode) =>
       color: isDarkMode ? 'white' : 'black',
       backgroundColor: isDarkMode ? config.colors.primary : 'white',
       paddingHorizontal: 10,
-      lineHeight: 20,
+      // lineHeight: 20,
       borderRadius: 20,
       paddingVertical: 5,
       fontFamily: 'Lato-Regular'
@@ -191,14 +191,14 @@ export const getStyles = (isDarkMode) =>
       flexDirection: 'row',
       alignItems: 'center',
     },
-    input: {
-      flex: 1,
-      backgroundColor: isDarkMode ? '#333' : '#f0f0f0',
-      borderRadius: 20,
-      paddingHorizontal: 15,
-      paddingVertical: 10,
-      fontSize: 16,
-    },
+    // input: {
+    //   flex: 1,
+    //   backgroundColor: isDarkMode ? '#333' : '#f0f0f0',
+    //   borderRadius: 20,
+    //   paddingHorizontal: 15,
+    //   paddingVertical: 10,
+    //   fontSize: 16,
+    // },
     sendButton: {
       marginLeft: 10,
       borderRadius: 20,
@@ -242,7 +242,7 @@ export const getStyles = (isDarkMode) =>
 
     userName: {
       color: '#bbb',
-      fontSize: 12
+      fontSize: 10
 
     },
     adminActions: {

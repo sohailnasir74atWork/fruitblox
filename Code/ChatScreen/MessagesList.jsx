@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   FlatList,
   View,
@@ -38,11 +38,11 @@ const MessagesList = ({
   const [showReportPopup, setShowReportPopup] = useState(false);
 
   const handleLongPress = (item) => {
-    if(!user.id) 
-    return
+    if (!user.id) return;
     Vibration.vibrate(50); // Vibrate for feedback
     setSelectedMessage(item);
   };
+  
 
   const handleReport = (message) => {
     setSelectedMessage(message);
@@ -65,7 +65,7 @@ const MessagesList = ({
   };
 
 
-  const renderMessage = ({ item, index }) => {
+  const renderMessage = useCallback(({ item, index }) => {
     const previousMessage = messages[index + 1];
     const currentDate = new Date(item.timestamp).toDateString();
     const previousDate = previousMessage
@@ -235,18 +235,21 @@ const MessagesList = ({
 
       </View>
     );
-  };
+  },[messages]);
 
   return (
     <>
       <FlatList
         data={messages}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item, index) => `${item.id}-${index}`}
         renderItem={({ item, index }) => renderMessage({ item, index })}
         contentContainerStyle={styles.chatList}
         inverted
         onEndReachedThreshold={0.1}
         onEndReached={handleLoadMore}
+        initialNumToRender={20} // Render the first 20 messages upfront
+        maxToRenderPerBatch={10} // Render 10 items per batch for smoother performance
+        windowSize={5} // Adjust the window size for rendering nearby items
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -258,7 +261,7 @@ const MessagesList = ({
       <ReportPopup
         visible={showReportPopup}
         message={selectedMessage}
-        onClose={() => setShowReportPopup(false)}
+        onClose={() => {setSelectedMessage(null); setShowReportPopup(false)}}
         onSubmit={submitReport}
       />
     </>

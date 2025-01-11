@@ -218,12 +218,7 @@ const styles = StyleSheet.create({
   bannedIndicator: {
     color: '#dc3545',
   },
-  deleteButton: {
-    color: 'red',
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginLeft: 10,
-  },
+
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -236,6 +231,7 @@ const styles = StyleSheet.create({
   delete:{
 // alignItems:'center',
 // justifyContent:'center',
+marginLeft:10
   },
   unreadBadge: {
     backgroundColor: config.colors.primary, // Badge color
@@ -244,12 +240,14 @@ const styles = StyleSheet.create({
     height: 24,
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: 10,
+
   },
   unreadBadgeText: {
     color: '#fff',
     fontSize: 12,
-    fontWeight: 'bold',
+    fontFamily: 'Lato-Bold',
+
+
   },
   
 });

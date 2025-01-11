@@ -12,6 +12,8 @@ import { getStyles } from './Style';
 import PrivateMessageInput from './PrivateMessageInput';
 import PrivateMessageList from './PrivateMessageList';
 import { useGlobalState } from '../GlobelStats';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import KeyboardAvoidingWrapper from '../Helper/keyboardAvoidingContainer';
 
 const PAGE_SIZE = 50;
 
@@ -158,6 +160,8 @@ const PrivateChatScreen = () => {
   // }, [chatRef, loadMessages]);
 
   return (
+    <GestureHandlerRootView>
+      <KeyboardAvoidingWrapper>
     <View style={styles.container}>
       {loading && messages.length === 0 ? (
         <ActivityIndicator size="large" color="#1E88E5" style={{ flex: 1, justifyContent: 'center' }} />
@@ -188,6 +192,9 @@ const PrivateChatScreen = () => {
     selectedTheme={selectedTheme}    
     />
     </View>
+    </KeyboardAvoidingWrapper>
+    
+    </GestureHandlerRootView>
   );
 };
 
