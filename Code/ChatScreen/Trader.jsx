@@ -16,11 +16,12 @@ import MessageInput from './MessageInput';
 import { getStyles } from './Style';
 import { BannerAd, BannerAdSize } from 'react-native-google-mobile-ads';
 import getAdUnitId from '../Ads/ads';
-import { banUser, makeAdmin,  removeAdmin, unbanUser } from './utils';
+import { banUser, deleteOldest500Messages, makeAdmin,  removeAdmin, unbanUser } from './utils';
 import { useNavigation } from '@react-navigation/native';
 import ProfileBottomDrawer from './BottomDrawer';
 import KeyboardAvoidingWrapper from '../Helper/keyboardAvoidingContainer';
 import leoProfanity from 'leo-profanity';
+import { get, getDatabase, query, ref } from 'firebase/database';
 leoProfanity.add(['hell', 'shit']);
 leoProfanity.loadDictionary('en');
 
@@ -42,7 +43,12 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
   const [selectedUser, setSelectedUser] = useState(null); // Store the selected user's details
   const userId = selectedUser?.senderId || null;
   const isOnline = activeUser.some((activeUser) => activeUser.id === userId);
-
+ 
+  // Call the function inside useEffect
+  // useEffect(() => {
+  //   deleteOldest500Messages();
+  // }, []);
+  
 
   const navigation = useNavigation()
   const toggleDrawer = (userData = null) => {
@@ -247,7 +253,7 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
       const newMessage = {
         text: cleanMessage,
         timestamp: now,
-        sender: user.displayName || 'Anonymous',
+        sender: user.displayName || user.displayName || 'Anonymous',
         senderId: user.id,
         avatar: user.avatar || 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png',
         replyTo: replyTo ? { id: replyTo.id, text: replyTo.text } : null,

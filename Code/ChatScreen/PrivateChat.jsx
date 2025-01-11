@@ -14,8 +14,11 @@ import PrivateMessageList from './PrivateMessageList';
 import { useGlobalState } from '../GlobelStats';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import KeyboardAvoidingWrapper from '../Helper/keyboardAvoidingContainer';
+import getAdUnitId from '../Ads/ads';
+import { BannerAd, BannerAdSize } from 'react-native-google-mobile-ads';
 
 const PAGE_SIZE = 50;
+const bannerAdUnitId = getAdUnitId('banner');
 
 const PrivateChatScreen = () => {
   const route = useRoute();
@@ -91,7 +94,7 @@ const PrivateChatScreen = () => {
         const newMessage = {
           text: trimmedText,
           senderId: myUserId,
-          senderName: user?.displayName || 'Anonymous',
+          sender: user.displayName || user.displayName || 'Anonymous',
           senderAvatar: user?.avatar || 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png',
           receiverId: selectedUserId,
           receiverName: selectedUser?.sender,
@@ -193,7 +196,12 @@ const PrivateChatScreen = () => {
     />
     </View>
     </KeyboardAvoidingWrapper>
-    
+    <View style={{ alignSelf: 'center' }}>
+        <BannerAd
+          unitId={bannerAdUnitId}
+          size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+        />
+      </View>
     </GestureHandlerRootView>
   );
 };

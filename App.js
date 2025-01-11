@@ -245,6 +245,14 @@ useEffect(() => {
               tabBarInactiveTintColor: theme === 'dark' ? '#888' : 'gray',
               headerTitleStyle: { fontFamily: 'Lato-Bold', fontSize: 24 },
               tabBarBadge: route.name === 'Chat' && chatFocused ? '' : null,
+              tabBarBadgeStyle: {
+                minWidth: 12, // Set a smaller minimum width
+                height: 12,   // Set a smaller height
+                borderRadius: 6, // Make it circular
+                fontSize: 10,  // Smaller font size
+                backgroundColor: 'red', // Badge background color
+                color: 'white', // Badge text color
+              },
               headerStyle: {
                 backgroundColor: selectedTheme.colors.background,
               },

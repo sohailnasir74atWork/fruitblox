@@ -1,4 +1,4 @@
-import { getDatabase, ref, update, get, query, orderByChild, remove, set } from 'firebase/database';
+import { getDatabase, ref, update, get, query, orderByChild, remove, set, orderByKey } from 'firebase/database';
 import { Alert } from 'react-native';
 
 // Initialize the database reference
@@ -172,3 +172,40 @@ export const unbanUserInChat = async (currentUserId, selectedUserId) => {
 //   }
 // };
 // useEffect(()=>{deleteLast100Messages()}, [])
+
+
+export const deleteOldest500Messages = async () => {
+  try {
+    const database = getDatabase(); // Initialize Firebase Realtime Database
+    const chatsRef = ref(database, 'chat'); // Reference to the 'chat' node
+
+    // Fetch all messages
+    const snapshot = await get(query(chatsRef, orderByKey()));
+    const messages = snapshot.val();
+
+    if (!messages) {
+      console.log('No messages to delete.');
+      return;
+    }
+
+    // Convert the messages to an array and sort by keys (oldest to newest)
+    const messageKeys = Object.keys(messages);
+    const oldestMessageKeys = messageKeys.slice(0, 500); // Get the first 500 keys
+
+    if (oldestMessageKeys.length === 0) {
+      console.log('No messages to delete.');
+      return;
+    }
+
+    // Delete the oldest 500 messages
+    const deletePromises = oldestMessageKeys.map((messageKey) =>
+      remove(ref(database, `chat/${messageKey}`))
+    );
+
+    await Promise.all(deletePromises);
+
+    console.log('Oldest 500 messages deleted successfully.');
+  } catch (error) {
+    console.error('Error deleting messages:', error);
+  }
+};
