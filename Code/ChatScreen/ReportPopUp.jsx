@@ -6,38 +6,67 @@ import {
   TouchableOpacity,
   TextInput,
   StyleSheet,
+  Alert,
 } from "react-native";
 import { useGlobalState } from "../GlobelStats";
 import config from "../Helper/Environment";
-import { getDatabase, ref, push } from "firebase/database";
+import { getDatabase, ref, get, update } from "firebase/database";
 
 const ReportPopup = ({ visible, message, onClose, onSubmit }) => {
   const [selectedReason, setSelectedReason] = useState("Spam");
   const [customReason, setCustomReason] = useState("");
   const [showCustomInput, setShowCustomInput] = useState(false);
-  const { theme, user } = useGlobalState();
+  const { theme } = useGlobalState();
   const isDarkMode = theme === "dark";
 
+
   const handleSubmit = () => {
-    const reason = showCustomInput ? customReason.trim() || "No reason provided" : selectedReason;
-
-    // Submit report to Firebase
-    const db = getDatabase();
-    const reportRef = ref(db, "reports");
-    push(reportRef, {
-      reportedBy: user?.displayName || "Anonymous",
-      reportedById: user?.id,
-      messageText: message?.text || "No message provided",
-      messageSender: message?.sender || "Unknown Sender",
-      reason,
-      timestamp: Date.now(),
-    });
-
-    // Notify parent component
-    onSubmit(message, reason);
-    onClose();
+    if (!message?.id) {
+      Alert.alert("Error", "Invalid message. Unable to report.");
+      return;
+    }
+  
+    const db = getDatabase(); // Initialize the database
+    const messageRef = ref(db, `chat/${message.id}`); // Reference to the specific message
+  
+    get(messageRef)
+      .then((snapshot) => {
+        let updatedReportCount = 1; // Default to 1 if no reportCount exists
+  
+        if (snapshot.exists()) {
+          const messageData = snapshot.val();
+          // Increment the existing reportCount or initialize it
+          updatedReportCount = (messageData?.reportCount || 0) + 1;
+        }
+  
+        // Update or set the reportCount in Firebase
+        return update(messageRef, { reportCount: updatedReportCount }).then(() => updatedReportCount);
+      })
+      .then((updatedReportCount) => {
+        // Update the local message state with the new reportCount
+        const updatedMessage = {
+          ...message,
+          reportCount: updatedReportCount, // Update report count locally
+        };
+  
+        // Immediate feedback
+        Alert.alert(
+          "Report Submitted",
+          "Thank you for reporting this message."
+        );
+  
+        onSubmit(updatedMessage, selectedReason); // Notify parent component if needed
+        onClose(); // Close the report modal
+      })
+      .catch((error) => {
+        console.error("Error reporting message:", error);
+        Alert.alert("Error", "Failed to submit the report. Please try again.");
+      });
   };
-
+  
+  
+  
+  
   const styles = getStyles(isDarkMode);
 
   return (
@@ -108,7 +137,7 @@ const ReportPopup = ({ visible, message, onClose, onSubmit }) => {
             <TouchableOpacity style={styles.button} onPress={onClose}>
               <Text style={styles.buttonText}>Cancel</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+            <TouchableOpacity style={[styles.button, {backgroundColor:config.colors.hasBlockGreen}]} onPress={handleSubmit}>
               <Text style={styles.buttonText}>Submit</Text>
             </TouchableOpacity>
           </View>

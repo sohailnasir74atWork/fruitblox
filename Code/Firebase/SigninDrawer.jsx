@@ -226,7 +226,7 @@ const SignInDrawer = ({ visible, onClose, selectedTheme, message }) => {
                     {Platform.OS === 'ios' &&
                     
                     <AppleButton
-                    buttonStyle={AppleButton.Style.WHITE}
+                    buttonStyle={isDarkMode ?  AppleButton.Style.WHITE : AppleButton.Style.BLACK}
                     buttonType={AppleButton.Type.SIGN_IN}
                     style={styles.applebUUTON}
                     onPress={() => onAppleButtonPress().then(() => console.log('Apple sign-in complete!'))}
@@ -315,8 +315,6 @@ const styles = StyleSheet.create({
         height:50,
        width: '100%',
        marginBottom:10,
-       borderWidth:1,
-       borderRadius:5
     },
     googleIcon: {
         marginRight: 10, // Space between the icon and the text

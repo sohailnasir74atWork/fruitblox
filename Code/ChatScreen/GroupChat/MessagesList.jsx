@@ -10,9 +10,11 @@ import {
   Linking,
   Alert,
 } from 'react-native';
-import { getStyles } from './Style';
+import { getStyles } from './../Style';
 import { Menu, MenuOptions, MenuOption, MenuTrigger } from 'react-native-popup-menu';
-import ReportPopup from './ReportPopUp';
+import ReportPopup from './../ReportPopUp';
+import Icon from 'react-native-vector-icons/Ionicons'; // Import Icon
+import config from '../../Helper/Environment';
 
 
 const MessagesList = ({
@@ -36,14 +38,13 @@ const MessagesList = ({
   const styles = getStyles(isDarkMode);
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [showReportPopup, setShowReportPopup] = useState(false);
-
   const handleLongPress = (item) => {
-    if (!user.id) return;
+    if (!user?.id) return;
     Vibration.vibrate(50); // Vibrate for feedback
     setSelectedMessage(item);
   };
   
-
+// console.log(messages)
   const handleReport = (message) => {
     setSelectedMessage(message);
     setShowReportPopup(true);
@@ -73,7 +74,7 @@ const MessagesList = ({
       : null;
     const shouldShowDateHeader = currentDate !== previousDate;
 
-
+console.log(item.reportCount)
     return (
       <View>
         {/* Display the date header if it's a new day */}
@@ -154,6 +155,9 @@ const MessagesList = ({
                     }
                     return part;
                   })}
+
+                        
+
                 </Text>
               </MenuTrigger>
               <MenuOptions  customStyles={{
@@ -178,8 +182,10 @@ const MessagesList = ({
               </MenuOptions>
             </Menu>
 
+           {item.reportCount > 0 && <Icon name="alert-circle-outline" size={14} style={styles.reportIcon} color={config.colors.wantBlockRed} />}
 
           </View>
+
 
           {/* Admin Actions or Timestamp */}
           {(isOwner || isAdmin) ? (
@@ -222,7 +228,7 @@ const MessagesList = ({
               </TouchableOpacity>}
             </View>
           ) : (
-            <View>
+            <View style={{flex:1, justifyContent:'flex-end'}}>
               <Text style={styles.timestamp}>
                 {new Date(item.timestamp).toLocaleTimeString([], {
                   hour: '2-digit',

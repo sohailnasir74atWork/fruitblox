@@ -1,9 +1,18 @@
 import React, { memo, useState } from 'react';
-import { FlatList, View, Text, RefreshControl, Image, TouchableOpacity, ActivityIndicator, Vibration } from 'react-native';
+import {
+  FlatList,
+  View,
+  Text,
+  RefreshControl,
+  Image,
+  TouchableOpacity,
+  ActivityIndicator,
+  Vibration,
+} from 'react-native';
 import { Menu, MenuOptions, MenuOption, MenuTrigger } from 'react-native-popup-menu';
-import { useGlobalState } from '../GlobelStats';
-import { getStyles } from './Style';
-import ReportPopup from './ReportPopUp';
+import { useGlobalState } from '../../GlobelStats';
+import { getStyles } from '../Style';
+import ReportPopup from '../ReportPopUp';
 
 const PrivateMessageList = ({
   messages,
@@ -11,10 +20,11 @@ const PrivateMessageList = ({
   handleLoadMore,
   refreshing,
   onRefresh,
-  bannedUsers,
+  isBanned,
   onReply,
-  onReportSubmit, // Callback for submitting report
+  onReportSubmit,
   loading,
+  selectedUserId, // Add selectedUserId to identify sender messages
 }) => {
   const { theme } = useGlobalState();
   const isDarkMode = theme === 'dark';
@@ -23,9 +33,10 @@ const PrivateMessageList = ({
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [showReportPopup, setShowReportPopup] = useState(false);
 
-  const filteredMessages = messages.filter(
-    (message) => !bannedUsers.includes(message.senderId)
-  );
+  // Filter messages: Keep only user's messages if `isBanned` is true
+  const filteredMessages = isBanned
+    ? messages.filter((message) => message.senderId === userId)
+    : messages;
 
   // Open the report popup
   const handleReport = (message) => {
@@ -69,11 +80,7 @@ const PrivateMessageList = ({
               TriggerTouchableComponent: TouchableOpacity,
             }}
           >
-            <Text
-              style={
-                isMyMessage ? styles.myMessageText : styles.otherMessageText
-              }
-            >
+            <Text style={isMyMessage ? styles.myMessageText : styles.otherMessageText}>
               {item.text}
             </Text>
           </MenuTrigger>

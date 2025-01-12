@@ -4,13 +4,15 @@ import { Platform } from 'react-native';
 import {  TestIds } from 'react-native-google-mobile-ads';
 import config from '../Helper/Environment';
 
-const developmentMode =false
+const developmentMode =true
 
 
 const adUnits = {
   test: {
     banner: TestIds.BANNER,
     interstitial: TestIds.INTERSTITIAL,
+    rewarded:TestIds.REWARDED,
+    openapp:TestIds.APP_OPEN,
   },
   android: {
     banner: config.andriodBanner,       

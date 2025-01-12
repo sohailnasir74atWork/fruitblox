@@ -56,19 +56,6 @@ export const GlobalStateProvider = ({ children }) => {
 
 
 
-  useEffect(() => {
-    if (!user?.id) return; // Ensure user is logged in
-
-    const bannedRef = ref(database, `bannedUsers/${user.id}`); // Access current user's ban list
-
-    const unsubscribe = onValue(bannedRef, (snapshot) => {
-      const bannedData = snapshot.val() || {};
-      const bannedUserIds = Object.keys(bannedData); // Extract banned user IDs
-      setBannedUsers(bannedUserIds);
-    });
-
-    return () => unsubscribe(); // Clean up listener on component unmount
-  }, [user?.id]);
 
 
   useEffect(() => {
@@ -327,10 +314,10 @@ export const GlobalStateProvider = ({ children }) => {
       setUser,
       setOnlineMembersCount,
       activeUser,
-      updateLocalStateAndDatabase,bannedUsers, unreadMessagesCount
+      updateLocalStateAndDatabase, unreadMessagesCount
       
     }),
-    [state, user, onlineMembersCount, theme, activeUser, bannedUsers, unreadMessagesCount]
+    [state, user, onlineMembersCount, theme, activeUser, unreadMessagesCount]
   );
 
   return (

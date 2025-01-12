@@ -8,13 +8,13 @@ import {
 } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import database from '@react-native-firebase/database';
-import { getStyles } from './Style';
+import { getStyles } from '../Style';
 import PrivateMessageInput from './PrivateMessageInput';
 import PrivateMessageList from './PrivateMessageList';
-import { useGlobalState } from '../GlobelStats';
+import { useGlobalState } from '../../GlobelStats';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import KeyboardAvoidingWrapper from '../Helper/keyboardAvoidingContainer';
-import getAdUnitId from '../Ads/ads';
+import KeyboardAvoidingWrapper from '../../Helper/keyboardAvoidingContainer';
+import getAdUnitId from '../../Ads/ads';
 import { BannerAd, BannerAdSize } from 'react-native-google-mobile-ads';
 
 const PAGE_SIZE = 50;
@@ -22,8 +22,8 @@ const bannerAdUnitId = getAdUnitId('banner');
 
 const PrivateChatScreen = () => {
   const route = useRoute();
-  const { selectedUser, selectedTheme } = route.params || {};
-  const { user, theme, bannedUsers } = useGlobalState();
+  const { selectedUser, selectedTheme, bannedUsers } = route.params || {};
+  const { user, theme } = useGlobalState();
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -33,10 +33,15 @@ const PrivateChatScreen = () => {
 
 
 
+
   const selectedUserId = selectedUser?.senderId;
   const myUserId = user?.id;
-  const isBanned = useMemo(() => bannedUsers.includes(selectedUserId), [bannedUsers, selectedUserId]);
-  const isDarkMode = theme === 'dark';
+  const isBanned = useMemo(() => {
+    const bannedUserIds = bannedUsers?.map((user) => user.id) || [];
+    return bannedUserIds.includes(selectedUserId);
+  }, [bannedUsers, selectedUserId]);
+  
+    const isDarkMode = theme === 'dark';
   const styles = useMemo(() => getStyles(isDarkMode), [isDarkMode]);
 
   // Generate a unique chat key
@@ -146,22 +151,7 @@ const PrivateChatScreen = () => {
     return () => chatRef.off('child_added', listener); // Cleanup listener
   }, [chatRef, loadMessages, updateLastRead]);
   
-  // Attach listener for new messages
-  // useEffect(() => {
-  //   loadMessages(true);
-
-  //   const listener = chatRef.limitToLast(1).on('child_added', (snapshot) => {
-  //     const newMessage = { id: snapshot.key, ...snapshot.val() };
-  //     setMessages((prevMessages) =>
-  //       prevMessages.some((msg) => msg.id === newMessage.id)
-  //         ? prevMessages
-  //         : [newMessage, ...prevMessages]
-  //     );
-  //   });
-
-  //   return () => chatRef.off('child_added', listener); // Cleanup listener
-  // }, [chatRef, loadMessages]);
-
+ 
   return (
     <GestureHandlerRootView>
       <KeyboardAvoidingWrapper>
@@ -179,7 +169,7 @@ const PrivateChatScreen = () => {
           handleLoadMore={loadMessages}
           refreshing={refreshing}
           onRefresh={handleRefresh}
-          bannedUsers={bannedUsers}
+          isBanned={isBanned}
           onReply={(message) => setReplyTo(message)}
         />
       )}

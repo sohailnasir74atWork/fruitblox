@@ -8,10 +8,10 @@ import {
   PanResponder, Modal
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import config from '../Helper/Environment';
-import { useGlobalState } from '../GlobelStats';
+import { useGlobalState } from '../../GlobelStats';
 import { ScrollView } from 'react-native-gesture-handler';
-import { rules } from './utils';
+import { rules } from './../utils';
+import config from '../../Helper/Environment';
 
 const AdminHeader = ({
   pinnedMessages = [], // Array of pinned messages

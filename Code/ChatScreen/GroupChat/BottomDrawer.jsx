@@ -8,11 +8,11 @@ import {
   Pressable,
   Image,
 } from 'react-native';
-import { getStyles } from '../SettingScreen/settingstyle';
-import { useGlobalState } from '../GlobelStats';
-import config from '../Helper/Environment';
+import { useGlobalState } from '../../GlobelStats';
+import config from '../../Helper/Environment';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { banUserInChat, unbanUserInChat } from './utils';
+import { banUserInChat, unbanUserInChat } from './../utils';
+import { getStyles } from '../../SettingScreen/settingstyle';
 
 const ProfileBottomDrawer = ({ isVisible, toggleModal, startChat, selectedUser, isOnline, bannedUsers }) => {
   const { theme, user } = useGlobalState();
@@ -23,14 +23,14 @@ const ProfileBottomDrawer = ({ isVisible, toggleModal, startChat, selectedUser, 
   const styles = getStyles(isDarkMode);
 
   // Determine if the user is currently banned
-  const isBanned = bannedUsers?.includes(selectedUser?.senderId);
+  const isBlock = bannedUsers?.includes(selectedUser?.senderId);
 
   // Handle Ban/Unban Toggle
-  const handleToggleBan = async () => {
-    if (isBanned) {
-      await unbanUserInChat(user.id, selectedUser.senderId);
+  const handleToggleBlock = async () => {
+    if (isBlock) {
+      await unbanUserInChat(user.id, selectedUser);
     } else {
-      await banUserInChat(user.id, selectedUser.senderId);
+      await banUserInChat(user.id, selectedUser);
     }
   };
 
@@ -91,14 +91,14 @@ const ProfileBottomDrawer = ({ isVisible, toggleModal, startChat, selectedUser, 
             </View>
 
             {/* Ban/Unban Icon */}
-            <TouchableOpacity onPress={handleToggleBan}>
+            <TouchableOpacity onPress={handleToggleBlock}>
               <Icon
-                name="ban-outline"
+                name={isBlock ? "shield-checkmark-outline" : "ban-outline"}
                 size={30}
                 color={
-                  isBanned
-                    ? config.colors.wantBlockRed // Banned color
-                    : config.colors.hasBlockGreen // Not banned color
+                  isBlock
+                    ? config.colors.hasBlockGreen // Banned color
+                    : config.colors.wantBlockRed // Not banned color
                 }
               />
             </TouchableOpacity>

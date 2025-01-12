@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { View, TextInput, TouchableOpacity, Text } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { getStyles } from './Style';
-import config from '../Helper/Environment';
-import { useGlobalState } from '../GlobelStats';
+import { getStyles } from '../Style';
+import config from '../../Helper/Environment';
+import { useGlobalState } from '../../GlobelStats';
 
 const PrivateMessageInput = ({ onSend, replyTo, onCancelReply, isBanned }) => {
   const [input, setInput] = useState('');
@@ -12,7 +12,6 @@ const PrivateMessageInput = ({ onSend, replyTo, onCancelReply, isBanned }) => {
   const isDark = theme === 'dark';
 
   const styles = getStyles(isDark);
-
   const handleSend = async () => {
     const trimmedInput = input.trim();
     if (!trimmedInput || isSending) return;

@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { View, TextInput, TouchableOpacity, Text } from 'react-native';
-import { getStyles } from './Style';
+import { getStyles } from './../Style';
 import Icon from 'react-native-vector-icons/Ionicons'; // Import Icon
-import config from '../Helper/Environment';
-import KeyboardAvoidingWrapper from '../Helper/keyboardAvoidingContainer';
+import config from '../../Helper/Environment';
 
 const MessageInput = ({
   input,
@@ -42,6 +41,7 @@ const MessageInput = ({
     </Text>
     <TouchableOpacity onPress={onCancelReply} style={styles.cancelReplyButton}>
       <Icon name="close-circle" size={24} color="#e74c3c" />
+      
     </TouchableOpacity>
   </View>
 )}

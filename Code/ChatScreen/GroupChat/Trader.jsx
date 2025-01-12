@@ -8,18 +8,18 @@ import {
 } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import database from '@react-native-firebase/database';
-import { useGlobalState } from '../GlobelStats';
-import SignInDrawer from '../Firebase/SigninDrawer';
+import { useGlobalState } from '../../GlobelStats';
+import SignInDrawer from '../../Firebase/SigninDrawer';
 import AdminHeader from './AdminHeader';
 import MessagesList from './MessagesList';
 import MessageInput from './MessageInput';
-import { getStyles } from './Style';
+import { getStyles } from '../Style';
 import { BannerAd, BannerAdSize } from 'react-native-google-mobile-ads';
-import getAdUnitId from '../Ads/ads';
-import { banUser, deleteOldest500Messages, makeAdmin,  removeAdmin, unbanUser } from './utils';
+import getAdUnitId from '../../Ads/ads';
+import { banUser, deleteOldest500Messages, makeAdmin,  removeAdmin, unbanUser } from '../utils';
 import { useNavigation } from '@react-navigation/native';
 import ProfileBottomDrawer from './BottomDrawer';
-import KeyboardAvoidingWrapper from '../Helper/keyboardAvoidingContainer';
+import KeyboardAvoidingWrapper from '../../Helper/keyboardAvoidingContainer';
 import leoProfanity from 'leo-profanity';
 import { get, getDatabase, query, ref } from 'firebase/database';
 leoProfanity.add(['hell', 'shit']);
@@ -43,7 +43,7 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
   const [selectedUser, setSelectedUser] = useState(null); // Store the selected user's details
   const userId = selectedUser?.senderId || null;
   const isOnline = activeUser.some((activeUser) => activeUser.id === userId);
- 
+//  console.log('baanned', bannedUsers)
   // Call the function inside useEffect
   // useEffect(() => {
   //   deleteOldest500Messages();
@@ -89,11 +89,13 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
 
         const snapshot = await messageQuery.once('value');
         const data = snapshot.val() || {};
+        const bannedUserIds = bannedUsers?.map((user) => user.id); // Extract IDs from bannedUsers
+
         const parsedMessages = Object.entries(data)
           .map(([key, value]) => validateMessage({ id: key, ...value }))
-          .filter((msg) => !bannedUsers.includes(msg.senderId))
-          .sort((a, b) => b.timestamp - a.timestamp);
-
+          .filter((msg) => !bannedUserIds.includes(msg.senderId)) // Filter messages from banned users
+          .sort((a, b) => b.timestamp - a.timestamp); // Sort messages by timestamp (descending)
+        
         if (parsedMessages.length > 0) {
           setMessages((prev) => (reset ? parsedMessages : [...parsedMessages, ...prev]));
           setLastLoadedKey(Object.keys(data)[0]);
@@ -104,7 +106,7 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
         if (reset) setLoading(false);
       }
     },
-    [chatRef, lastLoadedKey, validateMessage, bannedUsers]
+    [chatRef, lastLoadedKey, validateMessage, bannedUsers?.id]
   );
 
   useEffect(() => {
@@ -114,9 +116,11 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
 
 
   useEffect(() => {
+    const bannedUserIds = bannedUsers.map((user) => user.id); // Extract IDs from bannedUsers
+  
     const listener = chatRef.limitToLast(1).on('child_added', (snapshot) => {
       const newMessage = validateMessage({ id: `chat-${snapshot.key}`, ...snapshot.val() });
-      if (!bannedUsers.includes(newMessage.senderId)) {
+      if (!bannedUserIds.includes(newMessage.senderId)) { // Check if senderId is not banned
         setMessages((prev) => {
           const seenKeys = new Set(prev.map((msg) => msg.id));
           if (!seenKeys.has(newMessage.id)) {
@@ -126,9 +130,10 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
         });
       }
     });
-
+  
     return () => chatRef.off('child_added', listener); // Cleanup listener
-  }, [chatRef, bannedUsers, validateMessage]);
+  }, [chatRef, bannedUsers, validateMessage]); // Dependency updated to include bannedUsers directly
+  
 
 
 
@@ -249,15 +254,15 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
 
     try {
       const cleanMessage = leoProfanity.clean(trimmedInput); // Sanitize input
-
       const newMessage = {
         text: cleanMessage,
         timestamp: now,
-        sender: user.displayName || user.displayName || 'Anonymous',
+        sender: user.displayname || user.displayName || 'Anonymous',
         senderId: user.id,
         avatar: user.avatar || 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png',
         replyTo: replyTo ? { id: replyTo.id, text: replyTo.text } : null,
         isAdmin: user.isAdmin || user.isOwner,
+        reportCount:0
       };
 
       // Push the message to the chat database

@@ -102,54 +102,66 @@ export default function SettingsScreen({ selectedTheme }) {
       Alert.alert('Error', 'Failed to log out. Please try again.');
     }
   };
-console.log(user)
   const handleDeleteUser = async () => {
     try {
       if (!user || !user?.id) {
         Alert.alert('Error', 'No user is currently logged in.');
         return;
       }
-
-      Alert.alert(
-        'Delete Account',
-        'Are you sure you want to delete your account? This action is irreversible.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Delete',
-            style: 'destructive',
-            onPress: async () => {
-              try {
-                const currentUser = auth().currentUser; // Get the current logged-in user
-                if (currentUser) {
-                  await currentUser.delete(); // Delete the user account
-
-                  await resetUserState(setUser)
-                  Alert.alert('Success', 'Your account has been deleted.');
-                } else {
-                  Alert.alert('Error', 'User not found. Please log in again.');
-                }
-              } catch (error) {
-                console.error('Error deleting user:', error.message);
-                if (error.code === 'auth/requires-recent-login') {
-                  Alert.alert(
-                    'Session Expired',
-                    'Please log in again to delete your account.',
-                    [{ text: 'OK' }]
-                  );
-                } else {
-                  Alert.alert('Error', 'Failed to delete account. Please try again.');
-                }
-              }
-            },
-          },
-        ]
-      );
+  
+      // Step 1: Acknowledge the irreversible action
+      const showAcknowledgment = () =>
+        new Promise((resolve, reject) => {
+          Alert.alert(
+            'Delete Account',
+            'Deleting your account will permanently erase all your data, including chat history, points, and profile details. This action is irreversible.',
+            [
+              { text: 'Cancel', style: 'cancel', onPress: reject },
+              { text: 'Proceed', style: 'destructive', onPress: resolve },
+            ]
+          );
+        });
+  
+      // Step 2: Confirm the action again
+      const showFinalConfirmation = () =>
+        new Promise((resolve, reject) => {
+          Alert.alert(
+            'Confirm Deletion',
+            'Are you sure you want to delete your account? This action cannot be undone.',
+            [
+              { text: 'Cancel', style: 'cancel', onPress: reject },
+              { text: 'Delete', style: 'destructive', onPress: resolve },
+            ]
+          );
+        });
+  
+      // Await acknowledgment and confirmation
+      await showAcknowledgment();
+      await showFinalConfirmation();
+  
+      // Proceed to delete the user account
+      const currentUser = auth().currentUser;
+      if (currentUser) {
+        await currentUser.delete(); // Delete the user account
+        await resetUserState(setUser); // Reset the user state
+        Alert.alert('Success', 'Your account and all associated data have been permanently deleted.');
+      } else {
+        Alert.alert('Error', 'User not found. Please log in again.');
+      }
     } catch (error) {
       console.error('Error deleting user:', error.message);
-      Alert.alert('Error', 'An error occurred while trying to delete the account.');
+      if (error.code === 'auth/requires-recent-login') {
+        Alert.alert(
+          'Session Expired',
+          'Please log in again to delete your account.',
+          [{ text: 'OK' }]
+        );
+      } else {
+        Alert.alert('Error', 'Failed to delete account. Please try again.');
+      }
     }
   };
+  
 
   const handleProfileUpdate = () => {
     if (user?.id) {

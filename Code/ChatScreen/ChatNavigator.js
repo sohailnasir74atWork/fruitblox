@@ -2,22 +2,23 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { View, StyleSheet, Text } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import ChatScreen from './Trader';
-import PrivateChatScreen from './PrivateChat';
-import InboxScreen from './InboxScreen';
+import ChatScreen from './GroupChat/Trader';
+import PrivateChatScreen from './PrivateChat/PrivateChat';
+import InboxScreen from './GroupChat/InboxScreen';
 import config from '../Helper/Environment';
 import { getDatabase, onValue, ref } from 'firebase/database';
 import { useGlobalState } from '../GlobelStats';
-import PrivateChatHeader from './PrivateChatHeader';
+import PrivateChatHeader from './PrivateChat/PrivateChatHeader';
+import { Menu, MenuOptions, MenuOption, MenuTrigger } from 'react-native-popup-menu';
+
 
 const Stack = createNativeStackNavigator();
 
-// HeaderRight Component
 const HeaderRight = ({ selectedTheme, navigateToInbox, setModalVisibleChatinfo, navigation, unreadMessagesCount }) => (
   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
     <View style={styles.iconContainer}>
       <Icon
-        name="chatbox-ellipses-outline"
+        name="chatbox-outline"
         size={24}
         color={selectedTheme.colors.text}
         style={styles.icon2}
@@ -29,39 +30,56 @@ const HeaderRight = ({ selectedTheme, navigateToInbox, setModalVisibleChatinfo, 
         </View>
       )}
     </View>
-    <Icon
+
+    <Menu>
+        <MenuTrigger>
+          <Icon
+            name="ellipsis-vertical-outline"
+            size={24}
+            color={config.colors.primary}
+          />
+        </MenuTrigger>
+        <MenuOptions>
+          <MenuOption>
+            <Text style={{ color: 'red', fontSize: 16, padding: 10 }}>Delete</Text>
+          </MenuOption>
+        </MenuOptions>
+      </Menu>
+    {/* <Icon
       name="information-circle-outline"
       size={24}
       color={selectedTheme.colors.text}
       style={styles.icon}
       onPress={() => setModalVisibleChatinfo(true)}
-    />
+    /> */}
   </View>
 );
 
-// ChatStack Component
 export const ChatStack = ({ selectedTheme, setChatFocused, modalVisibleChatinfo, setModalVisibleChatinfo }) => {
   const { user, unreadMessagesCount } = useGlobalState();
   const [bannedUsers, setBannedUsers] = useState([]);
-
-  console.log(unreadMessagesCount)
-
-
-  // Fetch and Sync Banned Users in Real-Time
   useEffect(() => {
     if (!user?.id) return;
 
     const database = getDatabase();
     const bannedRef = ref(database, `bannedUsers/${user.id}`);
-    const unsubscribe = onValue(bannedRef, (snapshot) => {
-      const data = snapshot.val() || {};
-      setBannedUsers(Object.keys(data));
-    });
+    const unsubscribe = onValue(
+      bannedRef,
+      (snapshot) => {
+        const data = snapshot.val() || {};
+        const bannedUsersList = Object.entries(data).map(([id, details]) => ({
+          id,
+          displayName: details.displayName,
+          avatar: details.avatar,
+        }));
+        setBannedUsers(bannedUsersList);
+      },
+      (error) => console.error('Error in banned users listener:', error)
+    );
 
-    return () => unsubscribe(); // Cleanup listener on unmount
+    return () => unsubscribe(); // Cleanup the listener on unmount
   }, [user?.id]);
 
-  // Memoized Header Options
   const headerOptions = useMemo(
     () => ({
       headerStyle: { backgroundColor: selectedTheme.colors.background },
@@ -73,12 +91,11 @@ export const ChatStack = ({ selectedTheme, setChatFocused, modalVisibleChatinfo,
 
   return (
     <Stack.Navigator screenOptions={headerOptions}>
-      {/* Group Chat Screen */}
       <Stack.Screen
         name="GroupChat"
         options={({ navigation }) => ({
           headerTitleAlign: 'left',
-          headerTitle: 'Chat',
+          headerTitle: 'Community Chat',
           headerRight: () => (
             <HeaderRight
               selectedTheme={selectedTheme}
@@ -97,11 +114,11 @@ export const ChatStack = ({ selectedTheme, setChatFocused, modalVisibleChatinfo,
             modalVisibleChatinfo={modalVisibleChatinfo}
             setModalVisibleChatinfo={setModalVisibleChatinfo}
             bannedUsers={bannedUsers}
+            setBannedUsers={setBannedUsers}
           />
         )}
       </Stack.Screen>
 
-      {/* Inbox Screen */}
       <Stack.Screen
         name="Inbox"
         component={InboxScreen}
@@ -109,10 +126,10 @@ export const ChatStack = ({ selectedTheme, setChatFocused, modalVisibleChatinfo,
         initialParams={{ bannedUsers }}
       />
 
-      {/* Private Chat Screen */}
       <Stack.Screen
         name="PrivateChat"
         component={PrivateChatScreen}
+        initialParams={{ bannedUsers }}
         options={({ route }) => {
           const { selectedUser, isOnline } = route.params;
           return {
@@ -122,6 +139,7 @@ export const ChatStack = ({ selectedTheme, setChatFocused, modalVisibleChatinfo,
                 isOnline={isOnline}
                 selectedTheme={selectedTheme}
                 bannedUsers={bannedUsers}
+                setBannedUsers={setBannedUsers}
               />
             ),
           };
@@ -131,36 +149,18 @@ export const ChatStack = ({ selectedTheme, setChatFocused, modalVisibleChatinfo,
   );
 };
 
-
 const styles = StyleSheet.create({
   icon: {
     marginRight: 15,
   },
   icon2: {
     marginRight: 15,
-    marginTop:3
-  },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 10,
-  },
-  userName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  userStatus: {
-    fontSize: 12,
-    fontWeight: 'normal',
+    marginTop: 3,
   },
   iconContainer: {
     position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  icon: {
-    marginRight: 15,
   },
   badge: {
     position: 'absolute',

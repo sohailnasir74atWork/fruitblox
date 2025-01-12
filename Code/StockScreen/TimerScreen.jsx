@@ -72,7 +72,14 @@ const TimerScreen = ({ selectedTheme }) => {
       updateLocalStateAndDatabase('selectedFruits', updatedFruits); // Update selected fruits locally and remotely
       Alert.alert('Success', `${fruit.Name} selected successfully for 50 points!`);
     } else {
-      Alert.alert('Insufficient Points', 'You need at least 50 points to select more fruits.');
+      Alert.alert(
+        'Insufficient Points',
+        'You need at least 50 points to select more fruits. To earn points, go to\n\nSettings > Get Points > Earn Reward\n\nWatch ads or participate in activities to accumulate points.',
+        [
+          { text: 'OK', onPress: () => {} },
+        ]
+      );
+      
     }
   
     closeDrawer(); // Close the drawer after selection

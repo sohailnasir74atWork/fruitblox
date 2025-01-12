@@ -20,7 +20,7 @@ export const getStyles = (isDarkMode) =>
       paddingVertical: 5,
     },
     mymessageBubble: {
-      maxWidth: '95%',
+      // width: '100%',
       paddingHorizontal: 10,
       borderRadius: 15,
       flexDirection: "row-reverse",
@@ -28,12 +28,12 @@ export const getStyles = (isDarkMode) =>
       alignItems: 'flex-end'
     },
     othermessageBubble: {
-      maxWidth: '95%',
+      // width: '100%',
       paddingHorizontal: 10,
       borderRadius: 15,
       flexDirection: 'row',
       marginBottom: 10,
-      alignItems: 'flex-end'
+      alignItems: 'flex-start',
 
     },
     myMessage: {
@@ -56,7 +56,8 @@ export const getStyles = (isDarkMode) =>
       color: '#fff',
     },
     messageTextBox: {
-      flex: 1,
+      // flex: 1,
+      maxWidth:'75%'
     },
     messageTextBoxAdmin: {
       flexDirection: 'column',
@@ -69,7 +70,7 @@ export const getStyles = (isDarkMode) =>
       backgroundColor: isDarkMode ? config.colors.primary : 'lightgreen',
       paddingVertical: 5,
       paddingHorizontal: 10,
-      borderRadius: 20,
+      borderRadius: 10,
       fontFamily: 'Lato-Regular'
     },
     otherMessageText: {
@@ -78,15 +79,17 @@ export const getStyles = (isDarkMode) =>
       backgroundColor: isDarkMode ? config.colors.primary : 'white',
       paddingHorizontal: 10,
       // lineHeight: 20,
-      borderRadius: 20,
+      borderRadius: 10,
       paddingVertical: 5,
-      fontFamily: 'Lato-Regular'
+      fontFamily: 'Lato-Regular',
+      paddingRight:20
+
     },
     timestamp: {
       fontSize: 10,
       color: '#bbb',
       textAlign: 'right',
-      paddingHorizontal: 10
+      paddingHorizontal: 5
     },
     inputContainer: {
       flexDirection: 'row', // Maintains horizontal alignment with the send button
@@ -264,11 +267,7 @@ export const getStyles = (isDarkMode) =>
     },
     menu: {
       borderRadius: 20,
-
-
-
       // backgroundColor:'red'
-
     },
     menuTrig: {
       borderRadius: 50,
@@ -291,6 +290,13 @@ export const getStyles = (isDarkMode) =>
       fontSize: 16,
       color: '#000',
     },
+    reportIcon:{
+      position:'absolute',
+      right:2,
+      top:2,
+      opacity:1
+
+    }
 
 
   });

@@ -34,12 +34,13 @@ export const getStyles = (isDarkMode) =>
       },
       userName: {
         fontSize: 18,
-        fontWeight: '600',
+        fontFamily:'Lato-Bold',
         color: isDarkMode ? '#fff' : '#000',
       },
       reward: {
         fontSize: 14,
         color: isDarkMode ? '#ccc' : '#666',
+        fontFamily:'Lato-Regular'
       },
       option: {
         flexDirection: 'row',
@@ -58,6 +59,7 @@ export const getStyles = (isDarkMode) =>
         fontSize: 16,
         marginLeft: 10,
         color: isDarkMode ? '#fff' : '#000',
+        fontFamily:'Lato-Regular'
       },
       overlay: {
         flex: 1,
@@ -74,13 +76,11 @@ export const getStyles = (isDarkMode) =>
       },
       drawerTitle: {
         fontSize: 18,
-        fontWeight: '600',
         marginBottom: 15,
+        fontFamily:'Lato-Bold'
+
       },
-      drawerSubtitle: {
-        fontSize: 16,
-        marginBottom: 10,
-      },
+     
       input: {
         backgroundColor: isDarkMode ? '#121212' : '#f2f2f7',
         padding: 10,
@@ -107,7 +107,8 @@ export const getStyles = (isDarkMode) =>
       },
       drawerSubtitle:{
         color: isDarkMode ? '#fff' : '#000',
-        fontFamily:'Lato-Bold'
+        fontFamily:'Lato-Bold',
+        marginBottom:10
       },
       rewardDescription:{
         color: isDarkMode ? '#fff' : '#000',
@@ -117,19 +118,24 @@ export const getStyles = (isDarkMode) =>
       optionTextLogout:{
         fontSize: 16,
         marginLeft: 10,
-        color:config.colors.wantBlockRed
+        color:config.colors.wantBlockRed,
+        fontFamily:'Lato-Regular'
       },
       optionTextDelete:{
         fontSize: 16,
         marginLeft: 10,
-        color:!isDarkMode ? '#5A1F1F' : '#FFE5E5'
+        color:!isDarkMode ? '#5A1F1F' : '#FFE5E5',
+        fontFamily:'Lato-Regular'
+
       },
       optionDelete: {
         flexDirection: 'row',
         alignItems: 'center',
         padding: 15,
         borderBottomColor: isDarkMode ? '#333333' : '#cccccc',
-        backgroundColor: isDarkMode ? '#5A1F1F' : '#FFE5E5'
+        backgroundColor: isDarkMode ? '#5A1F1F' : '#FFE5E5',
+        fontFamily:'Lato-Regular'
+
       },
     });
   

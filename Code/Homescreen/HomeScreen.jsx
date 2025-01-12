@@ -27,7 +27,6 @@ const HomeScreen = ({ selectedTheme }) => {
   const [wantsTotal, setWantsTotal] = useState({ price: 0, value: 0 });
   const [isAdLoaded, setIsAdLoaded] = useState(false);
   const [isShowingAd, setIsShowingAd] = useState(false);
-  const [hasAdBeenShown, setHasAdBeenShown] = useState(0);
   const [loading, setLoading] = useState(true);
   const isDarkMode = theme === 'dark'
   const viewRef = useRef();
@@ -83,10 +82,10 @@ const HomeScreen = ({ selectedTheme }) => {
   };
 
   const openDrawer = (section) => {
-    // Show ad only if it's the "wants" section and the ad hasn't been shown yet
-    if (section === 'wants' && hasAdBeenShown === 1) {
+    const wantsItemCount = wantsItems.filter((item) => item !== null).length;
+    
+    if (section === 'wants' && wantsItemCount === 1 && !isShowingAd) {
       showInterstitialAd(() => {
-        setHasAdBeenShown(hasAdBeenShown + 1); // Mark the ad as shown
         setSelectedSection(section);
         setIsDrawerVisible(true);
       });
@@ -94,7 +93,6 @@ const HomeScreen = ({ selectedTheme }) => {
       // Open drawer without showing the ad
       setSelectedSection(section);
       setIsDrawerVisible(true);
-      setHasAdBeenShown(hasAdBeenShown + 1); // Mark the ad as shown
 
     }
   };
@@ -192,36 +190,36 @@ const HomeScreen = ({ selectedTheme }) => {
       console.error('View reference is undefined.');
       return;
     }
-  
+
     try {
       // Capture the view as an image
       const uri = await captureRef(viewRef.current, {
         format: 'png',
         quality: 0.8,
       });
-  
+
       // Generate a unique file name
       const timestamp = new Date().getTime(); // Use the current timestamp
       const uniqueFileName = `screenshot_${timestamp}.png`;
-  
+
       // Determine the path to save the screenshot
       const downloadDest = Platform.OS === 'android'
         ? `${RNFS.ExternalDirectoryPath}/${uniqueFileName}`
         : `${RNFS.DocumentDirectoryPath}/${uniqueFileName}`;
-  
+
       // Save the captured image to the determined path
       await RNFS.copyFile(uri, downloadDest);
-  
+
       console.log(`Screenshot saved to: ${downloadDest}`);
-  
+
       return downloadDest;
     } catch (error) {
       console.error('Error capturing screenshot:', error);
       Alert.alert('Error', 'Failed to capture and save the screenshot. Please try again.');
     }
   };
-  
-  
+
+
 
 
   const proceedWithScreenshotShare = async () => {
@@ -306,10 +304,10 @@ const HomeScreen = ({ selectedTheme }) => {
                           <Text style={styles.itemText}>{item.Name}</Text>
                           {item.Type.toUpperCase() !== 'PREMIUM' && (
                             <TouchableOpacity style={styles.switchValue} onPress={() => toggleItemValueMode(index, 'has')}>
-                              <Icon name="repeat-outline" size={14} />
+                              <Icon name="repeat-outline" size={14} color='black' />
                               <Text style={styles.switchValueText}>
-    {item.usePermanent ? 'Permanent' : 'Physical'}
-</Text>
+                                {item.usePermanent ? 'Permanent' : 'Physical'}
+                              </Text>
 
                             </TouchableOpacity>
                           )}
@@ -350,8 +348,8 @@ const HomeScreen = ({ selectedTheme }) => {
                             <TouchableOpacity style={styles.switchValue} onPress={() => toggleItemValueMode(index, 'want')}>
                               <Icon name="repeat-outline" size={14} />
                               <Text style={styles.switchValueText}>
-    {item.usePermanent ? 'Permanent' : 'Physical'}
-</Text>
+                                {item.usePermanent ? 'Permanent' : 'Physical'}
+                              </Text>
 
                             </TouchableOpacity>
                           )}
@@ -602,7 +600,8 @@ const getStyles = (isDarkMode) =>
     switchValueText: {
       fontSize: 10,
       padding: 3,
-      fontFamily: 'Lato-Regular'
+      fontFamily: 'Lato-Regular',
+      color: 'black'
 
     },
     captureButton: { backgroundColor: '#3E8BFC', padding: 10, borderRadius: 8, alignItems: 'center', marginTop: 20, alignSelf: 'center' },
