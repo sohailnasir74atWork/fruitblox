@@ -9,6 +9,7 @@ import {
   Image,
   Linking,
   Alert,
+  Keyboard,
 } from 'react-native';
 import { getStyles } from './../Style';
 import { Menu, MenuOptions, MenuOption, MenuTrigger } from 'react-native-popup-menu';
@@ -43,8 +44,8 @@ const MessagesList = ({
     Vibration.vibrate(50); // Vibrate for feedback
     setSelectedMessage(item);
   };
-  
-// console.log(messages)
+
+  // console.log(messages)
   const handleReport = (message) => {
     setSelectedMessage(message);
     setShowReportPopup(true);
@@ -59,10 +60,9 @@ const MessagesList = ({
   };
 
   const handleProfileClick = (item) => {
-    if(user.id) 
-      {toggleDrawer(item)} 
+    if (user.id) { toggleDrawer(item) }
     else return
-    
+
   };
 
 
@@ -74,7 +74,6 @@ const MessagesList = ({
       : null;
     const shouldShowDateHeader = currentDate !== previousDate;
 
-console.log(item.reportCount)
     return (
       <View>
         {/* Display the date header if it's a new day */}
@@ -156,13 +155,13 @@ console.log(item.reportCount)
                     return part;
                   })}
 
-                        
+
 
                 </Text>
               </MenuTrigger>
-              <MenuOptions  customStyles={{
-                    optionsContainer: styles.menuoptions,
-                  }}>
+              <MenuOptions customStyles={{
+                optionsContainer: styles.menuoptions,
+              }}>
                 <MenuOption
                   onSelect={() => onReply(item)}
                   text="Reply"
@@ -182,7 +181,7 @@ console.log(item.reportCount)
               </MenuOptions>
             </Menu>
 
-           {item.reportCount > 0 && <Icon name="alert-circle-outline" size={14} style={styles.reportIcon} color={config.colors.wantBlockRed} />}
+            {item.reportCount > 0 && <Icon name="alert-circle-outline" size={14} style={styles.reportIcon} color={config.colors.wantBlockRed} />}
 
           </View>
 
@@ -228,7 +227,7 @@ console.log(item.reportCount)
               </TouchableOpacity>}
             </View>
           ) : (
-            <View style={{flex:1, justifyContent:'flex-end'}}>
+            <View style={{ flex: 1, justifyContent: 'flex-end' }}>
               <Text style={styles.timestamp}>
                 {new Date(item.timestamp).toLocaleTimeString([], {
                   hour: '2-digit',
@@ -241,7 +240,7 @@ console.log(item.reportCount)
 
       </View>
     );
-  },[messages]);
+  }, [messages]);
 
   return (
     <>
@@ -263,11 +262,14 @@ console.log(item.reportCount)
             tintColor={isDarkMode ? '#FFF' : '#000'}
           />
         }
+        onScroll={() => Keyboard.dismiss()}
+        onTouchStart={() => Keyboard.dismiss()}
+        keyboardShouldPersistTaps="handled" // Ensures taps o
       />
       <ReportPopup
         visible={showReportPopup}
         message={selectedMessage}
-        onClose={() => {setSelectedMessage(null); setShowReportPopup(false)}}
+        onClose={() => { setSelectedMessage(null); setShowReportPopup(false) }}
         onSubmit={submitReport}
       />
     </>

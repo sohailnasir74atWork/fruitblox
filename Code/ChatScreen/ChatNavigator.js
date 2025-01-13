@@ -10,6 +10,7 @@ import { getDatabase, onValue, ref } from 'firebase/database';
 import { useGlobalState } from '../GlobelStats';
 import PrivateChatHeader from './PrivateChat/PrivateChatHeader';
 import { Menu, MenuOptions, MenuOption, MenuTrigger } from 'react-native-popup-menu';
+import BlockedUsersScreen from './PrivateChat/BlockUserList';
 
 
 const Stack = createNativeStackNavigator();
@@ -32,26 +33,30 @@ const HeaderRight = ({ selectedTheme, navigateToInbox, setModalVisibleChatinfo, 
     </View>
 
     <Menu>
-        <MenuTrigger>
-          <Icon
-            name="ellipsis-vertical-outline"
-            size={24}
-            color={config.colors.primary}
-          />
-        </MenuTrigger>
-        <MenuOptions>
-          <MenuOption>
-            <Text style={{ color: 'red', fontSize: 16, padding: 10 }}>Delete</Text>
-          </MenuOption>
-        </MenuOptions>
-      </Menu>
-    {/* <Icon
-      name="information-circle-outline"
-      size={24}
-      color={selectedTheme.colors.text}
-      style={styles.icon}
-      onPress={() => setModalVisibleChatinfo(true)}
-    /> */}
+      <MenuTrigger>
+        <Icon
+          name="ellipsis-vertical-outline"
+          size={24}
+          color={config.colors.primary}
+        />
+      </MenuTrigger>
+      <MenuOptions customStyles={{ optionsContainer: styles.menuOptions }}>
+        <MenuOption onSelect={ ()=> setModalVisibleChatinfo((prev) => !prev)}>
+          <View style={styles.menuItem}>
+            <Icon name="information-circle-outline" size={20} color={config.colors.primary} />
+            <Text style={styles.menuText}>Chat Rules</Text>
+          </View>
+        </MenuOption>
+        <View style={styles.separator} />
+        <MenuOption onSelect={() => navigation.navigate('BlockedUsers')}>
+  <View style={styles.menuItem}>
+    <Icon name="ban-outline" size={20} color={config.colors.primary} />
+    <Text style={styles.menuText}>View Blocked Users</Text>
+  </View>
+</MenuOption>
+
+      </MenuOptions>
+    </Menu>
   </View>
 );
 
@@ -125,6 +130,15 @@ export const ChatStack = ({ selectedTheme, setChatFocused, modalVisibleChatinfo,
         options={{ title: 'Inbox' }}
         initialParams={{ bannedUsers }}
       />
+ <Stack.Screen
+  name="BlockedUsers"
+  component={BlockedUsersScreen}
+  initialParams={{ bannedUsers }}
+  options={{
+    title: 'Blocked Users',
+  }}
+/>
+
 
       <Stack.Screen
         name="PrivateChat"
@@ -178,5 +192,28 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 10,
     fontWeight: 'bold',
+  },
+  menuOptions: {
+    paddingVertical: 10,
+    // backgroundColor: '#fff',
+    borderRadius: 10,
+    position:'absolute'
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 5,
+  },
+  menuText: {
+    fontFamily: 'Lato-Regular',
+    fontSize: 16,
+    color: config.colors.text,
+    marginLeft: 10, // Space between icon and text
+    color:config.colors.primary
+  },
+  separator: {
+    height: 1,
+    backgroundColor: '#ddd',
+    marginVertical: 5,
   },
 });

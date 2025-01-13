@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Vibration,
+  Keyboard,
 } from 'react-native';
 import { Menu, MenuOptions, MenuOption, MenuTrigger } from 'react-native-popup-menu';
 import { useGlobalState } from '../../GlobelStats';
@@ -128,6 +129,9 @@ const PrivateMessageList = ({
           inverted // Ensure list starts from the bottom
           onEndReached={handleLoadMore}
           onEndReachedThreshold={0.3}
+           onScroll={() => Keyboard.dismiss()}
+        onTouchStart={() => Keyboard.dismiss()}
+        keyboardShouldPersistTaps="handled" // Ensures taps o
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }

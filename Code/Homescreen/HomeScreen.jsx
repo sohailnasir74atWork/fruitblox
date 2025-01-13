@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Modal, FlatList, TextInput, Image, Alert, useColorScheme } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Modal, FlatList, TextInput, Image, Alert, useColorScheme, Keyboard, KeyboardAvoidingView, Pressable } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { InterstitialAd, AdEventType, TestIds, BannerAd, BannerAdSize } from 'react-native-google-mobile-ads';
 import getAdUnitId from '../Ads/ads';
@@ -9,6 +9,7 @@ import Share from 'react-native-share';
 import { useGlobalState } from '../GlobelStats';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import config from '../Helper/Environment';
+import KeyboardAvoidingWrapper from '../Helper/keyboardAvoidingContainer';
 
 const bannerAdUnitId = getAdUnitId('banner');
 const interstitialAdUnitId = getAdUnitId('interstitial');
@@ -370,19 +371,27 @@ const HomeScreen = ({ selectedTheme }) => {
 
             <Icon name={!config.isNoman ? "chevron-down-circle" : 'arrow-down-circle'} size={60} color={config.colors.hasBlockGreen} />
           </TouchableOpacity>
-
           <Modal
             visible={isDrawerVisible}
             transparent={true}
             animationType="slide"
             onRequestClose={closeDrawer}
-          >
-            <TouchableOpacity style={styles.modalOverlay} onPress={closeDrawer} />
+          >        
+            
+
+            <Pressable style={styles.modalOverlay} onPress={closeDrawer} />
+            <KeyboardAvoidingView
+    
+    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <View>
+
             <View style={[styles.drawerContainer, { backgroundColor: isDarkMode ? '#3B404C' : 'white' }]}>
               <Text style={[styles.titleText, { color: selectedTheme.colors.text }]}>You can search fruite and select it</Text>
               <View style={{
                 flexDirection: 'row', justifyContent: 'space-between', marginVertical: 10,
-              }}>
+              }}
+             
+              >
 
                 <TextInput
                   style={styles.searchInput}
@@ -394,6 +403,10 @@ const HomeScreen = ({ selectedTheme }) => {
                   <Text style={styles.closeButtonText}>CLOSE</Text>
                 </TouchableOpacity></View>
               <FlatList
+                onScroll={() => Keyboard.dismiss()}
+                onTouchStart={() => Keyboard.dismiss()}
+                keyboardShouldPersistTaps="handled" // Ensures taps o
+                
                 data={filteredData}
                 keyExtractor={(item) => item.Name}
                 renderItem={({ item }) => (
@@ -413,6 +426,8 @@ const HomeScreen = ({ selectedTheme }) => {
 
               />
             </View>
+            </View>
+            </KeyboardAvoidingView>
           </Modal>
         </View>
       </GestureHandlerRootView>

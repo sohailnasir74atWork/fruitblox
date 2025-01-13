@@ -5,7 +5,6 @@ import auth from '@react-native-firebase/auth';
 import messaging from '@react-native-firebase/messaging';
 import { Appearance } from 'react-native';
 import { createNewUser, firebaseConfig, registerForNotifications, saveTokenToDatabase } from './Globelhelper';
-import { act } from 'react-test-renderer';
 
 // Initialize Firebase
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
@@ -18,7 +17,8 @@ const GlobalStateContext = createContext();
 export const useGlobalState = () => useContext(GlobalStateContext);
 
 export const GlobalStateProvider = ({ children }) => {
-  const [theme, setTheme] = useState(Appearance.getColorScheme());
+  const [theme, setTheme] = useState(Appearance.getColorScheme() || 'light');
+
   const [state, setState] = useState({
     data: {},
     normalStock: [],
@@ -49,11 +49,11 @@ export const GlobalStateProvider = ({ children }) => {
   // Track theme changes
   useEffect(() => {
     const listener = Appearance.addChangeListener(({ colorScheme }) => {
-      setTheme(colorScheme);
+      setTheme(colorScheme || 'light'); 
     });
     return () => listener.remove();
   }, []);
-
+  
 
 
 
@@ -247,25 +247,25 @@ export const GlobalStateProvider = ({ children }) => {
     return () => unsubscribe();
   }, [user?.id]);
   // Fetch public stock data
+
+  const fetchStockData = async () => {
+    try {
+      const [xlsSnapshot, calcSnapshot] = await Promise.all([
+        get(ref(database, 'xlsData')),
+        get(ref(database, 'calcData')),
+      ]);
+
+      setState({
+        data: xlsSnapshot.val() || [],
+        normalStock: calcSnapshot.val()?.test || [],
+        mirageStock: calcSnapshot.val()?.mirage || [],
+        isAppReady: true,
+      });
+    } catch (error) {
+      console.error('Error fetching stock data:', error);
+    }
+  };
   useEffect(() => {
-    const fetchStockData = async () => {
-      try {
-        const [xlsSnapshot, calcSnapshot] = await Promise.all([
-          get(ref(database, 'xlsData')),
-          get(ref(database, 'calcData')),
-        ]);
-
-        setState({
-          data: xlsSnapshot.val() || [],
-          normalStock: calcSnapshot.val()?.test || [],
-          mirageStock: calcSnapshot.val()?.mirage || [],
-          isAppReady: true,
-        });
-      } catch (error) {
-        console.error('Error fetching stock data:', error);
-      }
-    };
-
     fetchStockData();
   }, []);
 
@@ -289,6 +289,8 @@ export const GlobalStateProvider = ({ children }) => {
       }
     };
   })();
+
+
   
   
   useEffect(() => {
@@ -314,10 +316,10 @@ export const GlobalStateProvider = ({ children }) => {
       setUser,
       setOnlineMembersCount,
       activeUser,
-      updateLocalStateAndDatabase, unreadMessagesCount
+      updateLocalStateAndDatabase, unreadMessagesCount, fetchStockData
       
     }),
-    [state, user, onlineMembersCount, theme, activeUser, unreadMessagesCount]
+    [state, user, onlineMembersCount, theme, activeUser, unreadMessagesCount, fetchStockData]
   );
 
   return (

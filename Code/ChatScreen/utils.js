@@ -1,5 +1,5 @@
 import { getDatabase, ref, update, get, query, orderByChild, remove, set, orderByKey } from 'firebase/database';
-import { Alert } from 'react-native';
+import { Alert, Linking, Text } from 'react-native';
 
 // Initialize the database reference
 const database = getDatabase();
@@ -212,4 +212,38 @@ export const deleteOldest500Messages = async () => {
   } catch (error) {
     console.error('Error deleting messages:', error);
   }
+};
+
+
+
+
+export const renderClickableText = (text) => {
+  // Regular expression for detecting links
+  const linkRegex = /(https?:\/\/[^\s]+)/g;
+
+  // Split the text into parts based on the link regex
+  const parts = text.split(linkRegex);
+
+  // Render the text with clickable links
+  return parts.map((part, index) => {
+    if (linkRegex.test(part)) {
+      // Render clickable link
+      return (
+        <Text
+          key={index}
+          style={{ color: 'blue', textDecorationLine: 'underline' }}
+          onPress={() => Linking.openURL(part)}
+        >
+          {part}
+        </Text>
+      );
+    } else {
+      // Render plain text
+      return (
+        <Text key={index} style={{ color: 'black' }}>
+          {part}
+        </Text>
+      );
+    }
+  });
 };

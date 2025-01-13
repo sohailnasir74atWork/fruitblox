@@ -5,12 +5,13 @@ import {
   TouchableOpacity,
   StyleSheet,
   Animated,
-  PanResponder, Modal
+  PanResponder, Modal,
+  Linking
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useGlobalState } from '../../GlobelStats';
 import { ScrollView } from 'react-native-gesture-handler';
-import { rules } from './../utils';
+import { renderClickableText, rules } from './../utils';
 import config from '../../Helper/Environment';
 
 const AdminHeader = ({
@@ -52,7 +53,7 @@ const AdminHeader = ({
 
   const expand = () => {
     Animated.timing(animatedHeight, {
-      toValue: contentHeight + 60, // Base height + content height
+      toValue: contentHeight + 100, // Base height + content height
       duration: 200,
       useNativeDriver: false,
     }).start(() => setExpanded(true));
@@ -106,7 +107,7 @@ const AdminHeader = ({
                 numberOfLines={!expanded && index === 0 ? 1 : 0} // Truncate only the first message when collapsed
                 ellipsizeMode="tail"
               >
-                📌 {message.text}
+                📌 {renderClickableText(message.text)}
               </Text>
               {isAdmin || isOwner && (
                 <TouchableOpacity

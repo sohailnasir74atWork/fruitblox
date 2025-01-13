@@ -1,22 +1,23 @@
 import React from 'react';
 import {
   KeyboardAvoidingView,
-  ScrollView,
-  TouchableWithoutFeedback,
   Keyboard,
   Platform,
   StyleSheet,
   View,
+  Pressable,
 } from 'react-native';
 
 const KeyboardAvoidingWrapper = ({ children, customStyles }) => {
   return (
     <KeyboardAvoidingView
-      style={[styles.container, customStyles]} // Merge custom styles if provided
+      style={[styles.container]} // Merge custom styles if provided
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}
     >
     
-          <View style={styles.inner}>{children}</View>
+         {children}
+
     </KeyboardAvoidingView>
   );
 };
@@ -24,6 +25,7 @@ const KeyboardAvoidingWrapper = ({ children, customStyles }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    
   },
   scrollViewContent: {
     flexGrow: 1,
@@ -32,7 +34,6 @@ const styles = StyleSheet.create({
     flex: 1,
     // justifyContent: 'center', // Center content vertically
     // Uncomment the line below for additional padding if needed
-    // paddingHorizontal: 20,
   },
 });
 

@@ -2,6 +2,7 @@ import { initializeApp, getApps } from 'firebase/app';
 import { getDatabase, ref, get, set } from 'firebase/database'; // Correct Firebase imports
 import messaging from '@react-native-firebase/messaging'; // React Native Firebase Messaging
 import { Platform } from 'react-native'; // Platform detection (iOS/Android)
+import { generateOnePieceUsername } from './Helper/RendomNamegen';
 export const firebaseConfig = {
     apiKey: "AIzaSyDUXkQcecnhrNmeagvtRsKmDBmwz4AsRC0",
     authDomain: "fruiteblocks.firebaseapp.com",
@@ -79,7 +80,7 @@ export const firebaseConfig = {
   
     //   console.log('Fetching FCM Token...');
       const fcmToken = await messaging().getToken();
-    //   console.log('FCM Token:', fcmToken);
+      // console.log('FCM Token:', fcmToken);
   
       if (!fcmToken) {
         console.error('Failed to fetch FCM token. Token is null or undefined.');
@@ -103,7 +104,7 @@ export const firebaseConfig = {
     status: 'active',
     isReminderEnabled: false,
     isSelectedReminderEnabled: false,
-    displayname: loggedInUser?.displayName || 'Anonymous',
+    displayname: generateOnePieceUsername() || 'Anonymous',
     avatar:
       loggedInUser?.photoURL ||
       'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png',

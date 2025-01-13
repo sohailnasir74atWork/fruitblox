@@ -283,8 +283,8 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
 
 
   return (
+    <KeyboardAvoidingWrapper>
     <GestureHandlerRootView>
-      <KeyboardAvoidingWrapper>
         <View style={styles.container}>
           <AdminHeader
             pinnedMessages={pinnedMessages}
@@ -345,7 +345,6 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
 
           />
         </View>
-      </KeyboardAvoidingWrapper>
       <ProfileBottomDrawer
         isVisible={isDrawerVisible}
         toggleModal={toggleDrawer}
@@ -361,6 +360,7 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
         />
       </View>
     </GestureHandlerRootView>
+    </KeyboardAvoidingWrapper>
   );
 };
 

@@ -61,6 +61,22 @@ function App() {
   const [chatFocused, setChatFocused] = useState(true);
   const [modalVisibleChatinfo, setModalVisibleChatinfo] = useState(false);
 
+  // useEffect(() => {
+  //   const unsubscribe = notifee.onForegroundEvent(({ type, detail }) => {
+  //     if (type === EventType.PRESS) {
+  //       handleNotificationPress(detail.pressAction.id);
+  //     }
+  //   });
+
+  //   return () => unsubscribe();
+  // }, []);
+
+  // const handleNotificationPress = (actionId) => {
+  //   // Handle navigation based on actionId
+  //   if (actionId === 'stock_screen') {
+  //     navigationRef.current?.navigate('Stock'); // Navigate to Stock screen
+  //   }
+  // };
 
   const adCooldown = 300000;
   useEffect(() => {

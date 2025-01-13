@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, FlatList, Image, Switch, TouchableOpacity, Alert, Linking, useColorScheme, Platform, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Image, Switch, TouchableOpacity, Alert, Linking, useColorScheme, Platform, ActivityIndicator, RefreshControl } from 'react-native';
 import { useGlobalState } from '../GlobelStats';
 import Icon from 'react-native-vector-icons/Ionicons';
 import FruitSelectionDrawer from './FruitSelectionDrawer';
@@ -16,12 +16,13 @@ const interstitial = InterstitialAd.createForAdRequest(interstitialAdUnitId);
 const TimerScreen = ({ selectedTheme }) => {
   const [normalTimer, setNormalTimer] = useState('');
   const [mirageTimer, setMirageTimer] = useState('');
-  const { state, setState, user, updateLocalStateAndDatabase, theme } = useGlobalState();
+  const { state, setState, user, updateLocalStateAndDatabase, theme, fetchStockData } = useGlobalState();
   const [hasAdBeenShown, setHasAdBeenShown] = useState(false);
   const [isAdLoaded, setIsAdLoaded] = useState(false);
   const [isShowingAd, setIsShowingAd] = useState(false);
   const [fruitRecords, setFruitRecords] = useState([]);
   const [isDrawerVisible, setDrawerVisible] = useState(false);
+  const [refreshing, setRefreshing] = useState(false); // State for pull-to-refresh
   const [isSigninDrawerVisible, setisSigninDrawerVisible] = useState(false);
   const isDarkMode = theme === 'dark';
   useEffect(() => {
@@ -85,7 +86,16 @@ const TimerScreen = ({ selectedTheme }) => {
     closeDrawer(); // Close the drawer after selection
   };
   
-  
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await fetchStockData(); // Re-fetch stock data
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
   
   const handleRemoveFruit = (fruit) => {
     const selectedFruits = user.selectedFruits || []; // Ensure `selectedFruits` is always an array
@@ -302,7 +312,13 @@ const TimerScreen = ({ selectedTheme }) => {
     <>
       <GestureHandlerRootView>
         <View style={styles.container}>
-          <ScrollView showsVerticalScrollIndicator={false}>
+        <ScrollView
+        contentContainerStyle={styles.scrollViewContent}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+        }
+      >
             <Text style={[styles.description, { color: selectedTheme.colors.text }]}>
               Stay updated on the latest fruits stock
             </Text>

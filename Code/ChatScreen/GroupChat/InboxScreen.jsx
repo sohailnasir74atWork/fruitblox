@@ -57,7 +57,7 @@ const InboxScreen = () => {
   useEffect(() => {
     if (!user?.id) return;
 
-    const bannedRef = database().ref(`bannedUsers/${user.id}`);
+    const bannedRef = database().ref(`bannedUsers/${user?.id}`);
     const unsubscribe = bannedRef.on('value', (snapshot) => {
       const data = snapshot.val() || {};
       const updatedBannedUsers = Object.entries(data).map(([id, details]) => ({
@@ -71,63 +71,65 @@ const InboxScreen = () => {
     return () => bannedRef.off('value', unsubscribe);
   }, [user?.id]);
 
-  // Fetch Chat Data
   const fetchChats = useCallback(async () => {
     if (!user?.id) return;
-
+  
     setLoading(true);
     const privateChatsRef = database().ref('privateChats');
     const lastReadRef = database().ref(`lastseen/${user.id}`);
-
+  
     try {
       const [chatsSnapshot, lastReadSnapshot] = await Promise.all([
         privateChatsRef.once('value'),
         lastReadRef.once('value'),
       ]);
-
+  
       const chatsData = chatsSnapshot.val() || {};
       const lastReadData = lastReadSnapshot.val() || {};
       const bannedUserIds = bannedUsers.map((banned) => banned.id);
-
+  
       const userChats = Object.keys(chatsData).reduce((acc, chatKey) => {
         const [userId1, userId2] = chatKey.split('_');
+        const isParticipant = userId1 === user.id || userId2 === user.id;
         const otherUserId = userId1 === user.id ? userId2 : userId1;
-
-        if (userId1 === user.id || userId2 === user.id) {
-          const messages = Object.entries(chatsData[chatKey]).sort(
-            (a, b) => b[1].timestamp - a[1].timestamp
-          );
-
-          if (messages.length > 0) {
-            const lastMessage = messages[0][1];
-            const unreadCount = messages.filter(
-              (msg) => msg[1].timestamp > (lastReadData[chatKey] || 0)
-            ).length;
-
-            const isOnline = activeUser?.some((active) => active.id === otherUserId);
-
-            acc.push({
-              chatKey,
-              userName:
-                lastMessage.receiverId === otherUserId
-                  ? lastMessage.receiverName
-                  : lastMessage.senderName,
-              avatar:
-                lastMessage.receiverId === otherUserId
-                  ? lastMessage.receiverAvatar
-                  : lastMessage.senderAvatar || config.defaultAvatar,
-              lastMessage: lastMessage.text,
-              unreadCount,
-              otherUserId,
-              isOnline,
-              isBanned: bannedUserIds.includes(otherUserId),
-            });
-          }
+  
+        if (isParticipant) {
+          const messages = Object.entries(chatsData[chatKey]);
+  
+          // Ensure we get the last message chronologically
+          const sortedMessages = messages.sort((a, b) => a[1].timestamp - b[1].timestamp);
+          const lastMessage = sortedMessages[sortedMessages.length - 1]?.[1] || {};
+  
+          // Extract the other user's details
+          const otherUserInfo = {
+            userName: lastMessage.senderId === user.id ? lastMessage.receiverName : lastMessage.senderName,
+            avatar: lastMessage.senderId === user.id ? lastMessage.receiverAvatar : lastMessage.senderAvatar,
+          };
+  
+          // Calculate unread messages
+          const unreadCount = messages.filter(
+            ([, msg]) =>
+              msg.receiverId === user.id && msg.timestamp > (lastReadData[chatKey] || 0)
+          ).length;
+  
+          // Check online status
+          const isOnline = activeUser?.some((active) => active.id === otherUserId);
+  
+          acc.push({
+            chatKey,
+            userName: otherUserInfo.userName || 'Unknown User',
+            avatar: otherUserInfo.avatar || config.defaultAvatar,
+            lastMessage: lastMessage.text || '',
+            unreadCount,
+            otherUserId,
+            isOnline,
+            isBanned: bannedUserIds.includes(otherUserId),
+          });
         }
-
+  
         return acc;
       }, []);
-
+  
       setChats(userChats);
     } catch (error) {
       console.error('Error fetching chats:', error);
@@ -135,6 +137,9 @@ const InboxScreen = () => {
       setLoading(false);
     }
   }, [user, activeUser, bannedUsers]);
+  
+  
+  
 
   useEffect(() => {
     fetchChats();
@@ -180,8 +185,9 @@ const InboxScreen = () => {
         <MenuTrigger>
           <Icon
             name="ellipsis-vertical-outline"
-            size={24}
+            size={20}
             color={config.colors.primary}
+            style={{paddingLeft:10}}
           />
         </MenuTrigger>
         <MenuOptions>
@@ -254,7 +260,7 @@ const getStyles = (isDarkMode) =>
       color: '#555',
     },
     unreadBadge: {
-      backgroundColor: config.colors.primary,
+      backgroundColor: config.colors.hasBlockGreen,
       borderRadius: 12,
       minWidth: 24,
       height: 24,

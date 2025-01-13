@@ -8,6 +8,7 @@ import { useGlobalState } from '../../GlobelStats';
 const PrivateChatHeader = ({ selectedUser, isOnline, selectedTheme, bannedUsers }) => {
   const { user } = useGlobalState();
   const avatarUri = selectedUser?.avatar || 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png';
+  console.log(selectedUser)
   const userName = selectedUser?.sender || 'User';
 
   // Check if the user is currently banned

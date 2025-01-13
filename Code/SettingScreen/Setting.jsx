@@ -9,6 +9,7 @@ import {
   Modal,
   Pressable,
   Alert,
+  KeyboardAvoidingView,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useGlobalState } from '../GlobelStats';
@@ -40,7 +41,6 @@ export default function SettingsScreen({ selectedTheme }) {
   const [openSingnin, setOpenSignin] = useState(false);
   const { user, theme, updateLocalStateAndDatabase, setUser } = useGlobalState()
   const isDarkMode = theme === 'dark';
-
   // Fetch user data on component mount
   useEffect(() => {
     if (user && user?.id) {
@@ -50,6 +50,7 @@ export default function SettingsScreen({ selectedTheme }) {
       setNewDisplayName('Guest User');
       setSelectedImage('https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png');
     }
+
   }, [user]);
   
   
@@ -207,7 +208,6 @@ export default function SettingsScreen({ selectedTheme }) {
     const timeDifference = now - lastRewardTime;
     return timeDifference >= 30 * 1000; // 30 seconds as defined
   };
-  
   // console.log(user)
   const showAd = async () => {
     try {
@@ -325,6 +325,9 @@ export default function SettingsScreen({ selectedTheme }) {
           style={styles.overlay}
           onPress={() => setDrawerVisible(false)}
         />
+         <KeyboardAvoidingView
+        
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}      >
         <View style={{ backgroundColor: 'rgba(0,0,0,0.5)', }}>
           <View style={styles.drawer}>
 
@@ -364,6 +367,7 @@ export default function SettingsScreen({ selectedTheme }) {
             </TouchableOpacity>
           </View>
         </View>
+        </KeyboardAvoidingView>
       </Modal>
       <Modal
         animationType="slide"

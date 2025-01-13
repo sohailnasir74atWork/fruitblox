@@ -7,66 +7,61 @@ import {
   TextInput,
   StyleSheet,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { useGlobalState } from "../GlobelStats";
 import config from "../Helper/Environment";
 import { getDatabase, ref, get, update } from "firebase/database";
 
-const ReportPopup = ({ visible, message, onClose, onSubmit }) => {
+const ReportPopup = ({ visible, message, onClose }) => {
   const [selectedReason, setSelectedReason] = useState("Spam");
   const [customReason, setCustomReason] = useState("");
   const [showCustomInput, setShowCustomInput] = useState(false);
+  const [loading, setLoading] = useState(false);
   const { theme } = useGlobalState();
   const isDarkMode = theme === "dark";
 
-
   const handleSubmit = () => {
-    if (!message?.id) {
+    const sanitizedId = message.id.startsWith("chat-") ? message.id.replace("chat-", "") : message.id; // Remove "chat-" prefix if it exists
+  
+  
+    if (!sanitizedId) {
       Alert.alert("Error", "Invalid message. Unable to report.");
       return;
     }
   
-    const db = getDatabase(); // Initialize the database
-    const messageRef = ref(db, `chat/${message.id}`); // Reference to the specific message
+    setLoading(true); // Start loader
+    const db = getDatabase();
+    const messageRef = ref(db, `chat/${sanitizedId}`);
   
     get(messageRef)
       .then((snapshot) => {
-        let updatedReportCount = 1; // Default to 1 if no reportCount exists
-  
         if (snapshot.exists()) {
           const messageData = snapshot.val();
-          // Increment the existing reportCount or initialize it
-          updatedReportCount = (messageData?.reportCount || 0) + 1;
+          console.log('Message Data:', messageData); // Log the fetched data
+          const updatedReportCount = (messageData?.reportCount || 0) + 1;
+  
+          return update(messageRef, { reportCount: updatedReportCount });
+        } else {
+          console.warn(`No data exists for path: chat/${sanitizedId}`);
+          // Initialize reportCount if the message doesn't exist
+          return update(messageRef, { reportCount: 1 });
         }
-  
-        // Update or set the reportCount in Firebase
-        return update(messageRef, { reportCount: updatedReportCount }).then(() => updatedReportCount);
       })
-      .then((updatedReportCount) => {
-        // Update the local message state with the new reportCount
-        const updatedMessage = {
-          ...message,
-          reportCount: updatedReportCount, // Update report count locally
-        };
-  
-        // Immediate feedback
-        Alert.alert(
-          "Report Submitted",
-          "Thank you for reporting this message."
-        );
-  
-        onSubmit(updatedMessage, selectedReason); // Notify parent component if needed
+      .then(() => {
+        setLoading(false); // Stop loader
+        Alert.alert("Report Submitted", "Thank you for reporting this message.");
         onClose(); // Close the report modal
       })
       .catch((error) => {
         console.error("Error reporting message:", error);
+        setLoading(false); // Stop loader
         Alert.alert("Error", "Failed to submit the report. Please try again.");
       });
   };
   
   
-  
-  
+
   const styles = getStyles(isDarkMode);
 
   return (
@@ -137,8 +132,19 @@ const ReportPopup = ({ visible, message, onClose, onSubmit }) => {
             <TouchableOpacity style={styles.button} onPress={onClose}>
               <Text style={styles.buttonText}>Cancel</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.button, {backgroundColor:config.colors.hasBlockGreen}]} onPress={handleSubmit}>
-              <Text style={styles.buttonText}>Submit</Text>
+            <TouchableOpacity
+              style={[
+                styles.button,
+                { backgroundColor: config.colors.hasBlockGreen },
+              ]}
+              onPress={handleSubmit}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Text style={styles.buttonText}>Submit</Text>
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -176,7 +182,6 @@ const getStyles = (isDarkMode) =>
     optionsContainer: {
       flexDirection: "row",
       flexWrap: "wrap",
-    //   justifyContent: "space-between",
       marginBottom: 10,
     },
     option: {
@@ -184,8 +189,7 @@ const getStyles = (isDarkMode) =>
       backgroundColor: "#ddd",
       borderRadius: 10,
       marginRight: 10,
-      marginBottom:10
-
+      marginBottom: 10,
     },
     selectedOption: {
       borderColor: config.colors.primary,
@@ -194,9 +198,8 @@ const getStyles = (isDarkMode) =>
     optionText: {
       fontSize: 14,
       color: isDarkMode ? "#888" : "#444",
-      paddingHorizontal:5
+      paddingHorizontal: 5,
     },
-
     selectedOptionText: {
       color: "white",
     },
@@ -204,7 +207,7 @@ const getStyles = (isDarkMode) =>
       borderWidth: 1,
       borderColor: "#ddd",
       borderRadius: 5,
-      padding:5,
+      padding: 5,
       marginTop: 10,
     },
     actions: {

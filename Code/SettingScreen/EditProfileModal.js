@@ -8,7 +8,9 @@ import {
   Image,
   Modal,
   Pressable,
+  KeyboardAvoidingView,
 } from 'react-native';
+import KeyboardAvoidingWrapper from '../Helper/keyboardAvoidingContainer';
 
 export default function EditProfileModal({
   visible,
@@ -41,6 +43,12 @@ export default function EditProfileModal({
         style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' }}
         onPress={onClose}
       />
+             <KeyboardAvoidingView
+        style={{ flex: 1, justifyContent: 'flex-end' }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={60} // Adjust offset as needed
+      >
+
       <View
         style={{
           backgroundColor: '#fff',
@@ -102,6 +110,8 @@ export default function EditProfileModal({
           <Text style={{ color: '#fff', textAlign: 'center' }}>Save Changes</Text>
         </TouchableOpacity>
       </View>
+      </KeyboardAvoidingView>
+
     </Modal>
   );
 }

@@ -85,7 +85,7 @@ const PrivateChatScreen = () => {
     },
     [chatRef, lastLoadedKey]
   );
-
+console.log(selectedUser)
   // Send message
   const sendMessage = useCallback(
     async (text) => {
@@ -99,7 +99,7 @@ const PrivateChatScreen = () => {
         const newMessage = {
           text: trimmedText,
           senderId: myUserId,
-          sender: user.displayName || user.displayName || 'Anonymous',
+          senderName: user.displayName,
           senderAvatar: user?.avatar || 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png',
           receiverId: selectedUserId,
           receiverName: selectedUser?.sender,
@@ -153,8 +153,9 @@ const PrivateChatScreen = () => {
   
  
   return (
+    <KeyboardAvoidingWrapper>
+
     <GestureHandlerRootView>
-      <KeyboardAvoidingWrapper>
     <View style={styles.container}>
       {loading && messages.length === 0 ? (
         <ActivityIndicator size="large" color="#1E88E5" style={{ flex: 1, justifyContent: 'center' }} />
@@ -185,7 +186,6 @@ const PrivateChatScreen = () => {
     selectedTheme={selectedTheme}    
     />
     </View>
-    </KeyboardAvoidingWrapper>
     <View style={{ alignSelf: 'center' }}>
         <BannerAd
           unitId={bannerAdUnitId}
@@ -193,6 +193,8 @@ const PrivateChatScreen = () => {
         />
       </View>
     </GestureHandlerRootView>
+    </KeyboardAvoidingWrapper>
+
   );
 };
 
