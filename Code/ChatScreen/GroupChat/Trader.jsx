@@ -26,7 +26,6 @@ leoProfanity.add(['hell', 'shit']);
 leoProfanity.loadDictionary('en');
 
 const bannerAdUnitId = getAdUnitId('banner');
-const PAGE_SIZE = 50; 
 let lastMessageTimestamp = 0; 
 const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatFocused,
   setModalVisibleChatinfo }) => {
@@ -49,6 +48,7 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
   //   deleteOldest500Messages();
   // }, []);
   
+  const PAGE_SIZE = 50; 
 
   const navigation = useNavigation()
   const toggleDrawer = (userData = null) => {
@@ -76,43 +76,70 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
     text: message.text?.trim() || '[No content]',
     timestamp: message.timestamp || Date.now(),
   }), []);
-
-
   const loadMessages = useCallback(
     async (reset = false) => {
       try {
-        if (reset) setLoading(true);
-
+        if (reset) {
+          // console.log('Resetting messages and loading the latest ones.');
+          setLoading(true);
+          setLastLoadedKey(null); // Reset pagination key
+        }
+  
+        // console.log(`Fetching messages. Reset: ${reset}, LastLoadedKey: ${lastLoadedKey}`);
+  
         const messageQuery = reset
           ? chatRef.orderByKey().limitToLast(PAGE_SIZE)
           : chatRef.orderByKey().endAt(lastLoadedKey).limitToLast(PAGE_SIZE);
-
+  
         const snapshot = await messageQuery.once('value');
         const data = snapshot.val() || {};
-        const bannedUserIds = bannedUsers?.map((user) => user.id); // Extract IDs from bannedUsers
-
+  
+        // console.log(`Fetched ${Object.keys(data).length} messages from Firebase.`);
+  
+        const bannedUserIds = bannedUsers?.map((user) => user.id) || [];
+        // console.log('Banned User IDs:', bannedUserIds);
+  
         const parsedMessages = Object.entries(data)
           .map(([key, value]) => validateMessage({ id: key, ...value }))
-          .filter((msg) => !bannedUserIds.includes(msg.senderId)) // Filter messages from banned users
-          .sort((a, b) => b.timestamp - a.timestamp); // Sort messages by timestamp (descending)
-        
+          .filter((msg) => !bannedUserIds.includes(msg.senderId))
+          .sort((a, b) => b.timestamp - a.timestamp); // Descending order
+  
+        // console.log('Parsed Messages:', parsedMessages);
+  
+        if (parsedMessages.length === 0 && !reset) {
+          // console.log('No more messages to load.');
+          setLastLoadedKey(null);
+          return;
+        }
+  
+        if (reset) {
+          setMessages(parsedMessages);
+          // console.log('Resetting messages:', parsedMessages);
+        } else {
+          setMessages((prev) => [...prev, ...parsedMessages]);
+          // console.log('Appending messages:', parsedMessages);
+        }
+  
         if (parsedMessages.length > 0) {
-          setMessages((prev) => (reset ? parsedMessages : [...parsedMessages, ...prev]));
-          setLastLoadedKey(Object.keys(data)[0]);
+          // Use the last key from the newly fetched messages
+          setLastLoadedKey(parsedMessages[parsedMessages.length - 1].id);
+          // console.log('Updated LastLoadedKey:', parsedMessages[parsedMessages.length - 1].id);
         }
       } catch (error) {
-        console.error('Error loading messages:', error);
+        // console.error('Error loading messages:', error);
       } finally {
         if (reset) setLoading(false);
       }
     },
-    [chatRef, lastLoadedKey, validateMessage, bannedUsers?.id]
+    [chatRef, lastLoadedKey, validateMessage, bannedUsers]
   );
-
+  
   useEffect(() => {
-    loadMessages(true);
+    // console.log('Initial loading of messages.');
+    loadMessages(true); // Reset and load the latest messages
     setChatFocused(false)
   }, []);
+  
 
 
   useEffect(() => {
@@ -135,13 +162,15 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
   }, [chatRef, bannedUsers, validateMessage]); // Dependency updated to include bannedUsers directly
   
 
-
-
   const handleLoadMore = async () => {
     if (!loading && lastLoadedKey) {
-      await loadMessages(false); 
+      // console.log('Loading more messages. LastLoadedKey:', lastLoadedKey);
+      await loadMessages(false);
+    } else {
+      // console.log('No more messages to load or currently loading.');
     }
   };
+  
 
 
   useEffect(() => {

@@ -16,6 +16,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import getAdUnitId from '../Ads/ads';
 import config from '../Helper/Environment';
 import { useGlobalState } from '../GlobelStats';
+import CodesDrawer from './Code';
 
 const bannerAdUnitId = getAdUnitId('banner');
 
@@ -26,10 +27,16 @@ const ValueScreen = ({ selectedTheme }) => {
   const [filteredData, setFilteredData] = useState([]);
   const { state } = useGlobalState();
   const valuesData = useMemo(() => (state.data ? Object.values(state.data) : []), [state.data]);
+  const codesData = useMemo(() => (state.codes ? Object.values(state.codes) : []), [state.codes]);
+
   const filters = ['ALL', 'COMMON', 'UNCOMMON', 'RARE', 'LEGENDARY', 'MYTHICAL', 'GAME PASS'];
   const displayedFilter = selectedFilter === 'PREMIUM' ? 'GAME PASS' : selectedFilter;
   const formatName = (name) => name.replace(/^\+/, '').replace(/\s+/g, '-');
+  const [isDrawerVisible, setIsDrawerVisible] = useState(false);
 
+  const toggleDrawer = () => {
+    setIsDrawerVisible(!isDrawerVisible);
+  };
   const handleFilterChange = (filter) => {
     setSelectedFilter(filter === 'GAME PASS' ? 'PREMIUM' : filter);
     setFilterDropdownVisible(false);
@@ -78,7 +85,6 @@ const ValueScreen = ({ selectedTheme }) => {
       </View>
     </View>
   ));
-
   return (
     <>
       <GestureHandlerRootView>
@@ -95,11 +101,17 @@ const ValueScreen = ({ selectedTheme }) => {
               onChangeText={handleSearchChange}
             />
             <TouchableOpacity
-              style={styles.filterDropdown}
+              style={[styles.filterDropdown, {backgroundColor:config.colors.hasBlockGreen}]}
               onPress={() => setFilterDropdownVisible(!filterDropdownVisible)}
             >
-              <Text style={styles.filterText}>{displayedFilter}</Text>
+              <Text style={[styles.filterText, {color:selectedTheme.colors.text}]}>{displayedFilter}</Text>
               <Icon name="chevron-down-outline" size={18} color="#333" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.filterDropdown, {backgroundColor:config.colors.hasBlockGreen}]}
+              onPress={toggleDrawer}
+            >
+              <Text style={[styles.filterText, {color:selectedTheme.colors.text}]}>Codes</Text>
             </TouchableOpacity>
           </View>
 
@@ -147,7 +159,7 @@ const ValueScreen = ({ selectedTheme }) => {
           }
 
         </View>
-
+<CodesDrawer isVisible={isDrawerVisible} toggleModal={toggleDrawer} codes={codesData}/>
       </GestureHandlerRootView>
       <View style={{ alignSelf: 'center' }}>
         <BannerAd
@@ -163,7 +175,7 @@ const styles = StyleSheet.create({
   container: { paddingHorizontal: 8, marginHorizontal: 2, flex: 1 },
   searchFilterContainer: { flexDirection: 'row', marginBottom: 10, alignItems: 'center' },
   searchInput: { flex: 1, backgroundColor: '#E0E0E0', padding: 10, borderRadius: 10, marginRight: 10, height: 48 },
-  filterDropdown: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#E0E0E0', padding: 10, borderRadius: 10, height: 48 },
+  filterDropdown: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#E0E0E0', padding: 10, borderRadius: 10, height: 48, marginLeft:10 },
   filterDropdownContainer: {
     position: 'absolute', top: 80, right: 10, width: 120, backgroundColor: '#FFF', borderRadius: 8,
     zIndex: 1

@@ -21,6 +21,7 @@ export const GlobalStateProvider = ({ children }) => {
 
   const [state, setState] = useState({
     data: {},
+    codes:{},
     normalStock: [],
     mirageStock: [],
     isAppReady: false,
@@ -250,15 +251,17 @@ export const GlobalStateProvider = ({ children }) => {
 
   const fetchStockData = async () => {
     try {
-      const [xlsSnapshot, calcSnapshot] = await Promise.all([
+      const [xlsSnapshot, calcSnapshot, codeSnapShot ] = await Promise.all([
         get(ref(database, 'xlsData')),
         get(ref(database, 'calcData')),
+        get(ref(database, 'codes')),
       ]);
 
       setState({
-        data: xlsSnapshot.val() || [],
-        normalStock: calcSnapshot.val()?.test || [],
-        mirageStock: calcSnapshot.val()?.mirage || [],
+        codes: codeSnapShot.val() || {},
+        data: xlsSnapshot.val() || {},
+        normalStock: calcSnapshot.val()?.test || {},
+        mirageStock: calcSnapshot.val()?.mirage || {},
         isAppReady: true,
       });
     } catch (error) {

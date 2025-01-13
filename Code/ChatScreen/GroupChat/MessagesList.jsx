@@ -52,7 +52,7 @@ const MessagesList = ({
   };
 
   const submitReport = (message, reason) => {
-    console.log("Reported:", { message, reason });
+    // console.log("Reported:", { message, reason });
     Alert.alert(
       "Report Submitted",
       `Thank you for reporting this message.\nReason: ${reason}`
