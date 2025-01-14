@@ -34,8 +34,8 @@ const BlockedUsersScreen = ({ route }) => {
         const data = snapshot.val() || {};
         const blockedUsersList = Object.entries(data).map(([id, details]) => ({
           id,
-          displayName: details.displayName || 'Unknown',
-          avatar: details.avatar || 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png',
+          displayName: details?.displayName || 'Unknown',
+          avatar: details?.avatar || 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png',
         }));
         setBlockedUsers(blockedUsersList);
         setLoading(false);

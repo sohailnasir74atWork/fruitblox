@@ -72,10 +72,10 @@ const ProfileBottomDrawer = ({ isVisible, toggleModal, startChat, selectedUser, 
                 style={styles.profileImage2}
               />
               <View style={{ justifyContent: 'center' }}>
-                <Text style={styles.drawerSubtitle}>{userName}</Text>
+                <Text style={styles.drawerSubtitleUser}>{userName}</Text>
                 <Text
                   style={[
-                    styles.drawerSubtitle,
+                    styles.drawerSubtitleUser,
                     {
                       color: isOnline
                         ? config.colors.hasBlockGreen

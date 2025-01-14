@@ -28,7 +28,7 @@ const ValueScreen = ({ selectedTheme }) => {
   const { state } = useGlobalState();
   const valuesData = useMemo(() => (state.data ? Object.values(state.data) : []), [state.data]);
   const codesData = useMemo(() => (state.codes ? Object.values(state.codes) : []), [state.codes]);
-
+  const [isAdVisible, setIsAdVisible] = useState(false);
   const filters = ['ALL', 'COMMON', 'UNCOMMON', 'RARE', 'LEGENDARY', 'MYTHICAL', 'GAME PASS'];
   const displayedFilter = selectedFilter === 'PREMIUM' ? 'GAME PASS' : selectedFilter;
   const formatName = (name) => name.replace(/^\+/, '').replace(/\s+/g, '-');
@@ -162,11 +162,15 @@ const ValueScreen = ({ selectedTheme }) => {
 <CodesDrawer isVisible={isDrawerVisible} toggleModal={toggleDrawer} codes={codesData}/>
       </GestureHandlerRootView>
       <View style={{ alignSelf: 'center' }}>
-        <BannerAd
-          unitId={bannerAdUnitId}
-          size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
-        />
-      </View>
+  {isAdVisible && (
+    <BannerAd
+      unitId={bannerAdUnitId}
+      size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+      onAdLoaded={() => setIsAdVisible(true)} 
+      onAdFailedToLoad={() => setIsAdVisible(false)} 
+    />
+  )}
+</View>
     </>
   );
 };

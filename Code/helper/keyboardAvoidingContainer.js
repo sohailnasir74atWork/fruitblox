@@ -13,7 +13,7 @@ const KeyboardAvoidingWrapper = ({ children, customStyles }) => {
     <KeyboardAvoidingView
       style={[styles.container]} // Merge custom styles if provided
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 110 : null}
     >
     
          {children}

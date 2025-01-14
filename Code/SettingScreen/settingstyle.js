@@ -110,6 +110,11 @@ export const getStyles = (isDarkMode) =>
         fontFamily:'Lato-Bold',
         marginBottom:10
       },
+      drawerSubtitleUser:{
+        color: isDarkMode ? '#fff' : '#000',
+        fontFamily:'Lato-Bold',
+        // marginBottom:10
+      },
       rewardDescription:{
         color: isDarkMode ? '#fff' : '#000',
         fontFamily:'Lato-Regular'

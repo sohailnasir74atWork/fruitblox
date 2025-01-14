@@ -95,17 +95,16 @@ const InboxScreen = () => {
   
         if (isParticipant) {
           const messages = Object.entries(chatsData[chatKey]);
-  
           // Ensure we get the last message chronologically
           const sortedMessages = messages.sort((a, b) => a[1].timestamp - b[1].timestamp);
           const lastMessage = sortedMessages[sortedMessages.length - 1]?.[1] || {};
-  
+
           // Extract the other user's details
           const otherUserInfo = {
             userName: lastMessage.senderId === user.id ? lastMessage.receiverName : lastMessage.senderName,
             avatar: lastMessage.senderId === user.id ? lastMessage.receiverAvatar : lastMessage.senderAvatar,
           };
-  
+  // console.log(otherUserInfo)
           // Calculate unread messages
           const unreadCount = messages.filter(
             ([, msg]) =>
@@ -117,7 +116,7 @@ const InboxScreen = () => {
   
           acc.push({
             chatKey,
-            userName: otherUserInfo.userName || 'Unknown User',
+            userName: otherUserInfo?.userName || 'Unknown User',
             avatar: otherUserInfo.avatar || config.defaultAvatar,
             lastMessage: lastMessage.text || '',
             unreadCount,

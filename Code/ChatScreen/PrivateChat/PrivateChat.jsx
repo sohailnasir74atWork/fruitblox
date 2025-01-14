@@ -5,6 +5,7 @@ import {
   Alert,
   Text,
   StyleSheet,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import database from '@react-native-firebase/database';
@@ -85,7 +86,7 @@ const PrivateChatScreen = () => {
     },
     [chatRef, lastLoadedKey]
   );
-console.log(selectedUser)
+console.log(selectedUser.sender)
   // Send message
   const sendMessage = useCallback(
     async (text) => {
@@ -153,9 +154,14 @@ console.log(selectedUser)
   
  
   return (
-    <KeyboardAvoidingWrapper>
+    <>
 
     <GestureHandlerRootView>
+              <KeyboardAvoidingView
+    keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : null}
+    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    style={{flex:1}}
+    >
     <View style={styles.container}>
       {loading && messages.length === 0 ? (
         <ActivityIndicator size="large" color="#1E88E5" style={{ flex: 1, justifyContent: 'center' }} />
@@ -186,15 +192,15 @@ console.log(selectedUser)
     selectedTheme={selectedTheme}    
     />
     </View>
+    </KeyboardAvoidingView>
+    </GestureHandlerRootView>
     <View style={{ alignSelf: 'center' }}>
         <BannerAd
           unitId={bannerAdUnitId}
           size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
         />
       </View>
-    </GestureHandlerRootView>
-    </KeyboardAvoidingWrapper>
-
+    </>
   );
 };
 
