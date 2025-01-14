@@ -93,38 +93,41 @@ const InboxScreen = () => {
         const isParticipant = userId1 === user.id || userId2 === user.id;
         const otherUserId = userId1 === user.id ? userId2 : userId1;
   
-        if (isParticipant) {
-          const messages = Object.entries(chatsData[chatKey]);
-          // Ensure we get the last message chronologically
-          const sortedMessages = messages.sort((a, b) => a[1].timestamp - b[1].timestamp);
-          const lastMessage = sortedMessages[sortedMessages.length - 1]?.[1] || {};
-
-          // Extract the other user's details
-          const otherUserInfo = {
-            userName: lastMessage.senderId === user.id ? lastMessage.receiverName : lastMessage.senderName,
-            avatar: lastMessage.senderId === user.id ? lastMessage.receiverAvatar : lastMessage.senderAvatar,
-          };
-  // console.log(otherUserInfo)
-          // Calculate unread messages
-          const unreadCount = messages.filter(
-            ([, msg]) =>
-              msg.receiverId === user.id && msg.timestamp > (lastReadData[chatKey] || 0)
-          ).length;
-  
-          // Check online status
-          const isOnline = activeUser?.some((active) => active.id === otherUserId);
-  
-          acc.push({
-            chatKey,
-            userName: otherUserInfo?.userName || 'Unknown User',
-            avatar: otherUserInfo.avatar || config.defaultAvatar,
-            lastMessage: lastMessage.text || '',
-            unreadCount,
-            otherUserId,
-            isOnline,
-            isBanned: bannedUserIds.includes(otherUserId),
-          });
+        // Exclude chats involving banned users
+        if (!isParticipant || bannedUserIds.includes(otherUserId)) {
+          return acc;
         }
+  
+        const messages = Object.entries(chatsData[chatKey]);
+        // Ensure we get the last message chronologically
+        const sortedMessages = messages.sort((a, b) => a[1].timestamp - b[1].timestamp);
+        const lastMessage = sortedMessages[sortedMessages.length - 1]?.[1] || {};
+  
+        // Extract the other user's details
+        const otherUserInfo = {
+          userName: lastMessage.senderId === user.id ? lastMessage.receiverName : lastMessage.senderName,
+          avatar: lastMessage.senderId === user.id ? lastMessage.receiverAvatar : lastMessage.senderAvatar,
+        };
+  
+        // Calculate unread messages
+        const unreadCount = messages.filter(
+          ([, msg]) =>
+            msg.receiverId === user.id && msg.timestamp > (lastReadData[chatKey] || 0)
+        ).length;
+  
+        // Check online status
+        const isOnline = activeUser?.some((active) => active.id === otherUserId);
+  
+        acc.push({
+          chatKey,
+          userName: otherUserInfo?.userName || 'Unknown User',
+          avatar: otherUserInfo.avatar || config.defaultAvatar,
+          lastMessage: lastMessage.text || '',
+          unreadCount,
+          otherUserId,
+          isOnline,
+          isBanned: bannedUserIds.includes(otherUserId),
+        });
   
         return acc;
       }, []);
@@ -136,6 +139,7 @@ const InboxScreen = () => {
       setLoading(false);
     }
   }, [user, activeUser, bannedUsers]);
+  
   
   
   

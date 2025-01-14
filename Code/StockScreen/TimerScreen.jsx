@@ -24,6 +24,8 @@ const TimerScreen = ({ selectedTheme }) => {
   const [isDrawerVisible, setDrawerVisible] = useState(false);
   const [refreshing, setRefreshing] = useState(false); // State for pull-to-refresh
   const [isSigninDrawerVisible, setisSigninDrawerVisible] = useState(false);
+  const [isAdVisible, setIsAdVisible] = useState(true);
+
   const isDarkMode = theme === 'dark';
   useEffect(() => {
     if (state.data && Object.keys(state.data).length > 0) {
@@ -75,7 +77,7 @@ const TimerScreen = ({ selectedTheme }) => {
     } else {
       Alert.alert(
         'Insufficient Points',
-        'You need at least 50 points to select more fruits. To earn points, go to\n\nSettings > Get Points > Earn Reward\n\nWatch ads or participate in activities to accumulate points.',
+        'You need at least 50 points to select more fruits. To earn points, go to\nSettings >> Get Points >> Earn Reward\nWatch ads or participate in activities to accumulate points.',
         [
           { text: 'OK', onPress: () => {} },
         ]
@@ -426,12 +428,17 @@ const TimerScreen = ({ selectedTheme }) => {
         </View>
 
       </GestureHandlerRootView>
-      <View style={{ alignSelf: 'center' }}>
-        <BannerAd
-          unitId={bannerAdUnitId}
-          size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
-        />
-      </View>
+
+<View style={{ alignSelf: 'center' }}>
+{isAdVisible && (
+<BannerAd
+unitId={bannerAdUnitId}
+size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+onAdLoaded={() => setIsAdVisible(true)} 
+onAdFailedToLoad={() => setIsAdVisible(false)} 
+/>
+)}
+</View>
     </>
 
 

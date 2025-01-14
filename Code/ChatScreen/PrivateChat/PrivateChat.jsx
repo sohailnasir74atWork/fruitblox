@@ -17,6 +17,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import KeyboardAvoidingWrapper from '../../Helper/keyboardAvoidingContainer';
 import getAdUnitId from '../../Ads/ads';
 import { BannerAd, BannerAdSize } from 'react-native-google-mobile-ads';
+import ConditionalKeyboardWrapper from '../../Helper/keyboardAvoidingContainer';
 
 const PAGE_SIZE = 50;
 const bannerAdUnitId = getAdUnitId('banner');
@@ -31,6 +32,8 @@ const PrivateChatScreen = () => {
   const [lastLoadedKey, setLastLoadedKey] = useState(null);
   const [replyTo, setReplyTo] = useState(null);
   const [input, setInput] = useState('');
+  const [isAdVisible, setIsAdVisible] = useState(true);
+
 
 
 
@@ -86,7 +89,7 @@ const PrivateChatScreen = () => {
     },
     [chatRef, lastLoadedKey]
   );
-console.log(selectedUser.sender)
+// console.log(selectedUser.sender)
   // Send message
   const sendMessage = useCallback(
     async (text) => {
@@ -97,10 +100,12 @@ console.log(selectedUser.sender)
       }
 
       try {
+
         const newMessage = {
+          
           text: trimmedText,
           senderId: myUserId,
-          senderName: user.displayName,
+          senderName: user.displayname ||'Unknown',
           senderAvatar: user?.avatar || 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png',
           receiverId: selectedUserId,
           receiverName: selectedUser?.sender,
@@ -157,12 +162,9 @@ console.log(selectedUser.sender)
     <>
 
     <GestureHandlerRootView>
-              <KeyboardAvoidingView
-    keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : null}
-    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    style={{flex:1}}
-    >
+            
     <View style={styles.container}>
+    <ConditionalKeyboardWrapper style={{flex:1}} chatscreen={true}>
       {loading && messages.length === 0 ? (
         <ActivityIndicator size="large" color="#1E88E5" style={{ flex: 1, justifyContent: 'center' }} />
       ) : messages.length === 0 ? (
@@ -191,15 +193,20 @@ console.log(selectedUser.sender)
     setInput={setInput}
     selectedTheme={selectedTheme}    
     />
+        </ConditionalKeyboardWrapper>
     </View>
-    </KeyboardAvoidingView>
     </GestureHandlerRootView>
-    <View style={{ alignSelf: 'center' }}>
-        <BannerAd
-          unitId={bannerAdUnitId}
-          size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
-        />
-      </View>
+
+<View style={{ alignSelf: 'center' }}>
+{isAdVisible && (
+<BannerAd
+unitId={bannerAdUnitId}
+size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+onAdLoaded={() => setIsAdVisible(true)} 
+onAdFailedToLoad={() => setIsAdVisible(false)} 
+/>
+)}
+</View>
     </>
   );
 };

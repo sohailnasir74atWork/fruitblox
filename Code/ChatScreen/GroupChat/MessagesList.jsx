@@ -16,6 +16,7 @@ import { Menu, MenuOptions, MenuOption, MenuTrigger } from 'react-native-popup-m
 import ReportPopup from './../ReportPopUp';
 import Icon from 'react-native-vector-icons/Ionicons'; // Import Icon
 import config from '../../Helper/Environment';
+import { parseMessageText } from '../ChatHelper';
 
 
 const MessagesList = ({
@@ -41,7 +42,7 @@ const MessagesList = ({
   const [showReportPopup, setShowReportPopup] = useState(false);
   const handleLongPress = (item) => {
     if (!user?.id) return;
-    Vibration.vibrate(50); // Vibrate for feedback
+    Vibration.vibrate(20); // Vibrate for feedback
     setSelectedMessage(item);
   };
 
@@ -50,15 +51,6 @@ const MessagesList = ({
     setSelectedMessage(message);
     setShowReportPopup(true);
   };
-
-  const submitReport = (message, reason) => {
-    // console.log("Reported:", { message, reason });
-    Alert.alert(
-      "Report Submitted",
-      `Thank you for reporting this message.\nReason: ${reason}`
-    );
-  };
-
   const handleProfileClick = (item) => {
     if (user.id) { toggleDrawer(item) }
     else return
@@ -124,6 +116,7 @@ const MessagesList = ({
             <Menu style={styles.menu}>
               <MenuTrigger
                 onLongPress={() => handleLongPress(item)} // Set the message for context menu
+                delayLongPress={300}
                 customStyles={{
                   TriggerTouchableComponent: TouchableOpacity,
                 }}
@@ -139,21 +132,7 @@ const MessagesList = ({
                   {item.isAdmin && <Text style={styles.dot}> • </Text>}
                   {item.isAdmin && <Text style={styles.admin}>Admin</Text>}
                   {'\n'}
-                  {item.text.split(/(\s+)/).map((part, index) => {
-                    const isLink = /^https?:\/\/\S+$/.test(part);
-                    if (isLink) {
-                      return (
-                        <Text
-                          key={index}
-                          style={styles.linkText}
-                          onPress={() => Linking.openURL(part)}
-                        >
-                          {part}
-                        </Text>
-                      );
-                    }
-                    return part;
-                  })}
+                 {parseMessageText(item?.text)}
 
 
 
@@ -162,14 +141,14 @@ const MessagesList = ({
               <MenuOptions customStyles={{
                 optionsContainer: styles.menuoptions,
               }}>
-                <MenuOption
+               {user.id && <MenuOption
                   onSelect={() => onReply(item)}
                   text="Reply"
                   customStyles={{
                     optionWrapper: styles.menuOption,
                     optionText: styles.menuOptionText,
                   }}
-                />
+                />}
                 <MenuOption
                   onSelect={() => handleReport(item)}
                   text="Report"
@@ -270,7 +249,6 @@ const MessagesList = ({
         visible={showReportPopup}
         message={selectedMessage}
         onClose={() => { setSelectedMessage(null); setShowReportPopup(false) }}
-        onSubmit={submitReport}
       />
     </>
   );

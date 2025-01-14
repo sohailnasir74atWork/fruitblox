@@ -52,7 +52,7 @@ export const loginUserWithEmail = async (email, password) => {
 export const logoutUser = async (setUser) => {
     try {
       await auth().signOut();
-      console.log('User logged out');
+    //   console.log('User logged out');
       resetUserState(setUser); // Reset the user state only after logout is complete
     } catch (error) {
       console.error('Error logging out:', error.message);

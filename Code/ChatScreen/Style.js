@@ -86,7 +86,7 @@ export const getStyles = (isDarkMode) =>
 
     },
     timestamp: {
-      fontSize: 10,
+      fontSize: 8,
       color: '#bbb',
       textAlign: 'right',
       paddingHorizontal: 5
@@ -94,9 +94,10 @@ export const getStyles = (isDarkMode) =>
     inputContainer: {
       flexDirection: 'row', // Maintains horizontal alignment with the send button
       alignItems: 'flex-start', // Align items at the top to allow wrapping
-      padding: 10,
+      // padding: 10,
       borderTopWidth: 1,
       borderTopColor: '#333',
+
     },
     input: {
       flex: 1, // Ensures the input takes available space
@@ -104,7 +105,7 @@ export const getStyles = (isDarkMode) =>
       padding: 10,
       marginRight: 10,
       fontSize: 16,
-      minHeight: 40, // Minimum height for a single line
+      heighteight: 30, // Minimum height for a single line
       maxHeight: 120, // Limit input growth to a max height
       textAlignVertical: 'top', // Ensures text starts at the top
       backgroundColor: isDarkMode ? '#333' : '#fff', // Optional background for better visibility
@@ -112,8 +113,9 @@ export const getStyles = (isDarkMode) =>
 
     sendButton: {
       borderRadius: 20,
-      paddingVertical: 10,
+      // paddingVertical: 10,
       paddingHorizontal: 20,
+      // backgroundColor:config.colors.primary
     },
     sendButtonText: {
       color: '#fff',
@@ -167,10 +169,13 @@ export const getStyles = (isDarkMode) =>
 
     },
     inputWrapper: {
-      padding: 10,
+      paddingHorizontal: 10,
+      paddingVertical:3,
       borderTopWidth: 1,
       borderTopColor: isDarkMode ? '#333' : '#ddd',
       backgroundColor: isDarkMode ? '#222' : '#fff',
+      // backgroundColor:'red',
+
     },
     replyContainer: {
       backgroundColor: isDarkMode ? '#333' : '#f0f0f0',
@@ -234,7 +239,8 @@ export const getStyles = (isDarkMode) =>
     profileImage: {
       height: 34,
       width: 34,
-      borderRadius: 17
+      borderRadius: 17,
+      backgroundColor:'white'
     },
     profileImagePvtChat: {
       height: 30,
@@ -278,13 +284,19 @@ export const getStyles = (isDarkMode) =>
     menuoptions: {
       // flexDirection:'row',
       // justifyContent:'space-evenly',
-      borderRadius: 10,
       maxWidth: 150,
+      borderRadius: 10,
+      marginLeft:100
+
     },
     menuOption: {
       paddingHorizontal: 10,
       paddingVertical: 15,
-      borderBottomWidth: 1
+      borderBottomWidth: 1,
+      borderColor:'lightgrey',
+      backgroundColor:'white',
+      borderRadius: 10,
+
     },
     menuOptionText: {
       fontSize: 16,

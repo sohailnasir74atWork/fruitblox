@@ -78,14 +78,19 @@ export const makeOwner = async (userId) => {
   }
 };
 export const rules = [
-  "Chat data older than 1 week will be automatically deleted.",
-  "Be respectful and courteous to others in the chat.",
-  "Do not share personal or sensitive information.",
-  "Avoid spamming or sending irrelevant messages. Spammers will be banned.",
-  "Follow community guidelines.",
+  "Always communicate respectfully. Hate speech, discrimination, and harassment are strictly prohibited.",
+  "Avoid sharing offensive, explicit, or inappropriate content, including text, images, or links.",
+  "Do not share personal, sensitive, or confidential information such as phone numbers, addresses, or financial details.",
+  "Spamming, repetitive messaging, or promoting products/services without permission is not allowed.",
+  "If you encounter inappropriate behavior, use the report or block tools available in the app.",
+  "Use appropriate language in the chat. Avoid abusive or overly aggressive tones.",
+  "Discussions or activities promoting illegal or unethical behavior are prohibited.",
+  "Users are responsible for the content they share and must adhere to community guidelines.",
+  "Moderators reserve the right to monitor and take action on any violations, including warnings or bans.",
+  "Content should be suitable for all approved age groups, adhering to app age requirements.",
+  "Do not share links to harmful sites, malware, or malicious content.",
+  "By using the chat feature, you agree to the app’s Terms of Service and Privacy Policy.https://bloxfruitscalc.com/privacy-policy/",
 ];
-
-
 
 
 export const banUserInChat = async (currentUserId, selectedUser) => {
@@ -188,7 +193,7 @@ export const deleteOldest500Messages = async () => {
     const messages = snapshot.val();
 
     if (!messages) {
-      console.log('No messages to delete.');
+      // console.log('No messages to delete.');
       return;
     }
 
@@ -197,7 +202,7 @@ export const deleteOldest500Messages = async () => {
     const oldestMessageKeys = messageKeys.slice(0, 500); // Get the first 500 keys
 
     if (oldestMessageKeys.length === 0) {
-      console.log('No messages to delete.');
+      // console.log('No messages to delete.');
       return;
     }
 
@@ -208,7 +213,7 @@ export const deleteOldest500Messages = async () => {
 
     await Promise.all(deletePromises);
 
-    console.log('Oldest 500 messages deleted successfully.');
+    // console.log('Oldest 500 messages deleted successfully.');
   } catch (error) {
     console.error('Error deleting messages:', error);
   }
@@ -216,34 +221,3 @@ export const deleteOldest500Messages = async () => {
 
 
 
-
-export const renderClickableText = (text) => {
-  // Regular expression for detecting links
-  const linkRegex = /(https?:\/\/[^\s]+)/g;
-
-  // Split the text into parts based on the link regex
-  const parts = text.split(linkRegex);
-
-  // Render the text with clickable links
-  return parts.map((part, index) => {
-    if (linkRegex.test(part)) {
-      // Render clickable link
-      return (
-        <Text
-          key={index}
-          style={{ color: 'blue', textDecorationLine: 'underline' }}
-          onPress={() => Linking.openURL(part)}
-        >
-          {part}
-        </Text>
-      );
-    } else {
-      // Render plain text
-      return (
-        <Text key={index} style={{ color: 'black' }}>
-          {part}
-        </Text>
-      );
-    }
-  });
-};

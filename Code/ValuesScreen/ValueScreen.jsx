@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import debounce from 'lodash.debounce';
-import { BannerAd, BannerAdSize } from 'react-native-google-mobile-ads';
+import { AdEventType, BannerAd, BannerAdSize, InterstitialAd } from 'react-native-google-mobile-ads';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import getAdUnitId from '../Ads/ads';
 import config from '../Helper/Environment';
@@ -19,6 +19,9 @@ import { useGlobalState } from '../GlobelStats';
 import CodesDrawer from './Code';
 
 const bannerAdUnitId = getAdUnitId('banner');
+const interstitialAdUnitId = getAdUnitId('interstitial');
+const interstitial = InterstitialAd.createForAdRequest(interstitialAdUnitId);
+
 
 const ValueScreen = ({ selectedTheme }) => {
   const [searchText, setSearchText] = useState('');
@@ -28,15 +31,37 @@ const ValueScreen = ({ selectedTheme }) => {
   const { state } = useGlobalState();
   const valuesData = useMemo(() => (state.data ? Object.values(state.data) : []), [state.data]);
   const codesData = useMemo(() => (state.codes ? Object.values(state.codes) : []), [state.codes]);
-  const [isAdVisible, setIsAdVisible] = useState(false);
+  const [isAdVisible, setIsAdVisible] = useState(true);
   const filters = ['ALL', 'COMMON', 'UNCOMMON', 'RARE', 'LEGENDARY', 'MYTHICAL', 'GAME PASS'];
   const displayedFilter = selectedFilter === 'PREMIUM' ? 'GAME PASS' : selectedFilter;
   const formatName = (name) => name.replace(/^\+/, '').replace(/\s+/g, '-');
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
+  const [hasAdBeenShown, setHasAdBeenShown] = useState(false);
+  const [isAdLoaded, setIsAdLoaded] = useState(false);
+  const [isShowingAd, setIsShowingAd] = useState(false);
+
+  // const toggleDrawer = () => {
+  //   setIsDrawerVisible(!isDrawerVisible);
+  // };
+
 
   const toggleDrawer = () => {
-    setIsDrawerVisible(!isDrawerVisible);
-  };
+    if (!hasAdBeenShown) {
+      showInterstitialAd(() => {
+        setHasAdBeenShown(true); // Mark the ad as shown
+         setIsDrawerVisible(!isDrawerVisible);
+      });
+    }
+    else {
+      setIsDrawerVisible(!isDrawerVisible);
+
+    }
+
+  }
+
+
+
+
   const handleFilterChange = (filter) => {
     setSelectedFilter(filter === 'GAME PASS' ? 'PREMIUM' : filter);
     setFilterDropdownVisible(false);
@@ -85,6 +110,53 @@ const ValueScreen = ({ selectedTheme }) => {
       </View>
     </View>
   ));
+
+
+
+
+
+
+  useEffect(() => {
+    interstitial.load();
+
+    const onAdLoaded = () => setIsAdLoaded(true);
+    const onAdClosed = () => {
+      setIsAdLoaded(false);
+      setIsShowingAd(false);
+      interstitial.load(); // Reload ad for the next use
+    };
+    const onAdError = (error) => {
+      setIsAdLoaded(false);
+      setIsShowingAd(false);
+      console.error('Ad Error:', error);
+    };
+
+    const loadedListener = interstitial.addAdEventListener(AdEventType.LOADED, onAdLoaded);
+    const closedListener = interstitial.addAdEventListener(AdEventType.CLOSED, onAdClosed);
+    const errorListener = interstitial.addAdEventListener(AdEventType.ERROR, onAdError);
+
+    return () => {
+      loadedListener();
+      closedListener();
+      errorListener();
+    };
+  }, []);
+
+  const showInterstitialAd = (callback) => {
+    if (isAdLoaded && !isShowingAd) {
+      setIsShowingAd(true);
+      try {
+        interstitial.show();
+        interstitial.addAdEventListener(AdEventType.CLOSED, callback);
+      } catch (error) {
+        console.error('Error showing interstitial ad:', error);
+        setIsShowingAd(false);
+        callback(); // Proceed with fallback in case of error
+      }
+    } else {
+      callback(); // If ad is not loaded, proceed immediately
+    }
+  };
   return (
     <>
       <GestureHandlerRootView>
@@ -161,6 +233,7 @@ const ValueScreen = ({ selectedTheme }) => {
         </View>
 <CodesDrawer isVisible={isDrawerVisible} toggleModal={toggleDrawer} codes={codesData}/>
       </GestureHandlerRootView>
+
       <View style={{ alignSelf: 'center' }}>
   {isAdVisible && (
     <BannerAd

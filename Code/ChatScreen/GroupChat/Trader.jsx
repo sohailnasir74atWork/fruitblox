@@ -24,6 +24,7 @@ import ProfileBottomDrawer from './BottomDrawer';
 import KeyboardAvoidingWrapper from '../../Helper/keyboardAvoidingContainer';
 import leoProfanity from 'leo-profanity';
 import { get, getDatabase, query, ref } from 'firebase/database';
+import ConditionalKeyboardWrapper from '../../Helper/keyboardAvoidingContainer';
 leoProfanity.add(['hell', 'shit']);
 leoProfanity.loadDictionary('en');
 
@@ -44,7 +45,7 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
   const [selectedUser, setSelectedUser] = useState(null); // Store the selected user's details
   const userId = selectedUser?.senderId || null;
   const isOnline = activeUser.some((activeUser) => activeUser.id === userId);
-  const [isAdVisible, setIsAdVisible] = useState(false);
+  const [isAdVisible, setIsAdVisible] = useState(true);
 
 
   
@@ -314,11 +315,7 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
   return (
     <>
     <GestureHandlerRootView>
-   <KeyboardAvoidingView
-    keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : null}
-    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    style={{flex:1}}
-    >
+  
         <View style={styles.container}>
           <AdminHeader
             pinnedMessages={pinnedMessages}
@@ -332,7 +329,7 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
             setModalVisibleChatinfo={setModalVisibleChatinfo}
           />
                   
-
+                 <ConditionalKeyboardWrapper style={{flex:1}} chatscreen={true}>
           {loading ? (
             <ActivityIndicator size="large" color="#1E88E5" style={{ flex: 1 }} />
           ) : (
@@ -373,7 +370,8 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
               <Text style={styles.loginText}>Login to Start Chat</Text>
             </TouchableOpacity>
           )}
-       
+               </ConditionalKeyboardWrapper>  
+
  <SignInDrawer
             visible={isSigninDrawerVisible}
             onClose={() => setIsSigninDrawerVisible(false)}
@@ -382,7 +380,6 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
 
           />
         </View>
-        </KeyboardAvoidingView>  
       <ProfileBottomDrawer
         isVisible={isDrawerVisible}
         toggleModal={toggleDrawer}
@@ -392,14 +389,17 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
         bannedUsers={bannedUsers}
       />
      </GestureHandlerRootView>
-     {isAdVisible && (
-    <BannerAd
-      unitId={bannerAdUnitId}
-      size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
-      onAdLoaded={() => setIsAdVisible(true)} 
-      onAdFailedToLoad={() => setIsAdVisible(false)} 
-    />
-  )}
+
+<View style={{ alignSelf: 'center' }}>
+{isAdVisible && (
+<BannerAd
+unitId={bannerAdUnitId}
+size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+onAdLoaded={() => setIsAdVisible(true)} 
+onAdFailedToLoad={() => setIsAdVisible(false)} 
+/>
+)}
+</View>
      </>
   );
 };

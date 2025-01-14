@@ -31,6 +31,7 @@ export const getStyles = (isDarkMode) =>
         height: 40,
         borderRadius: 20,
         marginRight: 10,
+        backgroundColor:'white'
       },
       userName: {
         fontSize: 18,

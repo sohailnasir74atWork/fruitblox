@@ -11,8 +11,9 @@ import {
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useGlobalState } from '../../GlobelStats';
 import { ScrollView } from 'react-native-gesture-handler';
-import { renderClickableText, rules } from './../utils';
 import config from '../../Helper/Environment';
+import {  rules } from '../utils';
+import { parseMessageText } from '../ChatHelper';
 
 const AdminHeader = ({
   pinnedMessages = [], // Array of pinned messages
@@ -107,7 +108,7 @@ const AdminHeader = ({
                 numberOfLines={!expanded && index === 0 ? 1 : 0} // Truncate only the first message when collapsed
                 ellipsizeMode="tail"
               >
-                📌 {renderClickableText(message.text)}
+                📌 {parseMessageText(message.text)}
               </Text>
               {isAdmin || isOwner && (
                 <TouchableOpacity
@@ -162,17 +163,38 @@ const AdminHeader = ({
         visible={modalVisibleChatinfo}
         onRequestClose={() => setModalVisibleChatinfo(false)}
       >
+        <ScrollView>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Chat Rules</Text>
 
-            <ScrollView style={styles.rulesContainer}>
-              {rules.map((rule, index) => (
-                <Text key={index} style={styles.ruleText}>
-                  {index + 1}. {rule}
-                </Text>
-              ))}
-            </ScrollView>
+            
+            {
+  rules.map((rule, index) => {
+    if (rule.includes("Terms of Service and Privacy Policy")) {
+      const beforeText = rule.split("Terms of Service and Privacy Policy")[0];
+      return (
+        <Text key={index} style={styles.ruleText}>
+          {index + 1}. {beforeText}
+          <Text
+            style={{ color: config.colors.hasBlockGreen, textDecorationLine: 'underline' }}
+            onPress={() => Linking.openURL("https://bloxfruitscalc.com/privacy-policy/")}
+          >
+            Terms of Service and Privacy Policy
+          </Text>
+        </Text>
+      );
+    }
+
+    return (
+      <Text key={index} style={styles.ruleText}>
+        {index + 1}. {rule} {'\n'}
+      </Text>
+    );
+  })
+}
+
+           
 
             {/* Close button */}
             <TouchableOpacity
@@ -183,6 +205,7 @@ const AdminHeader = ({
             </TouchableOpacity>
           </View>
         </View>
+        </ScrollView>
       </Modal>
     </Animated.View>
   );
@@ -266,15 +289,17 @@ StyleSheet.create({
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
+    margin:0,
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
-    width: '80%',
+    width: '95%',
     backgroundColor: isDarkMode ? '#121212' : '#f2f2f7',
     borderRadius: 10,
+    margin:10,
     padding: 20,
-    alignItems: 'center',
+    // alignItems: 'center',
   },
   modalTitle: {
     fontSize: 20,
@@ -297,7 +322,7 @@ StyleSheet.create({
   ruleText:{
     fontFamily:'Lato-Regular',
     color: isDarkMode ? 'white' : 'black',
-    lineHeight:24
+    lineHeight:24,
   }
   
 });

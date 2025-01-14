@@ -57,8 +57,8 @@ const PrivateMessageInput = ({ onSend, replyTo, onCancelReply, isBanned }) => {
             styles.sendButton,
             {
               backgroundColor: input.trim() && !isSending
-                ? config.colors.primary
-                : config.colors.disabled,
+                ? '#1E88E5'
+                : config.colors.primary,
             },
           ]}
           onPress={handleSend}

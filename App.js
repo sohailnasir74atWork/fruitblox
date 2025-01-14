@@ -256,7 +256,7 @@ useEffect(() => {
                   </Animated.View>
                 );
               },
-              tabBarStyle: { height: 60 },
+              tabBarStyle: { height: 60, backgroundColor: theme === 'dark' ? '#121212' : '#f2f2f7' },
               tabBarActiveTintColor: selectedTheme.colors.primary,
               tabBarInactiveTintColor: theme === 'dark' ? '#888' : 'gray',
               headerTitleStyle: { fontFamily: 'Lato-Bold', fontSize: 24 },

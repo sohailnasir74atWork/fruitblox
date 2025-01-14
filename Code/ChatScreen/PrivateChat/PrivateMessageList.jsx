@@ -44,7 +44,7 @@ const PrivateMessageList = ({
     setSelectedMessage(message);
     setShowReportPopup(true);
   };
-
+// console.log(messages)
   // Submit the report
   const handleSubmitReport = (message, reason) => {
     onReportSubmit(message, reason);
@@ -54,7 +54,13 @@ const PrivateMessageList = ({
   // Render a single message
   const renderMessage = ({ item }) => {
     const isMyMessage = item.senderId === userId;
-
+    // console.log(isMyMessage)
+    // console.log(item, isMyMessage);
+    // console.log('Selected User Avatar:', selectedUser?.avatar);
+    const avatarUri = selectedUserId === userId
+    ? item.receiverAvatar || (console.warn('Missing senderAvatar, using default'), 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png')
+    : item.senderAvatar || (console.warn('Missing receiverAvatar, using default'), 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png');
+  
     return (
       <View
         style={
@@ -65,48 +71,24 @@ const PrivateMessageList = ({
       >
         {/* Avatar */}
         <Image
-          source={{
-            uri: isMyMessage
-              ? item.senderAvatar || 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png'
-              : item.receiverAvatar || 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png',
-          }}
+          source={{ uri: avatarUri }}
           style={styles.profileImagePvtChat}
         />
-
         {/* Message Content */}
         <Menu>
           <MenuTrigger
-            onLongPress={() => Vibration.vibrate(50)} // Haptic feedback on long press
-            customStyles={{
-              TriggerTouchableComponent: TouchableOpacity,
-            }}
+            onLongPress={() => Vibration.vibrate(50)}
+            customStyles={{ TriggerTouchableComponent: TouchableOpacity }}
           >
             <Text style={isMyMessage ? styles.myMessageText : styles.otherMessageText}>
               {item.text}
             </Text>
           </MenuTrigger>
-
           <MenuOptions style={styles.menuoptions}>
-            <MenuOption
-              onSelect={() => onReply(item)}
-              text="Reply"
-              customStyles={{
-                optionWrapper: styles.menuOption,
-                optionText: styles.menuOptionText,
-              }}
-            />
-            <MenuOption
-              onSelect={() => handleReport(item)}
-              text="Report"
-              customStyles={{
-                optionWrapper: styles.menuOption,
-                optionText: styles.menuOptionText,
-              }}
-            />
+            <MenuOption onSelect={() => onReply(item)} text="Reply" />
+            <MenuOption onSelect={() => handleReport(item)} text="Report" />
           </MenuOptions>
         </Menu>
-
-        {/* Timestamp */}
         <Text style={styles.timestamp}>
           {new Date(item.timestamp).toLocaleTimeString([], {
             hour: '2-digit',
@@ -116,7 +98,7 @@ const PrivateMessageList = ({
       </View>
     );
   };
-
+  
   return (
     <View style={styles.container}>
       {loading && messages.length === 0 ? (

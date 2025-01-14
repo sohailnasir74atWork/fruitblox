@@ -9,7 +9,7 @@ import Share from 'react-native-share';
 import { useGlobalState } from '../GlobelStats';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import config from '../Helper/Environment';
-import KeyboardAvoidingWrapper from '../Helper/keyboardAvoidingContainer';
+import ConditionalKeyboardWrapper from '../Helper/keyboardAvoidingContainer';
 
 const bannerAdUnitId = getAdUnitId('banner');
 const interstitialAdUnitId = getAdUnitId('interstitial');
@@ -29,6 +29,8 @@ const HomeScreen = ({ selectedTheme }) => {
   const [isAdLoaded, setIsAdLoaded] = useState(false);
   const [isShowingAd, setIsShowingAd] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isAdVisible, setIsAdVisible] = useState(true);
+
   const isDarkMode = theme === 'dark'
   const viewRef = useRef();
   useEffect(() => {
@@ -211,7 +213,7 @@ const HomeScreen = ({ selectedTheme }) => {
       // Save the captured image to the determined path
       await RNFS.copyFile(uri, downloadDest);
 
-      console.log(`Screenshot saved to: ${downloadDest}`);
+      // console.log(`Screenshot saved to: ${downloadDest}`);
 
       return downloadDest;
     } catch (error) {
@@ -315,7 +317,7 @@ const HomeScreen = ({ selectedTheme }) => {
 
 
                           <TouchableOpacity onPress={() => removeItem(index, true)} style={styles.removeButton}>
-                            <Icon name="close-outline" size={14} color="white" />
+                            <Icon name="close-outline" size={24} color="white" />
                           </TouchableOpacity>
                         </>
                       ) : (
@@ -355,7 +357,7 @@ const HomeScreen = ({ selectedTheme }) => {
                             </TouchableOpacity>
                           )}
                           <TouchableOpacity onPress={() => removeItem(index, false)} style={styles.removeButton}>
-                            <Icon name="close-outline" size={18} color="white" />
+                            <Icon name="close-outline" size={24} color="white" />
                           </TouchableOpacity>
                         </>
 
@@ -380,9 +382,7 @@ const HomeScreen = ({ selectedTheme }) => {
             
 
             <Pressable style={styles.modalOverlay} onPress={closeDrawer} />
-            <KeyboardAvoidingView
-    
-    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <ConditionalKeyboardWrapper>
       <View>
 
             <View style={[styles.drawerContainer, { backgroundColor: isDarkMode ? '#3B404C' : 'white' }]}>
@@ -427,16 +427,21 @@ const HomeScreen = ({ selectedTheme }) => {
               />
             </View>
             </View>
-            </KeyboardAvoidingView>
+            </ConditionalKeyboardWrapper>
           </Modal>
         </View>
       </GestureHandlerRootView>
-      <View style={{ alignSelf: 'center' }}>
-        <BannerAd
-          unitId={bannerAdUnitId}
-          size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
-        />
-      </View>
+
+<View style={{ alignSelf: 'center' }}>
+{isAdVisible && (
+<BannerAd
+unitId={bannerAdUnitId}
+size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+onAdLoaded={() => setIsAdVisible(true)} 
+onAdFailedToLoad={() => setIsAdVisible(false)} 
+/>
+)}
+</View>
     </>
   );
 }
@@ -529,7 +534,6 @@ const getStyles = (isDarkMode) =>
       right: 5,
       backgroundColor: config.colors.wantBlockRed,
       borderRadius: 50,
-      padding: 2,
     },
     divider: {
       justifyContent: 'center',

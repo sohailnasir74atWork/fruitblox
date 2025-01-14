@@ -1,40 +1,18 @@
 import React from 'react';
-import {
-  KeyboardAvoidingView,
-  Keyboard,
-  Platform,
-  StyleSheet,
-  View,
-  Pressable,
-} from 'react-native';
+import { KeyboardAvoidingView, View, Platform, StyleSheet } from 'react-native';
 
-const KeyboardAvoidingWrapper = ({ children, customStyles }) => {
-  return (
+const ConditionalKeyboardWrapper = ({ children, style, chatscreen }) => {
+  return Platform.OS === 'ios' ? (
     <KeyboardAvoidingView
-      style={[styles.container]} // Merge custom styles if provided
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 110 : null}
+      behavior="padding"
+      style={ style} // Combine default and passed styles
+      keyboardVerticalOffset={chatscreen && 100 }
     >
-    
-         {children}
-
+      {children}
     </KeyboardAvoidingView>
+  ) : (
+    <View style={ style}>{children}</View>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    
-  },
-  scrollViewContent: {
-    flexGrow: 1,
-  },
-  inner: {
-    flex: 1,
-    // justifyContent: 'center', // Center content vertically
-    // Uncomment the line below for additional padding if needed
-  },
-});
-
-export default KeyboardAvoidingWrapper;
+export default ConditionalKeyboardWrapper;

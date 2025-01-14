@@ -43,7 +43,6 @@ export const GlobalStateProvider = ({ children }) => {
 
   const [onlineMembersCount, setOnlineMembersCount] = useState(0);
   const [activeUser, setActiveUser] = useState([]);
-  const [bannedUsers, setBannedUsers] = useState([]);
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(0); // Total unread messages
 
   
@@ -57,51 +56,71 @@ export const GlobalStateProvider = ({ children }) => {
   
 
 
-
-
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      // console.log("No user logged in. Skipping fetchUnreadMessages.");
+      return;
+    }
   
     const privateChatsRef = ref(database, 'privateChats');
     const lastReadRef = ref(database, `lastseen/${user.id}`);
+    const bannedRef = ref(database, `bannedUsers`);
   
     const fetchUnreadMessages = async () => {
       try {
-        const [chatsSnapshot, lastReadSnapshot] = await Promise.all([
+        // console.log("Fetching data for unread messages...");
+        const [chatsSnapshot, lastReadSnapshot, bannedSnapshot] = await Promise.all([
           get(privateChatsRef),
           get(lastReadRef),
+          get(bannedRef),
         ]);
   
         const chatsData = chatsSnapshot.val() || {};
         const lastReadData = lastReadSnapshot.val() || {};
+        const bannedData = bannedSnapshot.val() || {};
   
-        // Calculate unread messages for the logged-in user
+  
+        // Fixing banned user IDs extraction
+        const bannedIds = Object.values(bannedData).reduce((acc, bannedGroup) => {
+          const userIds = Object.keys(bannedGroup); // Extract user IDs
+          acc.push(...userIds);
+          return acc;
+        }, []);
+  
+        // Calculate unread messages excluding messages from banned users
         const totalUnread = Object.keys(chatsData).reduce((total, chatKey) => {
           const messages = Object.entries(chatsData[chatKey] || {});
   
+  
           const unreadCount = messages.filter(
-            ([, msg]) =>
-              msg.receiverId === user.id && // Only messages for the current user
-              msg.timestamp > (lastReadData[chatKey] || 0) // Messages sent after the last read timestamp
+            ([, msg]) => {
+              const isReceiver = msg.receiverId === user.id;
+              const isUnread = msg.timestamp > (lastReadData[chatKey] || 0);
+              const isNotBanned = !bannedIds.includes(msg.senderId);
+  
+  
+              return isReceiver && isUnread && isNotBanned;
+            }
           ).length;
+  
   
           return total + unreadCount;
         }, 0);
   
         setUnreadMessagesCount(totalUnread); // Update unread messages count
       } catch (error) {
-        console.error('Error fetching unread messages:', error);
+        console.error("Error fetching unread messages:", error);
       }
     };
   
     // Real-time listeners for updates
-    const handleChatsUpdate = () => fetchUnreadMessages();
-    const handleLastReadUpdate = () => fetchUnreadMessages();
-  
-    const chatsListener = onValue(privateChatsRef, handleChatsUpdate, {
+    const chatsListener = onValue(privateChatsRef, fetchUnreadMessages, {
       onlyOnce: false,
     });
-    const lastReadListener = onValue(lastReadRef, handleLastReadUpdate, {
+    const lastReadListener = onValue(lastReadRef, fetchUnreadMessages, {
+      onlyOnce: false,
+    });
+    const bannedListener = onValue(bannedRef, fetchUnreadMessages, {
       onlyOnce: false,
     });
   
@@ -111,8 +130,10 @@ export const GlobalStateProvider = ({ children }) => {
     return () => {
       off(privateChatsRef, 'value', chatsListener);
       off(lastReadRef, 'value', lastReadListener);
+      off(bannedRef, 'value', bannedListener);
     };
   }, [user?.id]);
+  
   
 
   useEffect(() => {

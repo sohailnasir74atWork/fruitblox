@@ -24,6 +24,7 @@ import getAdUnitId from '../Ads/ads';
 import { appleAuth } from '@invertase/react-native-apple-authentication';
 import { deleteUser } from '@react-native-firebase/auth';
 import { resetUserState } from '../Globelhelper';
+import ConditionalKeyboardWrapper from '../Helper/keyboardAvoidingContainer';
 
 const adUnitId = getAdUnitId('rewarded')
 
@@ -52,14 +53,14 @@ export default function SettingsScreen({ selectedTheme }) {
     }
 
   }, [user]);
-  
-  
+
+
 
   const handleSaveChanges = async () => {
     const MAX_NAME_LENGTH = 20;
-  
+
     if (!user?.id) return;
-  
+
     if (newDisplayName.length > MAX_NAME_LENGTH) {
       Alert.alert(
         'Error',
@@ -67,14 +68,14 @@ export default function SettingsScreen({ selectedTheme }) {
       );
       return;
     }
-  
+
     try {
       await updateLocalStateAndDatabase({
         displayName: newDisplayName.trim(),
         displayname: newDisplayName.trim(), // Sync both properties
         avatar: selectedImage.trim(),
       });
-  
+
       setDrawerVisible(false);
       Alert.alert('Success', 'Profile updated successfully!');
     } catch (error) {
@@ -82,12 +83,12 @@ export default function SettingsScreen({ selectedTheme }) {
       Alert.alert('Error', 'Failed to update profile. Please try again.');
     }
   };
-  
+
 
 
   const displayName = user?.id
-  ? newDisplayName?.trim() || user?.displayName?.trim() || user?.displayname?.trim() || 'Anonymous'
-  : 'Guest User';
+    ? newDisplayName?.trim() || user?.displayName?.trim() || user?.displayname?.trim() || 'Anonymous'
+    : 'Guest User';
 
 
 
@@ -109,7 +110,7 @@ export default function SettingsScreen({ selectedTheme }) {
         Alert.alert('Error', 'No user is currently logged in.');
         return;
       }
-  
+
       // Step 1: Acknowledge the irreversible action
       const showAcknowledgment = () =>
         new Promise((resolve, reject) => {
@@ -122,7 +123,7 @@ export default function SettingsScreen({ selectedTheme }) {
             ]
           );
         });
-  
+
       // Step 2: Confirm the action again
       const showFinalConfirmation = () =>
         new Promise((resolve, reject) => {
@@ -135,11 +136,11 @@ export default function SettingsScreen({ selectedTheme }) {
             ]
           );
         });
-  
+
       // Await acknowledgment and confirmation
       await showAcknowledgment();
       await showFinalConfirmation();
-  
+
       // Proceed to delete the user account
       const currentUser = auth().currentUser;
       if (currentUser) {
@@ -162,7 +163,7 @@ export default function SettingsScreen({ selectedTheme }) {
       }
     }
   };
-  
+
 
   const handleProfileUpdate = () => {
     if (user?.id) {
@@ -180,7 +181,7 @@ export default function SettingsScreen({ selectedTheme }) {
       RewardedAdEventType.EARNED_REWARD,
       reward => {
         // console.log('User earned reward of ', reward);
-        const newPoints = (user?.points || 0) + reward.amount;
+        const newPoints = (user?.points || 0) + 100;
         // console.log(newPoints)
         updateLocalStateAndDatabase('points', newPoints);
         const now = new Date().getTime(); // Current time in milliseconds
@@ -202,17 +203,17 @@ export default function SettingsScreen({ selectedTheme }) {
   const canClaimReward = () => {
     const now = new Date().getTime();
     const lastRewardTime = user?.lastRewardtime;
-  
+
     if (!lastRewardTime) return true;
-  
+
     const timeDifference = now - lastRewardTime;
-    return timeDifference >= 30 * 1000; // 30 seconds as defined
+    return timeDifference >=   2 * 60 * 1000; // 30 seconds as defined
   };
   // console.log(user)
   const showAd = async () => {
     try {
       if (!canClaimReward()) {
-        const remainingTime = 60 - Math.floor((new Date().getTime() - user?.lastRewardtime) / 60000);
+        const remainingTime = 2 - Math.floor((new Date().getTime() - user?.lastRewardtime) / 60000);
         Alert.alert('Not Eligible', `Please wait ${remainingTime} minutes to claim the next reward.`);
         return;
       }
@@ -222,18 +223,17 @@ export default function SettingsScreen({ selectedTheme }) {
         setLoaded(false); // Reset ad availability
         // console.log('Ad displayed successfully.');
       } else {
-        Alert.alert('Ad not ready', 'Please wait until the ad is loaded.');
+
+        const newPoints = (user?.points || 0) + 100;
+        // console.log(newPoints)
+        updateLocalStateAndDatabase('points', newPoints);
+        const now = new Date().getTime(); // Current time in milliseconds
+        updateLocalStateAndDatabase('lastRewardtime', now);
+
+        Alert.alert('Ad not ready', 'However reward granted');
       }
     } catch (error) {
       console.error('Error displaying ad:', error);
-      const newPoints = (user?.points || 0) + 100;
-      updateLocalStateAndDatabase('points', newPoints);
-
-      // Update the last reward time
-      const now = new Date().getTime(); // Current time in milliseconds
-      updateLocalStateAndDatabase('lastRewardtime', now);
-
-      Alert.alert('Reward Granted', `You earned 100 points!`);
     }
   };
 
@@ -263,9 +263,9 @@ export default function SettingsScreen({ selectedTheme }) {
               style={styles.profileImage}
             />
             <TouchableOpacity onPress={user?.id ? () => { } : () => { setOpenSignin(true) }}>
-            <Text style={styles.userName}>
-  {!user?.id ? 'Login / Register' : displayName}
-</Text>
+              <Text style={styles.userName}>
+                {!user?.id ? 'Login / Register' : displayName}
+              </Text>
 
               <Text style={styles.reward}>My Points: {user?.points}</Text>
             </TouchableOpacity>
@@ -325,49 +325,47 @@ export default function SettingsScreen({ selectedTheme }) {
           style={styles.overlay}
           onPress={() => setDrawerVisible(false)}
         />
-         <KeyboardAvoidingView
-        
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}      >
-        <View style={{ backgroundColor: 'rgba(0,0,0,0.5)', }}>
-          <View style={styles.drawer}>
+      <ConditionalKeyboardWrapper>
+          <View style={{ backgroundColor: 'rgba(0,0,0,0.5)', }}>
+            <View style={styles.drawer}>
 
-            {/* Name Input */}
-            <Text style={styles.drawerSubtitle}>Change Display Name</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter new display name"
-              value={newDisplayName}
-              onChangeText={setNewDisplayName}
-            />
+              {/* Name Input */}
+              <Text style={styles.drawerSubtitle}>Change Display Name</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter new display name"
+                value={newDisplayName}
+                onChangeText={setNewDisplayName}
+              />
 
-            {/* Profile Image Selection */}
-            <Text style={styles.drawerSubtitle}>Select Profile Icon</Text>
-            <FlatList
-              data={imageOptions}
-              keyExtractor={(item, index) => item.toString()}
-              horizontal
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  onPress={() => {
-                    setSelectedImage(item);
-                  }}
-                >
-                  <Image source={{
-                    uri: item,
-                  }} style={styles.imageOption} />
-                </TouchableOpacity>
-              )}
-            />
+              {/* Profile Image Selection */}
+              <Text style={styles.drawerSubtitle}>Select Profile Icon</Text>
+              <FlatList
+                data={imageOptions}
+                keyExtractor={(item, index) => item.toString()}
+                horizontal
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    onPress={() => {
+                      setSelectedImage(item);
+                    }}
+                  >
+                    <Image source={{
+                      uri: item,
+                    }} style={styles.imageOption} />
+                  </TouchableOpacity>
+                )}
+              />
 
-            <TouchableOpacity
-              style={styles.saveButton}
-              onPress={handleSaveChanges}
-            >
-              <Text style={styles.saveButtonText}>Save Changes</Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.saveButton}
+                onPress={handleSaveChanges}
+              >
+                <Text style={styles.saveButtonText}>Save Changes</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-        </KeyboardAvoidingView>
+          </ConditionalKeyboardWrapper>
       </Modal>
       <Modal
         animationType="slide"
@@ -408,4 +406,3 @@ export default function SettingsScreen({ selectedTheme }) {
     </View>
   );
 }
-

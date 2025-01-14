@@ -61,7 +61,7 @@ const SignInDrawer = ({ visible, onClose, selectedTheme, message }) => {
           // Login successful, show alert and close drawer
           Alert.alert('Login Successful', `Welcome, ${userCredential.user.displayName || 'User'}!`);
          
-          console.log('User signed in:', userCredential);
+        //   console.log('User signed in:', userCredential);
         } catch (error) {
           // Login failed, show error alert
           Alert.alert('Login Failed', error.message || 'An unknown error occurred.');

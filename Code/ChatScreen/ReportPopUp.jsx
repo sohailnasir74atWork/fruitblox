@@ -24,7 +24,6 @@ const ReportPopup = ({ visible, message, onClose }) => {
   const handleSubmit = () => {
     const sanitizedId = message.id.startsWith("chat-") ? message.id.replace("chat-", "") : message.id; // Remove "chat-" prefix if it exists
   
-  
     if (!sanitizedId) {
       Alert.alert("Error", "Invalid message. Unable to report.");
       return;
@@ -36,21 +35,20 @@ const ReportPopup = ({ visible, message, onClose }) => {
   
     get(messageRef)
       .then((snapshot) => {
+        let updatedReportCount = 1;
         if (snapshot.exists()) {
           const messageData = snapshot.val();
-          console.log('Message Data:', messageData); // Log the fetched data
-          const updatedReportCount = (messageData?.reportCount || 0) + 1;
-  
-          return update(messageRef, { reportCount: updatedReportCount });
-        } else {
-          console.warn(`No data exists for path: chat/${sanitizedId}`);
-          // Initialize reportCount if the message doesn't exist
-          return update(messageRef, { reportCount: 1 });
+          updatedReportCount = (messageData?.reportCount || 0) + 1;
         }
+  
+        return update(messageRef, { reportCount: updatedReportCount });
       })
       .then(() => {
         setLoading(false); // Stop loader
-        Alert.alert("Report Submitted", "Thank you for reporting this message.");
+        Alert.alert(
+          "Report Submitted",
+          `Reason: ${showCustomInput ? customReason : selectedReason}\nMessage: "${message.text}"\nThank you for reporting this message. Our team will review your report and take appropriate action if necessary.`
+        );
         onClose(); // Close the report modal
       })
       .catch((error) => {
@@ -59,6 +57,7 @@ const ReportPopup = ({ visible, message, onClose }) => {
         Alert.alert("Error", "Failed to submit the report. Please try again.");
       });
   };
+  
   
   
 

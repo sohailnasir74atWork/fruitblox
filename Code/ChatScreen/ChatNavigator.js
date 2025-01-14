@@ -11,6 +11,7 @@ import { useGlobalState } from '../GlobelStats';
 import PrivateChatHeader from './PrivateChat/PrivateChatHeader';
 import { Menu, MenuOptions, MenuOption, MenuTrigger } from 'react-native-popup-menu';
 import BlockedUsersScreen from './PrivateChat/BlockUserList';
+import { BannerAdSize } from 'react-native-google-mobile-ads';
 
 
 const Stack = createNativeStackNavigator();
@@ -27,7 +28,7 @@ const HeaderRight = ({ selectedTheme, navigateToInbox, setModalVisibleChatinfo, 
       />
       {unreadMessagesCount > 0 && (
         <View style={styles.badge}>
-          <Text style={styles.badgeText}>{unreadMessagesCount > 99 ? '99+' : unreadMessagesCount}</Text>
+          <Text style={styles.badgeText}>{unreadMessagesCount > 9 ? '9+' : unreadMessagesCount}</Text>
         </View>
       )}
     </View>
@@ -42,16 +43,16 @@ const HeaderRight = ({ selectedTheme, navigateToInbox, setModalVisibleChatinfo, 
       </MenuTrigger>
       <MenuOptions customStyles={{ optionsContainer: styles.menuOptions }}>
         <MenuOption onSelect={ ()=> setModalVisibleChatinfo((prev) => !prev)}>
-          <View style={styles.menuItem}>
-            <Icon name="information-circle-outline" size={20} color={config.colors.primary} />
+          <View style={[styles.menuItem]}>
+            <Icon name="information-circle-outline" size={20} color={config.colors.primary} style={{paddingLeft:10}} />
             <Text style={styles.menuText}>Chat Rules</Text>
           </View>
         </MenuOption>
         <View style={styles.separator} />
-        <MenuOption onSelect={() => navigation.navigate('BlockedUsers')}>
+        <MenuOption onSelect={() => navigation.navigate('BlockedUsers')} >
   <View style={styles.menuItem}>
-    <Icon name="ban-outline" size={20} color={config.colors.primary} />
-    <Text style={styles.menuText}>View Blocked Users</Text>
+    <Icon name="ban-outline" size={20} color={config.colors.primary} style={{paddingLeft:10}}/>
+    <Text style={styles.menuText}>Blocked Users</Text>
   </View>
 </MenuOption>
 
@@ -63,6 +64,7 @@ const HeaderRight = ({ selectedTheme, navigateToInbox, setModalVisibleChatinfo, 
 export const ChatStack = ({ selectedTheme, setChatFocused, modalVisibleChatinfo, setModalVisibleChatinfo }) => {
   const { user, unreadMessagesCount } = useGlobalState();
   const [bannedUsers, setBannedUsers] = useState([]);
+  // console.log(bannedUsers)
   useEffect(() => {
     if (!user?.id) return;
 
@@ -102,13 +104,13 @@ export const ChatStack = ({ selectedTheme, setChatFocused, modalVisibleChatinfo,
           headerTitleAlign: 'left',
           headerTitle: 'Community Chat',
           headerRight: () => (
-            <HeaderRight
+           user.id ? <HeaderRight
               selectedTheme={selectedTheme}
               navigateToInbox={(nav) => nav.navigate('Inbox')}
               setModalVisibleChatinfo={setModalVisibleChatinfo}
               navigation={navigation}
               unreadMessagesCount={unreadMessagesCount}
-            />
+            /> : null
           ),
         })}
       >

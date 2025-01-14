@@ -11,18 +11,20 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useGlobalState } from '../GlobelStats';
+import Clipboard from '@react-native-clipboard/clipboard';
 
 const CodesDrawer = ({ isVisible, toggleModal, codes }) => {
   // Flatten codes if necessary
-
-  const {theme} = useGlobalState()
-  const isDarkMode = theme === 'dark'
+  const { theme } = useGlobalState();
+  const isDarkMode = theme === 'dark';
   const normalizedCodes =
     Array.isArray(codes) && codes.length === 1 && Array.isArray(codes[0])
       ? codes[0]
       : codes;
 
+  // Function to copy the code to the clipboard
   const copyToClipboard = (code) => {
+    Clipboard.setString(code); // Copies the code to the clipboard
     Alert.alert('Copied', `Code "${code}" has been copied to your clipboard.`);
   };
 
@@ -30,7 +32,7 @@ const CodesDrawer = ({ isVisible, toggleModal, codes }) => {
     <View style={styles.codeItem}>
       <Text style={styles.codeText}>[{item.code}]</Text>
       <View style={styles.rewardContainer}>
-        <Text style={styles.rewardText}>Reward : {item.reward}</Text>
+        <Text style={styles.rewardText}>Reward: {item.reward}</Text>
         <TouchableOpacity
           onPress={() => copyToClipboard(item.code)}
           style={styles.copyButton}
@@ -40,7 +42,9 @@ const CodesDrawer = ({ isVisible, toggleModal, codes }) => {
       </View>
     </View>
   );
-const styles = getStyles(isDarkMode)
+
+  const styles = getStyles(isDarkMode);
+
   return (
     <Modal
       animationType="slide"
@@ -66,57 +70,55 @@ const styles = getStyles(isDarkMode)
 };
 
 export const getStyles = (isDarkMode) =>
-StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  drawer: {
-    backgroundColor: isDarkMode ? '#121212' : '#f2f2f7',
-    borderTopLeftRadius: 15,
-    borderTopRightRadius: 15,
-    padding: 20,
-    position: 'absolute',
-    bottom: 0,
-    width: '100%',
-    maxHeight: '80%',
-  },
-  headerText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    textAlign: 'center',
-  },
-  listContainer: {
-    paddingBottom: 20,
-  },
-  codeItem: {
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
-    alignItems: 'center',
-  },
-  codeText: {
-    fontSize: 16,
-    fontFamily: 'Courier', // Monospaced font
-    fontFamily: '900',
-    textAlign: 'center',
-    marginBottom: 5,
-  },
-  rewardContainer: {
-    // flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  rewardText: {
-    fontSize: 14,
-    color: '#555',
-    marginRight: 10,
-    textAlign:'center'
-  },
-  copyButton: {
-    padding: 5,
-  },
-});
+  StyleSheet.create({
+    overlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    },
+    drawer: {
+      backgroundColor: isDarkMode ? '#121212' : '#f2f2f7',
+      borderTopLeftRadius: 15,
+      borderTopRightRadius: 15,
+      padding: 20,
+      position: 'absolute',
+      bottom: 0,
+      width: '100%',
+      maxHeight: '60%',
+    },
+    headerText: {
+      fontSize: 20,
+      fontWeight: 'bold',
+      marginBottom: 10,
+      textAlign: 'center',
+    },
+    listContainer: {
+      paddingBottom: 20,
+    },
+    codeItem: {
+      paddingVertical: 10,
+      borderBottomWidth: 1,
+      borderBottomColor: '#ddd',
+      alignItems: 'center',
+    },
+    codeText: {
+      fontSize: 16,
+      fontFamily: 'Courier', // Monospaced font
+      textAlign: 'center',
+      marginBottom: 5,
+    },
+    rewardContainer: {
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    rewardText: {
+      fontSize: 14,
+      color: '#555',
+      marginRight: 10,
+      textAlign: 'center',
+    },
+    copyButton: {
+      padding: 5,
+    },
+  });
 
 export default CodesDrawer;
