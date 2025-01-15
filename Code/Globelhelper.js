@@ -80,6 +80,7 @@ export const firebaseConfig = {
   
     //   console.log('Fetching FCM Token...');
       const fcmToken = await messaging().getToken();
+      console.log(fcmToken)
       // console.log('FCM Token:', fcmToken);
   
       if (!fcmToken) {
@@ -128,7 +129,10 @@ export const resetUserState = (setUser) => {
       avatar: null,
       isOwner: false,
       isPro: false,
-      points: 0,
+      points: 0, 
+      lastRewardtime:null,
+      isBlock:false,
+      fcmToken:null
     });
   };
 

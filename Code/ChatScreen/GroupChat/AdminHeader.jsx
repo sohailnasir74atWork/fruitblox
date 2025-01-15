@@ -112,7 +112,7 @@ const AdminHeader = ({
               </Text>
               {isAdmin || isOwner && (
                 <TouchableOpacity
-                  onPress={() => onUnpinMessage(message.id)}
+                  onPress={() => onUnpinMessage(message.firebaseKey)}
                   style={styles.clearIcon}
                 >
                   <Icon

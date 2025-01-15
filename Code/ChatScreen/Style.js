@@ -255,7 +255,18 @@ export const getStyles = (isDarkMode) =>
 
     },
     adminActions: {
-      flexDirection: 'column',
+      flexDirection: 'row',
+      justifyContent:'center',
+      // alignItems:'flex-end',
+      overflow:'hidden',
+      flexWrap:"wrap"
+    },
+    adminTextAction:{
+      backgroundColor:config.colors.wantBlockRed,
+      marginHorizontal:3,
+      paddingHorizontal:5,
+      borderRadius:3,
+      color:'white'
     },
     dot: {
       color: '#bbb',

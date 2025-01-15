@@ -25,6 +25,8 @@ export const getStyles = (isDarkMode) =>
         height: 60,
         borderRadius: 30,
         marginRight: 10,
+        backgroundColor:'white'
+
       },
       profileImage2: {
         width: 40,

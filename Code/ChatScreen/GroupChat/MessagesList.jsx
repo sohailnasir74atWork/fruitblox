@@ -17,6 +17,7 @@ import ReportPopup from './../ReportPopUp';
 import Icon from 'react-native-vector-icons/Ionicons'; // Import Icon
 import config from '../../Helper/Environment';
 import { parseMessageText } from '../ChatHelper';
+import { useGlobalState } from '../../GlobelStats';
 
 
 const MessagesList = ({
@@ -40,6 +41,7 @@ const MessagesList = ({
   const styles = getStyles(isDarkMode);
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [showReportPopup, setShowReportPopup] = useState(false);
+  const {updateLocalStateAndDatabase} = useGlobalState()
   const handleLongPress = (item) => {
     if (!user?.id) return;
     Vibration.vibrate(20); // Vibrate for feedback
@@ -166,46 +168,8 @@ const MessagesList = ({
 
 
           {/* Admin Actions or Timestamp */}
-          {(isOwner || isAdmin) ? (
-            <View style={styles.adminActions}>
-              <TouchableOpacity
-                onPress={() => onPinMessage(item)}
-                style={styles.pinButton}
-              >
-                <Text style={styles.pinButtonText}>Pin</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => onDeleteMessage(item.id)}
-                style={styles.deleteButton}
-              >
-                <Text style={styles.deleteButtonText}>Delete</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => banUser(item.senderId)}
-                style={styles.deleteButton}
-              >
-                <Text style={styles.deleteButtonText}>Block User</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => unbanUser(item.senderId)}
-                style={styles.deleteButton}
-              >
-                <Text style={styles.deleteButtonText}>Unban User</Text>
-              </TouchableOpacity>
-              {isOwner && <TouchableOpacity
-                onPress={() => makeadmin(item.senderId)}
-                style={styles.deleteButton}
-              >
-                <Text style={styles.deleteButtonText}>Make admin</Text>
-              </TouchableOpacity>}
-              {isOwner && <TouchableOpacity
-                onPress={() => removeAdmin(item.senderId)}
-                style={styles.deleteButton}
-              >
-                <Text style={styles.deleteButtonText}>Remove admin</Text>
-              </TouchableOpacity>}
-            </View>
-          ) : (
+
+          
             <View style={{ flex: 1, justifyContent: 'flex-end' }}>
               <Text style={styles.timestamp}>
                 {new Date(item.timestamp).toLocaleTimeString([], {
@@ -214,9 +178,47 @@ const MessagesList = ({
                 })}
               </Text>
             </View>
-          )}
+          
         </View>
-
+        {(isOwner || isAdmin) && (
+            <View style={styles.adminActions}>
+              <TouchableOpacity
+                onPress={() => onPinMessage(item)}
+                style={styles.pinButton}
+              >
+                <Text style={styles.adminTextAction}>Pin</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => onDeleteMessage(item.id)}
+                style={styles.deleteButton}
+              >
+                <Text style={styles.adminTextAction}>delete</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => banUser(item.senderId)}
+                style={styles.deleteButton}
+              >
+                <Text style={styles.adminTextAction}>block</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => unbanUser(item.senderId)}
+                style={styles.deleteButton}
+              >
+                <Text style={styles.adminTextAction}>unBlock</Text>
+              </TouchableOpacity>
+              {isOwner && <TouchableOpacity
+                onPress={() => makeadmin(item.senderId)}
+                style={styles.deleteButton}
+              >
+                <Text style={styles.adminTextAction}>admin</Text>
+              </TouchableOpacity>}
+              {isOwner && <TouchableOpacity
+                onPress={() => removeAdmin(item.senderId)}
+                style={styles.deleteButton}
+              >
+                <Text style={styles.adminTextAction}>r/admin</Text>
+              </TouchableOpacity>}
+            </View>)}
       </View>
     );
   }, [messages]);

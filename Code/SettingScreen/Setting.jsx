@@ -10,6 +10,7 @@ import {
   Pressable,
   Alert,
   KeyboardAvoidingView,
+  ScrollView,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useGlobalState } from '../GlobelStats';
@@ -277,6 +278,7 @@ export default function SettingsScreen({ selectedTheme }) {
       </View>
 
       {/* Options Section */}
+      <ScrollView showsVerticalScrollIndicator={false}>
       <View style={styles.cardContainer}>
         <TouchableOpacity style={styles.option} onPress={handleGetPoints}>
           <Icon name="trophy-outline" size={24} color={'#4B4453'} />
@@ -312,6 +314,7 @@ export default function SettingsScreen({ selectedTheme }) {
         </TouchableOpacity>}
 
       </View>
+      </ScrollView>
 
       {/* Bottom Drawer */}
       <Modal

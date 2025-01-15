@@ -45,7 +45,7 @@ export const unbanUser = async (userId) => {
 // Remove Admin
 export const removeAdmin = async (userId) => {
   try {
-    const userToUpdateRef = ref(usersRef, userId); // Reference to the specific user
+    const userToUpdateRef = ref(database, `users/${userId}`); // Reference to the specific user
     await update(userToUpdateRef, { isAdmin: false });
     Alert.alert('Success', 'Admin privileges removed from the user.');
   } catch (error) {
@@ -53,11 +53,11 @@ export const removeAdmin = async (userId) => {
     Alert.alert('Error', 'Failed to remove admin privileges.');
   }
 };
-
 // Make Admin
 export const makeAdmin = async (userId) => {
   try {
-    const userToUpdateRef = ref(usersRef, userId); // Reference to the specific user
+    console.log(userId)
+    const userToUpdateRef = ref(database, `users/${userId}`); // Reference to the specific user
     await update(userToUpdateRef, { isAdmin: true });
     Alert.alert('Success', 'User has been made an admin.');
   } catch (error) {

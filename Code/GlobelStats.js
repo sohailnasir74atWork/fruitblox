@@ -5,7 +5,7 @@ import auth from '@react-native-firebase/auth';
 import messaging from '@react-native-firebase/messaging';
 import { Appearance } from 'react-native';
 import { createNewUser, firebaseConfig, registerForNotifications, saveTokenToDatabase } from './Globelhelper';
-
+import { AppState } from 'react-native';
 // Initialize Firebase
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 const database = getDatabase(app);
@@ -27,17 +27,21 @@ export const GlobalStateProvider = ({ children }) => {
     isAppReady: false,
   });
   const [user, setUser] = useState({
-    id: null,
-    selectedFruits: [],
-    isAdmin: false,
-    status: null,
-    isReminderEnabled: false,
-    isSelectedReminderEnabled: false,
-    displayname: 'Anonymous',
-    avatar: null,
-    isOwner: false,
-    isPro: false,
-    points: 0,
+      id: null,
+      selectedFruits: [],
+      isAdmin: false,
+      status: null,
+      isReminderEnabled: false,
+      isSelectedReminderEnabled: false,
+      displayname: 'Anonymous',
+      avatar: null,
+      isOwner: false,
+      isPro: false,
+      points: 0, 
+      lastRewardtime:null,
+      isBlock:false,
+      fcmToken:null
+
 
   });
 
@@ -137,34 +141,69 @@ export const GlobalStateProvider = ({ children }) => {
   
 
   useEffect(() => {
+    let appState = AppState.currentState;
+    let subscription;
+  
+    const handleAppStateChange = (nextAppState) => {
+      if (appState.match(/inactive|background/) && nextAppState === 'active') {
+        // App has come to the foreground
+        if (user.id) {
+          setOnlineStatus(true); // Mark user as active
+        }
+      } else if (nextAppState.match(/inactive|background/)) {
+        // App has gone to the background
+        if (user.id) {
+          setOnlineStatus(false); // Mark user as inactive
+        }
+      }
+      appState = nextAppState;
+    };
+  
+    // Add the AppState change listener
+    subscription = AppState.addEventListener('change', handleAppStateChange);
+  
+    // Cleanup on unmount
+    return () => {
+      if (subscription) {
+        subscription.remove(); // Remove the AppState listener correctly
+      }
+      if (user.id) {
+        setOnlineStatus(false); // Ensure user is marked offline
+      }
+    };
+  }, [user?.id]);
+  
+  
+  useEffect(() => {
     const onlineRef = ref(database, 'onlineUser');
   
     const unsubscribe = onValue(onlineRef, async (snapshot) => {
       const onlineUsers = snapshot.val() || {};
+  
+      // Only include users currently marked as online
       const activeUsers = Object.values(onlineUsers).filter((user) => user.status);
   
-      // Fetch metadata for new users
+      // Fetch metadata for active users in parallel
       const userMetadataPromises = activeUsers.map((active) =>
         get(ref(database, `users/${active.id}`)).then((snap) => snap.val())
       );
   
       const usersWithMetadata = await Promise.all(userMetadataPromises);
   
+      // Combine metadata with active user info
       const enrichedActiveUsers = activeUsers.map((active, index) => ({
         ...active,
         ...usersWithMetadata[index],
       }));
   
-      setActiveUser(enrichedActiveUsers);
-      setOnlineMembersCount(enrichedActiveUsers.length);
+      setActiveUser(enrichedActiveUsers); // Set state with enriched active users
+      setOnlineMembersCount(enrichedActiveUsers.length); // Update online members count
     });
   
     return () => unsubscribe();
   }, []);
-  
-
-
-
+// console.log(user)
+// console.log(onlineUsers)
   // Unified Update Function
   const updateLocalStateAndDatabase = async (keyOrUpdates, value) => {
     if (!user.id) return; // Prevent updates if user is not logged in
@@ -207,7 +246,7 @@ export const GlobalStateProvider = ({ children }) => {
 
 
 
-
+console.log(user)
 
   // Reset user state
   const resetUserState = () => {
@@ -224,6 +263,10 @@ export const GlobalStateProvider = ({ children }) => {
       isPro: false,
       points: 0, 
       lastRewardtime:null,
+      isBlock:false,
+      fcmToken:null
+
+
     });
   };
 

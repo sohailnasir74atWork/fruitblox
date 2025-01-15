@@ -250,6 +250,7 @@ const getStyles = (isDarkMode) =>
       height: 50,
       borderRadius: 25,
       marginRight: 10,
+      backgroundColor:'white'
     },
     textContainer: {
       flex: 1,

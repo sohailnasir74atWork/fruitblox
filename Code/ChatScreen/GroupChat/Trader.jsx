@@ -21,9 +21,7 @@ import getAdUnitId from '../../Ads/ads';
 import { banUser, deleteOldest500Messages, makeAdmin,  removeAdmin, unbanUser } from '../utils';
 import { useNavigation } from '@react-navigation/native';
 import ProfileBottomDrawer from './BottomDrawer';
-import KeyboardAvoidingWrapper from '../../Helper/keyboardAvoidingContainer';
 import leoProfanity from 'leo-profanity';
-import { get, getDatabase, query, ref } from 'firebase/database';
 import ConditionalKeyboardWrapper from '../../Helper/keyboardAvoidingContainer';
 leoProfanity.add(['hell', 'shit']);
 leoProfanity.loadDictionary('en');
@@ -181,10 +179,10 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
         if (snapshot.exists()) {
           const data = snapshot.val();
           const parsedPinnedMessages = Object.entries(data).map(([key, value]) => ({
-            id: `pinned-${key}`,
+            firebaseKey: key, // Use the actual Firebase key here
             ...value,
           }));
-          setPinnedMessages(parsedPinnedMessages);
+          setPinnedMessages(parsedPinnedMessages); // Store the parsed messages with the Firebase key
         } else {
           setPinnedMessages([]); // No pinned messages
         }
@@ -193,9 +191,10 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
         Alert.alert('Error', 'Could not load pinned messages. Please try again.');
       }
     };
-
+  
     loadPinnedMessages();
   }, [pinnedMessagesRef]);
+  
 
 
 
@@ -204,27 +203,44 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
     try {
       const pinnedMessage = { ...message, pinnedAt: Date.now() };
       const newRef = await pinnedMessagesRef.push(pinnedMessage);
-      setPinnedMessages((prev) => [...prev, { id: `pinned-${newRef.key}`, ...pinnedMessage }]);
+  
+      // Use the Firebase key for tracking the message
+      setPinnedMessages((prev) => [
+        ...prev,
+        { firebaseKey: newRef.key, ...pinnedMessage },
+      ]);
+      console.log('Pinned message added with firebaseKey:', newRef.key);
     } catch (error) {
       console.error('Error pinning message:', error);
       Alert.alert('Error', 'Could not pin the message. Please try again.');
     }
   };
+  
+  
 
-
-
-  const unpinSingleMessage = async (messageId) => {
+  const unpinSingleMessage = async (firebaseKey) => {
     try {
-      const id = messageId.replace('pinned-', '');
-      await pinnedMessagesRef.child(id).remove();
-      setPinnedMessages((prev) => prev.filter((msg) => msg.id !== messageId));
+      console.log(`Received firebaseKey for unpinning: ${firebaseKey}`);
+  
+      // Remove the message from Firebase
+      const messageRef = pinnedMessagesRef.child(firebaseKey);
+      console.log(`Firebase reference for removal: ${messageRef.toString()}`);
+      await messageRef.remove();
+      console.log(`Message with Firebase key: ${firebaseKey} successfully removed from Firebase.`);
+  
+      // Update the local state by filtering out the removed message
+      setPinnedMessages((prev) => {
+        const updatedMessages = prev.filter((msg) => msg.firebaseKey !== firebaseKey);
+        console.log('Updated pinned messages after removal:', updatedMessages);
+        return updatedMessages;
+      });
     } catch (error) {
       console.error('Error unpinning message:', error);
       Alert.alert('Error', 'Could not unpin the message. Please try again.');
     }
   };
-
-
+  
+  
 
 
   const clearAllPinnedMessages = async () => {
@@ -246,7 +262,6 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
     setRefreshing(false);
   };
 
-
   const handleSendMessage = async () => {
     const MAX_WORDS = 100; // Maximum allowed words
     const MESSAGE_COOLDOWN = 2000; // 5 seconds cooldown in milliseconds
@@ -256,6 +271,11 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
       Alert.alert('Error', 'You must be logged in to send messages.');
       return;
     }
+    if (user.isBlock) {
+      Alert.alert('You are blocked by an Admin');
+      return;
+    }
+
 
     const trimmedInput = input.trim();
 
