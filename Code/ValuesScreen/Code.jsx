@@ -105,6 +105,7 @@ export const getStyles = (isDarkMode) =>
       fontFamily: 'Courier', // Monospaced font
       textAlign: 'center',
       marginBottom: 5,
+      color: isDarkMode ? '#fff' : '#000',
     },
     rewardContainer: {
       alignItems: 'center',
@@ -115,6 +116,7 @@ export const getStyles = (isDarkMode) =>
       color: '#555',
       marginRight: 10,
       textAlign: 'center',
+      color: isDarkMode ? '#fff' : '#000',
     },
     copyButton: {
       padding: 5,

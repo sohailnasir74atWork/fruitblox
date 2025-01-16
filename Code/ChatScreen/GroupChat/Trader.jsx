@@ -18,7 +18,7 @@ import MessageInput from './MessageInput';
 import { getStyles } from '../Style';
 import { BannerAd, BannerAdSize } from 'react-native-google-mobile-ads';
 import getAdUnitId from '../../Ads/ads';
-import { banUser, deleteOldest500Messages, makeAdmin,  removeAdmin, unbanUser } from '../utils';
+import { banUser, deleteOldest500Messages, isUserOnline, makeAdmin,  removeAdmin, unbanUser } from '../utils';
 import { useNavigation } from '@react-navigation/native';
 import ProfileBottomDrawer from './BottomDrawer';
 import leoProfanity from 'leo-profanity';
@@ -30,7 +30,7 @@ const bannerAdUnitId = getAdUnitId('banner');
 let lastMessageTimestamp = 0; 
 const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatFocused,
   setModalVisibleChatinfo }) => {
-  const { user, theme, onlineMembersCount, activeUser } = useGlobalState();
+  const { user, theme, onlineMembersCount } = useGlobalState();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [replyTo, setReplyTo] = useState(null);
@@ -41,11 +41,30 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
   const [isSigninDrawerVisible, setIsSigninDrawerVisible] = useState(false);
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null); // Store the selected user's details
+  const [isOnline, setIsOnline] = useState(false);
   const userId = selectedUser?.senderId || null;
-  const isOnline = activeUser.some((activeUser) => activeUser.id === userId);
   const [isAdVisible, setIsAdVisible] = useState(true);
 
+  useEffect(() => {
+    let isMounted = true;
 
+    const checkUserStatus = async () => {
+      if (userId) {
+        const status = await isUserOnline(userId);
+        if (isMounted) {
+          setIsOnline(status); // Update state only if component is still mounted
+        }
+      } else {
+        setIsOnline(false);
+      }
+    };
+
+    checkUserStatus();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [userId]);
   
   const PAGE_SIZE = 50; 
 
@@ -162,11 +181,19 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
   
 
   const handleLoadMore = async () => {
+    if (!user.id) {
+      Alert.alert(
+        'Login Required',
+        'Please log in to load previous messages.',
+        [{ text: 'OK', onPress: () => setIsSigninDrawerVisible(true) }]
+      );
+      return;
+    }
+  
     if (!loading && lastLoadedKey) {
-      // console.log('Loading more messages. LastLoadedKey:', lastLoadedKey);
       await loadMessages(false);
     } else {
-      // console.log('No more messages to load or currently loading.');
+      console.log('No more messages to load or currently loading.');
     }
   };
   

@@ -16,7 +16,7 @@ const interstitialAdUnitId = getAdUnitId('interstitial');
 const interstitial = InterstitialAd.createForAdRequest(interstitialAdUnitId);
 
 const HomeScreen = ({ selectedTheme }) => {
-  const { state, theme } = useGlobalState();
+  const { state, theme, loading } = useGlobalState();
   const initialItems = [null, null];
   const [hasItems, setHasItems] = useState(initialItems);
   const [fruitRecords, setFruitRecords] = useState([]);
@@ -28,7 +28,7 @@ const HomeScreen = ({ selectedTheme }) => {
   const [wantsTotal, setWantsTotal] = useState({ price: 0, value: 0 });
   const [isAdLoaded, setIsAdLoaded] = useState(false);
   const [isShowingAd, setIsShowingAd] = useState(false);
-  const [loading, setLoading] = useState(true);
+  
   const [isAdVisible, setIsAdVisible] = useState(true);
 
   const isDarkMode = theme === 'dark'
@@ -36,7 +36,7 @@ const HomeScreen = ({ selectedTheme }) => {
   useEffect(() => {
     if (state.data && Object.keys(state.data).length > 0) {
       setFruitRecords(Object.values(state.data));
-      setLoading(false)
+      // setLoading(false)
     } else {
       setFruitRecords([]);
     }
@@ -484,7 +484,7 @@ const getStyles = (isDarkMode) =>
     },
     sectionTitle: {
       fontSize: 16,
-      marginVertical: 10,
+      marginBottom: 10,
       fontFamily: 'Lato-Bold',
 
     },
@@ -492,7 +492,7 @@ const getStyles = (isDarkMode) =>
       flexDirection: 'row',
       flexWrap: 'wrap',
       justifyContent: 'space-between',
-      marginBottom: 40,
+      marginBottom: 20,
 
     },
     addItemBlock: {

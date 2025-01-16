@@ -3,6 +3,8 @@ import { getDatabase, ref, get, set } from 'firebase/database'; // Correct Fireb
 import messaging from '@react-native-firebase/messaging'; // React Native Firebase Messaging
 import { Platform } from 'react-native'; // Platform detection (iOS/Android)
 import { generateOnePieceUsername } from './Helper/RendomNamegen';
+import { update } from "firebase/database";
+
 export const firebaseConfig = {
     apiKey: "AIzaSyDUXkQcecnhrNmeagvtRsKmDBmwz4AsRC0",
     authDomain: "fruiteblocks.firebaseapp.com",
@@ -80,7 +82,6 @@ export const firebaseConfig = {
   
     //   console.log('Fetching FCM Token...');
       const fcmToken = await messaging().getToken();
-      console.log(fcmToken)
       // console.log('FCM Token:', fcmToken);
   
       if (!fcmToken) {
@@ -136,3 +137,72 @@ export const resetUserState = (setUser) => {
     });
   };
 
+
+  // Function to update all usernames
+  export async function updateAllUsernames() {
+    try {
+      const db = getDatabase();
+      const flagRef = ref(db, "usernamesUpdated"); // Reference to the flag
+      const usersRef = ref(db, "users"); // Reference to the users node
+  
+      // Check if the update has already been performed
+      const flagSnapshot = await get(flagRef);
+      if (flagSnapshot.exists() && flagSnapshot.val() === true) {
+        console.log("Usernames have already been updated. Skipping operation.");
+        return;
+      }
+  
+      // Fetch all users
+      const snapshot = await get(usersRef);
+      if (snapshot.exists()) {
+        const users = snapshot.val();
+  
+        // Prepare updates for all users
+        const updates = {};
+        Object.keys(users).forEach((userId) => {
+          const name = generateOnePieceUsername(); // Generate a new name
+          updates[`${userId}/displayname`] = name;
+          updates[`${userId}/displayName`] = name;
+        });
+  
+        // Update all users in one operation
+        await update(usersRef, updates);
+  
+        // Set the flag to indicate the update has been completed
+        await set(flagRef, true);
+  
+        console.log("Successfully updated all usernames!");
+      } else {
+        console.log("No users found in the database.");
+      }
+    } catch (error) {
+      console.error("Error updating usernames:", error);
+    }
+  }
+  
+  // Call the function to update all usernames
+  export const fetchBannedUsersByCurrentUser = async (currentUserId) => {
+    if (!currentUserId) return [];
+  
+    try {
+      // Reference to the current user's banned users
+      const bannedRef = ref(database, `bannedUsers/${currentUserId}`);
+      
+      // Fetch banned users
+      const bannedSnapshot = await get(bannedRef);
+      const bannedData = bannedSnapshot.val() || {};
+  
+      // Format data into an array
+      const bannedUsers = Object.entries(bannedData).map(([bannedUserId, details]) => ({
+        id: bannedUserId,
+        avatar: details.avatar,
+        displayName: details.displayName,
+      }));
+  
+      console.log("Banned Users by Current User:", bannedUsers);
+      return bannedUsers;
+    } catch (error) {
+      console.error("Error fetching banned users:", error);
+      return [];
+    }
+  };

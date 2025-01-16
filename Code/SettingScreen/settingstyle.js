@@ -89,6 +89,7 @@ export const getStyles = (isDarkMode) =>
         padding: 10,
         borderRadius: 5,
         marginBottom: 20,
+        color: isDarkMode ? '#fff' : '#000',
       },
       imageOption: {
         width: 60,

@@ -278,9 +278,9 @@ const styles = StyleSheet.create({
   robuxPrice: {
     fontSize: 12, fontFamily: 'Lato-Regular', color: 'white'
   },
-  statusContainer: { alignItems: 'left', alignSelf: 'flex-end' },
+  statusContainer: { alignItems: 'left', alignSelf: 'flex-end', position:'absolute', bottom:0 },
   status: {
-    paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10, color: '#FFF', fontSize: 12, fontFamily: 'Lato-Bold'
+    paddingHorizontal: 8, paddingVertical: 4, borderTopLeftRadius: 10, borderBottomRightRadius:10, color: '#FFF', fontSize: 12, fontFamily: 'Lato-Bold'
   },
   filterText: { fontSize: 16, fontFamily: 'Lato-Regular', marginRight: 5 },
   description: {

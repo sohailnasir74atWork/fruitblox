@@ -33,11 +33,6 @@ const PrivateChatScreen = () => {
   const [replyTo, setReplyTo] = useState(null);
   const [input, setInput] = useState('');
   const [isAdVisible, setIsAdVisible] = useState(true);
-
-
-
-
-
   const selectedUserId = selectedUser?.senderId;
   const myUserId = user?.id;
   const isBanned = useMemo(() => {
@@ -57,7 +52,9 @@ const PrivateChatScreen = () => {
     [myUserId, selectedUserId]
   );
 
-  const chatRef = useMemo(() => database().ref(`privateChats/${chatKey}`), [chatKey]);
+  const chatRef = useMemo(() => database().ref(`privateChat/${chatKey}`), [chatKey]);
+  const messagesRef = useMemo(() => database().ref(`privateChat/${chatKey}/messages`), [chatKey]);
+
 
   // Load messages with pagination
   const loadMessages = useCallback(
@@ -66,8 +63,8 @@ const PrivateChatScreen = () => {
 
       try {
         const query = reset
-          ? chatRef.orderByKey().limitToLast(PAGE_SIZE)
-          : chatRef.orderByKey().endAt(lastLoadedKey).limitToLast(PAGE_SIZE);
+          ? messagesRef.orderByKey().limitToLast(PAGE_SIZE)
+          : messagesRef.orderByKey().endAt(lastLoadedKey).limitToLast(PAGE_SIZE);
 
         const snapshot = await query.once('value');
         const data = snapshot.val() || {};
@@ -87,7 +84,7 @@ const PrivateChatScreen = () => {
         setLoading(false);
       }
     },
-    [chatRef, lastLoadedKey]
+    [messagesRef, lastLoadedKey]
   );
 // console.log(selectedUser.sender)
   // Send message
@@ -98,24 +95,57 @@ const PrivateChatScreen = () => {
         Alert.alert('Error', 'Message cannot be empty.');
         return;
       }
-
+  
+      const timestamp = Date.now();
+  
+      const newMessage = {
+        text: trimmedText,
+        senderId: myUserId,
+        senderName: user.displayname || 'Unknown',
+        senderAvatar: user?.avatar || 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png',
+        receiverId: selectedUserId,
+        receiverName: selectedUser?.sender || 'Unknown Receiver',
+        receiverAvatar: selectedUser?.avatar || 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png',
+        timestamp,
+        replyTo: replyTo ? { id: replyTo.id, text: replyTo.text } : null,
+      };
+  
       try {
-
-        const newMessage = {
-          
-          text: trimmedText,
-          senderId: myUserId,
-          senderName: user.displayname ||'Unknown',
-          senderAvatar: user?.avatar || 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png',
-          receiverId: selectedUserId,
-          receiverName: selectedUser?.sender,
-          receiverAvatar: selectedUser?.avatar || 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png',
-          timestamp: Date.now(),
-          replyTo: replyTo ? { id: replyTo.id, text: replyTo.text } : null, // Attach reply context
-        };
-
-        // Push the message to Firebase
-        await chatRef.push(newMessage);
+        // Push message
+        await chatRef.child(`messages/${timestamp}`).set(newMessage);
+  
+        // Only update participants if needed
+        const participantsRef = chatRef.child('participants');
+        participantsRef.transaction((currentParticipants) => {
+          if (currentParticipants) {
+            return {
+              ...currentParticipants,
+              [myUserId]: {
+                name: user.displayname || 'Unknown',
+                avatar: user?.avatar || 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png',
+                lastSeen: timestamp,
+              },
+              [selectedUserId]: currentParticipants[selectedUserId] || {
+                name: selectedUser?.sender || 'Unknown Receiver',
+                avatar: selectedUser?.avatar || 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png',
+                lastSeen: null,
+              },
+            };
+          }
+          return {
+            [myUserId]: {
+              name: user.displayname || 'Unknown',
+              avatar: user?.avatar || 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png',
+              lastSeen: timestamp,
+            },
+            [selectedUserId]: {
+              name: selectedUser?.sender || 'Unknown Receiver',
+              avatar: selectedUser?.avatar || 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png',
+              lastSeen: null,
+            },
+          };
+        });
+  
         setInput('');
         setReplyTo(null);
       } catch (error) {
@@ -123,8 +153,9 @@ const PrivateChatScreen = () => {
         Alert.alert('Error', 'Could not send your message. Please try again.');
       }
     },
-    [chatRef, myUserId, selectedUser, selectedUserId, user]
+    [chatRef, myUserId, selectedUser, selectedUserId, user, replyTo]
   );
+  
 
   // Handle refresh
   const handleRefresh = useCallback(async () => {
@@ -132,30 +163,40 @@ const PrivateChatScreen = () => {
     await loadMessages(true);
     setRefreshing(false);
   }, [loadMessages]);
-  const updateLastRead = useCallback(() => {
-    const lastReadRef = database().ref(`lastseen/${myUserId}/${chatKey}`);
-    lastReadRef.set(Date.now());
-  }, [chatKey, myUserId]);
-  
-  useEffect(() => {
-    updateLastRead(); // Update last seen timestamp when the chat is opened
-  }, [updateLastRead]);
-  
-  useEffect(() => {
-    loadMessages(true);
-  
-    const listener = chatRef.limitToLast(1).on('child_added', (snapshot) => {
-      const newMessage = { id: snapshot.key, ...snapshot.val() };
-      setMessages((prevMessages) =>
-        prevMessages.some((msg) => msg.id === newMessage.id)
-          ? prevMessages
-          : [newMessage, ...prevMessages]
-      );
-      updateLastRead(); // Update last seen timestamp when a new message is added
+
+
+
+ const updateLastRead = useCallback(() => {
+  const lastReadRef = database().ref(`lastseen/${myUserId}/${chatKey}`);
+  lastReadRef
+    .set(Date.now())
+    .then(() => {
+      console.log('Last read updated successfully for:', chatKey);
+    })
+    .catch((error) => {
+      console.error('Error updating last read:', error);
     });
+}, [chatKey, myUserId]);
+
+useEffect(() => {
+  updateLastRead(); // Update last seen timestamp when the chat is opened
+}, [updateLastRead]);
+
+useEffect(() => {
+  const listener = messagesRef.on('child_added', (snapshot) => {
+    const newMessage = { id: snapshot.key, ...snapshot.val() };
+    setMessages((prevMessages) =>
+      prevMessages.some((msg) => msg.id === newMessage.id)
+        ? prevMessages
+        : [newMessage, ...prevMessages]
+    );
+    updateLastRead(); // Update the last seen timestamp for new messages
+  });
+
+  return () => messagesRef.off('child_added', listener); // Cleanup on unmount
+}, [messagesRef, updateLastRead]);
+
   
-    return () => chatRef.off('child_added', listener); // Cleanup listener
-  }, [chatRef, loadMessages, updateLastRead]);
   
  
   return (

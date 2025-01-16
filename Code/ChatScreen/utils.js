@@ -221,3 +221,26 @@ export const deleteOldest500Messages = async () => {
 
 
 
+
+
+
+export const isUserOnline = async (userId) => {
+  if (!userId) {
+    return false; // If no user ID is provided, return false
+  }
+
+  const database = getDatabase();
+  const userRef = ref(database, `onlineUsers/${userId}`);
+
+  try {
+    const snapshot = await get(userRef);
+    if (snapshot.exists()) {
+      const userStatus = snapshot.val();
+      return userStatus?.status === true; // Return true if status is true
+    }
+    return false; // If no data exists, the user is offline
+  } catch (error) {
+    console.error('Error checking user status:', error);
+    return false; // Return false in case of an error
+  }
+};

@@ -15,16 +15,16 @@ import { useGlobalState } from '../../GlobelStats';
 import Icon from 'react-native-vector-icons/Ionicons';
 import config from '../../Helper/Environment';
 import { Menu, MenuOptions, MenuOption, MenuTrigger } from 'react-native-popup-menu';
-
+import { isUserOnline } from '../utils';
 
 const InboxScreen = () => {
   const navigation = useNavigation();
-  const { user, activeUser, theme } = useGlobalState();
+  const { user, theme } = useGlobalState();
   const [chats, setChats] = useState([]);
-  const [bannedUsers, setBannedUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const isDarkMode = theme === 'dark';
   const styles = getStyles(isDarkMode);
+
   const handleDelete = (chatKey) => {
     Alert.alert(
       'Delete Chat',
@@ -37,7 +37,7 @@ const InboxScreen = () => {
           onPress: async () => {
             try {
               // Remove chat from Firebase
-              const chatRef = database().ref(`privateChats/${chatKey}`);
+              const chatRef = database().ref(`privateChat/${chatKey}`);
               await chatRef.remove();
 
               // Update the local state to remove the chat
@@ -53,100 +53,104 @@ const InboxScreen = () => {
     );
   };
 
-  // Fetch and Sync Banned Users in Real-Time
-  useEffect(() => {
-    if (!user?.id) return;
+  
 
-    const bannedRef = database().ref(`bannedUsers/${user?.id}`);
-    const unsubscribe = bannedRef.on('value', (snapshot) => {
-      const data = snapshot.val() || {};
-      const updatedBannedUsers = Object.entries(data).map(([id, details]) => ({
-        id,
-        displayName: details.displayName || details.userName,
-        avatar: details.avatar,
-      }));
-      setBannedUsers(updatedBannedUsers);
-    });
 
-    return () => bannedRef.off('value', unsubscribe);
-  }, [user?.id]);
+
+
 
   const fetchChats = useCallback(async () => {
     if (!user?.id) return;
   
     setLoading(true);
-    const privateChatsRef = database().ref('privateChats');
-    const lastReadRef = database().ref(`lastseen/${user.id}`);
   
     try {
-      const [chatsSnapshot, lastReadSnapshot] = await Promise.all([
-        privateChatsRef.once('value'),
+      const privateChatsRef = database().ref('privateChat');
+      const bannedRef = database().ref(`bannedUsers/${user.id}`);
+      const lastReadRef = database().ref(`lastseen/${user.id}`);
+  
+      // Fetch necessary data concurrently
+      const [userChatsSnapshot, bannedSnapshot, lastReadSnapshot] = await Promise.all([
+        privateChatsRef.orderByChild(`participants/${user.id}`).once('value'),
+        bannedRef.once('value'),
         lastReadRef.once('value'),
       ]);
   
-      const chatsData = chatsSnapshot.val() || {};
+      const userChats = userChatsSnapshot.val() || {};
+      const bannedData = bannedSnapshot.val() || {};
       const lastReadData = lastReadSnapshot.val() || {};
-      const bannedUserIds = bannedUsers.map((banned) => banned.id);
   
-      const userChats = Object.keys(chatsData).reduce((acc, chatKey) => {
-        const [userId1, userId2] = chatKey.split('_');
-        const isParticipant = userId1 === user.id || userId2 === user.id;
-        const otherUserId = userId1 === user.id ? userId2 : userId1;
+      // Extract banned user IDs
+      const bannedUserIds = Object.keys(bannedData);
+      console.log('Banned User IDs:', bannedUserIds);
   
-        // Exclude chats involving banned users
-        if (!isParticipant || bannedUserIds.includes(otherUserId)) {
-          return acc;
-        }
+      // Filter and map chats
+      const filteredChats = await Promise.all(
+        Object.entries(userChats)
+          .filter(([chatKey, chatData]) => {
+            const otherUserId = Object.keys(chatData.participants).find((id) => id !== user.id);
   
-        const messages = Object.entries(chatsData[chatKey]);
-        // Ensure we get the last message chronologically
-        const sortedMessages = messages.sort((a, b) => a[1].timestamp - b[1].timestamp);
-        const lastMessage = sortedMessages[sortedMessages.length - 1]?.[1] || {};
+            // Exclude chats with banned users
+            return otherUserId && !bannedUserIds.includes(otherUserId);
+          })
+          .map(async ([chatKey, chatData]) => {
+            const messages = Object.entries(chatData.messages || {}).map(([key, msg]) => ({
+              id: key,
+              ...msg,
+            }));
   
-        // Extract the other user's details
-        const otherUserInfo = {
-          userName: lastMessage.senderId === user.id ? lastMessage.receiverName : lastMessage.senderName,
-          avatar: lastMessage.senderId === user.id ? lastMessage.receiverAvatar : lastMessage.senderAvatar,
-        };
+            // Sort messages by timestamp to get the latest message
+            const sortedMessages = messages.sort((a, b) => a.timestamp - b.timestamp);
+            const lastMessage = sortedMessages[sortedMessages.length - 1] || {};
   
-        // Calculate unread messages
-        const unreadCount = messages.filter(
-          ([, msg]) =>
-            msg.receiverId === user.id && msg.timestamp > (lastReadData[chatKey] || 0)
-        ).length;
+            const otherUserId = Object.keys(chatData.participants).find((id) => id !== user.id);
+            const otherUserInfo = {
+              userName:
+                lastMessage.senderId === user.id
+                  ? lastMessage.receiverName
+                  : lastMessage.senderName || 'Unknown User',
+              avatar:
+                lastMessage.senderId === user.id
+                  ? lastMessage.receiverAvatar
+                  : lastMessage.senderAvatar || config.defaultAvatar,
+            };
   
-        // Check online status
-        const isOnline = activeUser?.some((active) => active.id === otherUserId);
+            // Calculate unread messages
+            const lastReadTimestamp = lastReadData[chatKey] || 0;
+            const unreadCount = messages.filter(
+              (msg) => msg.receiverId === user.id && msg.timestamp > lastReadTimestamp
+            ).length;
   
-        acc.push({
-          chatKey,
-          userName: otherUserInfo?.userName || 'Unknown User',
-          avatar: otherUserInfo.avatar || config.defaultAvatar,
-          lastMessage: lastMessage.text || '',
-          unreadCount,
-          otherUserId,
-          isOnline,
-          isBanned: bannedUserIds.includes(otherUserId),
-        });
+            // Check if the other user is online
+            const isOnline = await isUserOnline(otherUserId);
   
-        return acc;
-      }, []);
+            return {
+              chatKey,
+              userName: otherUserInfo.userName,
+              avatar: otherUserInfo.avatar,
+              lastMessage: lastMessage.text || '',
+              unreadCount,
+              otherUserId,
+              isOnline,
+            };
+          })
+      );
   
-      setChats(userChats);
+      setChats(filteredChats);
     } catch (error) {
       console.error('Error fetching chats:', error);
     } finally {
       setLoading(false);
     }
-  }, [user, activeUser, bannedUsers]);
+  }, [user]);
   
   
   
   
-
   useEffect(() => {
     fetchChats();
   }, [fetchChats]);
+  
 
   // Render Chat Item
   const renderChatItem = ({ item }) => (

@@ -1,14 +1,14 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { initializeApp, getApps } from 'firebase/app';
-import { getDatabase, ref, set, onValue, get, update, off, query, orderByKey, limitToLast, remove } from 'firebase/database';
+import { getDatabase, ref, set, onValue, get, update, off, onDisconnect, query, orderByChild, equalTo } from 'firebase/database';
 import auth from '@react-native-firebase/auth';
-import messaging from '@react-native-firebase/messaging';
 import { Appearance } from 'react-native';
-import { createNewUser, firebaseConfig, registerForNotifications, saveTokenToDatabase } from './Globelhelper';
-import { AppState } from 'react-native';
-// Initialize Firebase
+import { createNewUser, firebaseConfig, registerForNotifications } from './Globelhelper';
+import database from '@react-native-firebase/database';
+
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-const database = getDatabase(app);
+
+const appdatabase = getDatabase(app);
 
 // Create Global Context
 const GlobalStateContext = createContext();
@@ -46,9 +46,8 @@ export const GlobalStateProvider = ({ children }) => {
   });
 
   const [onlineMembersCount, setOnlineMembersCount] = useState(0);
-  const [activeUser, setActiveUser] = useState([]);
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(0); // Total unread messages
-
+  const [loading, setLoading] = useState(false);
   
   // Track theme changes
   useEffect(() => {
@@ -57,159 +56,116 @@ export const GlobalStateProvider = ({ children }) => {
     });
     return () => listener.remove();
   }, []);
-  
-
-
   useEffect(() => {
-    if (!user?.id) {
-      // console.log("No user logged in. Skipping fetchUnreadMessages.");
-      return;
-    }
+    if (!user?.id) return;
   
-    const privateChatsRef = ref(database, 'privateChats');
-    const lastReadRef = ref(database, `lastseen/${user.id}`);
-    const bannedRef = ref(database, `bannedUsers`);
+    const privateChatsRef = database().ref('privateChat');
+    const lastReadRef = database().ref(`lastseen/${user.id}`);
+    const bannedRef = database().ref(`bannedUsers/${user.id}`);
   
-    const fetchUnreadMessages = async () => {
+    const fetchUnreadMessages = async (snapshot) => {
       try {
-        // console.log("Fetching data for unread messages...");
-        const [chatsSnapshot, lastReadSnapshot, bannedSnapshot] = await Promise.all([
-          get(privateChatsRef),
-          get(lastReadRef),
-          get(bannedRef),
-        ]);
+        // Use the snapshot from the listener if available, otherwise fetch once
+        const chatsData = snapshot?.val() || 
+          (await privateChatsRef.orderByChild(`participants/${user.id}`).once('value')).val() || {};
+        
+        // Fetch additional data
+        const lastReadSnapshot = await lastReadRef.once('value');
+        const bannedSnapshot = await bannedRef.once('value');
   
-        const chatsData = chatsSnapshot.val() || {};
         const lastReadData = lastReadSnapshot.val() || {};
         const bannedData = bannedSnapshot.val() || {};
   
+       
   
-        // Fixing banned user IDs extraction
-        const bannedIds = Object.values(bannedData).reduce((acc, bannedGroup) => {
-          const userIds = Object.keys(bannedGroup); // Extract user IDs
-          acc.push(...userIds);
-          return acc;
-        }, []);
+        // Extract banned user IDs
+        const bannedUserIds = Object.keys(bannedData || {});
   
-        // Calculate unread messages excluding messages from banned users
-        const totalUnread = Object.keys(chatsData).reduce((total, chatKey) => {
-          const messages = Object.entries(chatsData[chatKey] || {});
+        // Calculate unread messages for the current user
+        let totalUnread = 0;
   
+        Object.entries(chatsData || {}).forEach(([chatKey, chatData]) => {
+          const otherUserId = Object.keys(chatData.participants || {}).find((id) => id !== user.id);
   
-          const unreadCount = messages.filter(
-            ([, msg]) => {
-              const isReceiver = msg.receiverId === user.id;
-              const isUnread = msg.timestamp > (lastReadData[chatKey] || 0);
-              const isNotBanned = !bannedIds.includes(msg.senderId);
+          if (!otherUserId || bannedUserIds.includes(otherUserId)) return;
   
+          const unreadCount = Object.entries(chatData.messages || {}).filter(([_, msg]) => {
+            const isReceiver = msg.receiverId === user.id;
+            const isUnread = msg.timestamp > (lastReadData[chatKey] || 0);
+            return isReceiver && isUnread;
+          }).length;
   
-              return isReceiver && isUnread && isNotBanned;
-            }
-          ).length;
+          totalUnread += unreadCount;
+        });
   
-  
-          return total + unreadCount;
-        }, 0);
-  
-        setUnreadMessagesCount(totalUnread); // Update unread messages count
+        setUnreadMessagesCount(totalUnread);
       } catch (error) {
-        console.error("Error fetching unread messages:", error);
+        console.error('Error fetching unread messages:', error.message);
       }
     };
   
-    // Real-time listeners for updates
-    const chatsListener = onValue(privateChatsRef, fetchUnreadMessages, {
-      onlyOnce: false,
-    });
-    const lastReadListener = onValue(lastReadRef, fetchUnreadMessages, {
-      onlyOnce: false,
-    });
-    const bannedListener = onValue(bannedRef, fetchUnreadMessages, {
-      onlyOnce: false,
-    });
+    // Add real-time listeners
+    const chatsListener = privateChatsRef
+      .orderByChild(`participants/${user.id}`)
+      
+      .on('value', fetchUnreadMessages);
   
-    // Fetch unread messages initially
-    fetchUnreadMessages();
+    const lastReadListener = lastReadRef.on('value', fetchUnreadMessages);
+    const bannedListener = bannedRef.on('value', fetchUnreadMessages);
   
     return () => {
-      off(privateChatsRef, 'value', chatsListener);
-      off(lastReadRef, 'value', lastReadListener);
-      off(bannedRef, 'value', bannedListener);
+      // Cleanup listeners
+      privateChatsRef.off('value', chatsListener);
+      lastReadRef.off('value', lastReadListener);
+      bannedRef.off('value', bannedListener);
     };
   }, [user?.id]);
+  
   
   
 
+////////////logic for setting online users status////////
+
   useEffect(() => {
-    let appState = AppState.currentState;
-    let subscription;
+    if (!user?.id) return;
   
-    const handleAppStateChange = (nextAppState) => {
-      if (appState.match(/inactive|background/) && nextAppState === 'active') {
-        // App has come to the foreground
-        if (user.id) {
-          setOnlineStatus(true); // Mark user as active
-        }
-      } else if (nextAppState.match(/inactive|background/)) {
-        // App has gone to the background
-        if (user.id) {
-          setOnlineStatus(false); // Mark user as inactive
-        }
-      }
-      appState = nextAppState;
-    };
+    const connectedRef = ref(appdatabase, ".info/connected");
   
-    // Add the AppState change listener
-    subscription = AppState.addEventListener('change', handleAppStateChange);
+    const handlePresence = onValue(connectedRef, (snapshot) => {
+      if (snapshot.val() === true) {
+        const userRef = ref(appdatabase, `onlineUsers/${user.id}`);
   
-    // Cleanup on unmount
-    return () => {
-      if (subscription) {
-        subscription.remove(); // Remove the AppState listener correctly
+        // Set user as online
+        set(userRef, {
+          status: true,
+          timestamp: Date.now(),
+        });
+  
+        // Automatically remove user from onlineUser node on disconnect
+        onDisconnect(userRef).remove();
       }
-      if (user.id) {
-        setOnlineStatus(false); // Ensure user is marked offline
-      }
-    };
+    });
+  
+    return () => off(connectedRef, "value", handlePresence);
   }, [user?.id]);
   
   
   useEffect(() => {
-    const onlineRef = ref(database, 'onlineUser');
+    const onlineRef = ref(appdatabase, "onlineUsers");
   
-    const unsubscribe = onValue(onlineRef, async (snapshot) => {
-      const onlineUsers = snapshot.val() || {};
-  
-      // Only include users currently marked as online
-      const activeUsers = Object.values(onlineUsers).filter((user) => user.status);
-  
-      // Fetch metadata for active users in parallel
-      const userMetadataPromises = activeUsers.map((active) =>
-        get(ref(database, `users/${active.id}`)).then((snap) => snap.val())
-      );
-  
-      const usersWithMetadata = await Promise.all(userMetadataPromises);
-  
-      // Combine metadata with active user info
-      const enrichedActiveUsers = activeUsers.map((active, index) => ({
-        ...active,
-        ...usersWithMetadata[index],
-      }));
-  
-      setActiveUser(enrichedActiveUsers); // Set state with enriched active users
-      setOnlineMembersCount(enrichedActiveUsers.length); // Update online members count
+    const unsubscribe = onValue(onlineRef, (snapshot) => {
+      setOnlineMembersCount(snapshot.size || 0); // Count keys directly
     });
   
     return () => unsubscribe();
   }, []);
-// console.log(user)
-// console.log(onlineUsers)
-  // Unified Update Function
+// console.log(onlineMembersCount)
+
   const updateLocalStateAndDatabase = async (keyOrUpdates, value) => {
     if (!user.id) return; // Prevent updates if user is not logged in
 
     try {
-      const userRef = ref(database, `users/${user.id}`);
+      const userRef = ref(appdatabase, `users/${user.id}`);
       if (typeof keyOrUpdates === 'string') {
         // Single update
         const updates = { [keyOrUpdates]: value };
@@ -246,7 +202,7 @@ export const GlobalStateProvider = ({ children }) => {
 
 
 
-console.log(user)
+// console.log(user)
 
   // Reset user state
   const resetUserState = () => {
@@ -275,7 +231,7 @@ console.log(user)
     const unsubscribe = auth().onAuthStateChanged(async (loggedInUser) => {
       if (loggedInUser) {
         const userId = loggedInUser.uid;
-        const userRef = ref(database, `users/${userId}`);
+        const userRef = ref(appdatabase, `users/${userId}`);
         const snapshot = await get(userRef);
 
         if (snapshot.exists()) {
@@ -302,77 +258,59 @@ console.log(user)
     return () => unsubscribe();
   }, []);
 
-  // Handle FCM token refresh
-  useEffect(() => {
-    const unsubscribe = messaging().onTokenRefresh(async (newToken) => {
-      if (user.id) {
-        await saveTokenToDatabase(newToken, user.id);
-      }
+ const checkInternetConnection = async () => {
+  try {
+    const response = await fetch('https://www.google.com/favicon.ico', { method: 'HEAD', cache: 'no-store' });
+    if (!response.ok) {
+      throw new Error('Unable to reach the internet. Please check your connection.');
+    }
+  } catch {
+    throw new Error('No internet connection. Please check your network.');
+  }
+};
+
+
+// Utility: Centralized Error Handler
+const handleError = (error) => {
+  console.error('Error:', error.message);
+  alert(error.message || 'An unexpected error occurred. Please try again.');
+};
+
+// Main Function to Fetch Data
+const fetchStockData = async () => {
+  try {
+    setLoading(true);
+
+    // Improved connectivity check
+    await checkInternetConnection();
+
+    const [xlsSnapshot, calcSnapshot, codeSnapShot] = await Promise.all([
+      get(ref(appdatabase, 'xlsData')),
+      get(ref(appdatabase, 'calcData')),
+      get(ref(appdatabase, 'codes')),
+    ]);
+
+    setState({
+      codes: codeSnapShot.val() || {},
+      data: xlsSnapshot.val() || {},
+      normalStock: calcSnapshot.val()?.test || {},
+      mirageStock: calcSnapshot.val()?.mirage || {},
+      isAppReady: true,
     });
-    return () => unsubscribe();
-  }, [user?.id]);
-  // Fetch public stock data
-
-  const fetchStockData = async () => {
-    try {
-      const [xlsSnapshot, calcSnapshot, codeSnapShot ] = await Promise.all([
-        get(ref(database, 'xlsData')),
-        get(ref(database, 'calcData')),
-        get(ref(database, 'codes')),
-      ]);
-
-      setState({
-        codes: codeSnapShot.val() || {},
-        data: xlsSnapshot.val() || {},
-        normalStock: calcSnapshot.val()?.test || {},
-        mirageStock: calcSnapshot.val()?.mirage || {},
-        isAppReady: true,
-      });
-    } catch (error) {
-      console.error('Error fetching stock data:', error);
-    }
-  };
-  useEffect(() => {
-    fetchStockData();
-  }, []);
-
-  const setOnlineStatus = (() => {
-    let lastStatus = null;
-    let timeout = null;
-  
-    return (status) => {
-      if (user.id && status !== lastStatus) {
-        if (timeout) clearTimeout(timeout);
-  
-        timeout = setTimeout(() => {
-          const userRef = ref(database, `onlineUser/${user.id}`);
-          set(userRef, {
-            id: user.id,
-            status,
-            timestamp: Date.now(),
-          });
-          lastStatus = status;
-        }, 1000); // Update status every 1 second if it changes
-      }
-    };
-  })();
+  } catch (error) {
+    console.error('Error fetching stock data:', error);
+    alert(error.message || 'An unexpected error occurred. Please try again.');
+  } finally {
+    setLoading(false);
+  }
+};
 
 
-  
-  
-  useEffect(() => {
-    if (user.id) {
-      setOnlineStatus(true); // Set online status on login
-    }
-  
-    return () => {
-      if (user.id) {
-        setOnlineStatus(false); // Set offline status on logout or app close
-      }
-    };
-  }, [user?.id]);
-  
-  
+useEffect(() => {
+  fetchStockData();
+}, []);
+
+
   const contextValue = useMemo(
     () => ({
       state,
@@ -382,11 +320,10 @@ console.log(user)
       theme,
       setUser,
       setOnlineMembersCount,
-      activeUser,
-      updateLocalStateAndDatabase, unreadMessagesCount, fetchStockData
+      updateLocalStateAndDatabase, unreadMessagesCount, fetchStockData, loading
       
     }),
-    [state, user, onlineMembersCount, theme, activeUser, unreadMessagesCount, fetchStockData]
+    [state, user, onlineMembersCount, theme,  unreadMessagesCount, fetchStockData, loading]
   );
 
   return (
