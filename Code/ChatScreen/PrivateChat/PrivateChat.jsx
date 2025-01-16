@@ -206,7 +206,7 @@ useEffect(() => {
             
     <View style={styles.container}>
     <ConditionalKeyboardWrapper style={{flex:1}} chatscreen={true}>
-      {loading && messages.length === 0 ? (
+      {!loading && messages.length === 0 ? (
         <ActivityIndicator size="large" color="#1E88E5" style={{ flex: 1, justifyContent: 'center' }} />
       ) : messages.length === 0 ? (
         <View style={styles.emptyContainer}>

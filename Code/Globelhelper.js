@@ -148,7 +148,7 @@ export const resetUserState = (setUser) => {
       // Check if the update has already been performed
       const flagSnapshot = await get(flagRef);
       if (flagSnapshot.exists() && flagSnapshot.val() === true) {
-        console.log("Usernames have already been updated. Skipping operation.");
+        // console.log("Usernames have already been updated. Skipping operation.");
         return;
       }
   
@@ -171,9 +171,9 @@ export const resetUserState = (setUser) => {
         // Set the flag to indicate the update has been completed
         await set(flagRef, true);
   
-        console.log("Successfully updated all usernames!");
+        // console.log("Successfully updated all usernames!");
       } else {
-        console.log("No users found in the database.");
+        // console.log("No users found in the database.");
       }
     } catch (error) {
       console.error("Error updating usernames:", error);
@@ -199,7 +199,7 @@ export const resetUserState = (setUser) => {
         displayName: details.displayName,
       }));
   
-      console.log("Banned Users by Current User:", bannedUsers);
+      // console.log("Banned Users by Current User:", bannedUsers);
       return bannedUsers;
     } catch (error) {
       console.error("Error fetching banned users:", error);

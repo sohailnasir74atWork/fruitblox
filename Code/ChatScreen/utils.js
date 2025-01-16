@@ -56,7 +56,7 @@ export const removeAdmin = async (userId) => {
 // Make Admin
 export const makeAdmin = async (userId) => {
   try {
-    console.log(userId)
+    // console.log(userId)
     const userToUpdateRef = ref(database, `users/${userId}`); // Reference to the specific user
     await update(userToUpdateRef, { isAdmin: true });
     Alert.alert('Success', 'User has been made an admin.');

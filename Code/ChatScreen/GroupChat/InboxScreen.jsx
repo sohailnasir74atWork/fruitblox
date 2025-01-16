@@ -82,7 +82,7 @@ const InboxScreen = () => {
   
       // Extract banned user IDs
       const bannedUserIds = Object.keys(bannedData);
-      console.log('Banned User IDs:', bannedUserIds);
+      // console.log('Banned User IDs:', bannedUserIds);
   
       // Filter and map chats
       const filteredChats = await Promise.all(

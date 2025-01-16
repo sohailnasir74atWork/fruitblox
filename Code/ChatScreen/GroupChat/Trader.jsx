@@ -44,6 +44,7 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
   const [isOnline, setIsOnline] = useState(false);
   const userId = selectedUser?.senderId || null;
   const [isAdVisible, setIsAdVisible] = useState(true);
+  const [isCooldown, setIsCooldown] = useState(false); 
 
   useEffect(() => {
     let isMounted = true;
@@ -193,7 +194,7 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
     if (!loading && lastLoadedKey) {
       await loadMessages(false);
     } else {
-      console.log('No more messages to load or currently loading.');
+      // console.log('No more messages to load or currently loading.');
     }
   };
   
@@ -236,7 +237,7 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
         ...prev,
         { firebaseKey: newRef.key, ...pinnedMessage },
       ]);
-      console.log('Pinned message added with firebaseKey:', newRef.key);
+      // console.log('Pinned message added with firebaseKey:', newRef.key);
     } catch (error) {
       console.error('Error pinning message:', error);
       Alert.alert('Error', 'Could not pin the message. Please try again.');
@@ -247,11 +248,11 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
 
   const unpinSingleMessage = async (firebaseKey) => {
     try {
-      console.log(`Received firebaseKey for unpinning: ${firebaseKey}`);
+      // console.log(`Received firebaseKey for unpinning: ${firebaseKey}`);
   
       // Remove the message from Firebase
       const messageRef = pinnedMessagesRef.child(firebaseKey);
-      console.log(`Firebase reference for removal: ${messageRef.toString()}`);
+      // console.log(`Firebase reference for removal: ${messageRef.toString()}`);
       await messageRef.remove();
       console.log(`Message with Firebase key: ${firebaseKey} successfully removed from Firebase.`);
   
@@ -289,20 +290,19 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
     setRefreshing(false);
   };
 
-  const handleSendMessage = async () => {
-    const MAX_WORDS = 100; // Maximum allowed words
-    const MESSAGE_COOLDOWN = 2000; // 5 seconds cooldown in milliseconds
-    const now = Date.now();
+  const handleSendMessage = () => {
+    const MAX_WORDS = 100; 
+    const MESSAGE_COOLDOWN = 10000; 
 
-    if (!user.id) {
+    if (!user?.id) {
       Alert.alert('Error', 'You must be logged in to send messages.');
       return;
     }
-    if (user.isBlock) {
+
+    if (user?.isBlock) {
       Alert.alert('You are blocked by an Admin');
       return;
     }
-
 
     const trimmedInput = input.trim();
 
@@ -311,7 +311,7 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
       return;
     }
 
-    // Check for profane content using leo-profanity
+    // Check for profane content
     if (leoProfanity.check(trimmedInput)) {
       Alert.alert('Error', 'Your message contains inappropriate language.');
       return;
@@ -319,45 +319,48 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
 
     const wordCount = trimmedInput.split(/\s+/).length;
     if (wordCount > MAX_WORDS) {
-      Alert.alert('Error', `Message cannot exceed ${MAX_WORDS} words. Your message contains ${wordCount} words.`);
+      Alert.alert(
+        'Error',
+        `Message cannot exceed ${MAX_WORDS} words. Your message contains ${wordCount} words.`
+      );
       return;
     }
 
-    if (now - lastMessageTimestamp < MESSAGE_COOLDOWN) {
-      const remainingTime = Math.ceil((MESSAGE_COOLDOWN - (now - lastMessageTimestamp)) / 1000);
-      Alert.alert('Error', `You are sending messages too quickly. Please wait ${remainingTime} seconds.`);
+    if (isCooldown) {
+      Alert.alert('Error', 'You are sending messages too quickly. Please wait a moment.');
       return;
     }
 
     try {
-      const cleanMessage = leoProfanity.clean(trimmedInput); // Sanitize input
+      // Prepare the message
       const newMessage = {
-        text: cleanMessage,
-        timestamp: now,
+        text: trimmedInput,
+        timestamp: Date.now(),
         sender: user.displayname || user.displayName || 'Anonymous',
         senderId: user.id,
         avatar: user.avatar || 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png',
         replyTo: replyTo ? { id: replyTo.id, text: replyTo.text } : null,
         isAdmin: user.isAdmin || user.isOwner,
-        reportCount:0
+        reportCount: 0,
       };
 
-      // Push the message to the chat database
-      await chatRef.push(newMessage);
+      // Push the message to Firebase
+      database()
+        .ref('chat')
+        .push(newMessage);
 
-      // Update the last message timestamp
-      lastMessageTimestamp = now;
-
-      // Clear input and reply context
+      // Clear the input and reply context
       setInput('');
       setReplyTo(null);
+
+      // Activate the cooldown
+      setIsCooldown(true);
+      setTimeout(() => setIsCooldown(false), MESSAGE_COOLDOWN); // Reset cooldown after MESSAGE_COOLDOWN
     } catch (error) {
       console.error('Error sending message:', error);
       Alert.alert('Error', 'Could not send your message. Please try again.');
     }
   };
-
-
 
   return (
     <>
