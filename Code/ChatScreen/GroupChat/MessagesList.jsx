@@ -37,6 +37,7 @@ const MessagesList = ({
   unbanUser,
   isOwner,
   toggleDrawer,
+  setMessages
 }) => {
   const styles = getStyles(isDarkMode);
   const [selectedMessage, setSelectedMessage] = useState(null);
@@ -48,11 +49,19 @@ const MessagesList = ({
     setSelectedMessage(item);
   };
 
-  // console.log(messages)
   const handleReport = (message) => {
     setSelectedMessage(message);
     setShowReportPopup(true);
   };
+
+  const handleReportSuccess = (reportedMessageId) => {
+    setMessages((prevMessages) =>
+      prevMessages.map((msg) =>
+        msg.id === reportedMessageId ? { ...msg, isReportedByUser: true } : msg
+      )
+    );
+  };
+
   const handleProfileClick = (item) => {
     if (user.id) { toggleDrawer(item) }
     else return
@@ -81,7 +90,7 @@ const MessagesList = ({
         <View
           style={[
             item.senderId === user?.id ? styles.mymessageBubble : styles.othermessageBubble,
-            item.senderId === user?.id ? styles.myMessage : styles.otherMessage,
+            item.senderId === user?.id ? styles.myMessage : styles.otherMessage, item.isReportedByUser && styles.reportedMessage,
           ]}
         >
           <View
@@ -247,10 +256,16 @@ const MessagesList = ({
         onTouchStart={() => Keyboard.dismiss()}
         keyboardShouldPersistTaps="handled" // Ensures taps o
       />
-      <ReportPopup
+     <ReportPopup
         visible={showReportPopup}
         message={selectedMessage}
-        onClose={() => { setSelectedMessage(null); setShowReportPopup(false) }}
+        onClose={(success) => {
+          if (success) {
+            handleReportSuccess(selectedMessage.id);
+          }
+          setSelectedMessage(null);
+          setShowReportPopup(false);
+        }}
       />
     </>
   );

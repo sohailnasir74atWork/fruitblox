@@ -78,7 +78,7 @@ function App() {
   //   }
   // };
 
-  const adCooldown = 300000;
+  const adCooldown = 120000;
   useEffect(() => {
     mobileAds()
       .initialize()

@@ -94,63 +94,75 @@ export const rules = [
 
 
 export const banUserInChat = async (currentUserId, selectedUser) => {
+  return new Promise((resolve, reject) => {
+    Alert.alert(
+      'Block User',
+      `Are you sure you want to block ${selectedUser.sender || 'this user'}? You will no longer receive messages from them.`,
+      [
+        { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) }, // User cancels the operation
+        {
+          text: 'Block',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const database = getDatabase();
+              const bannedRef = ref(database, `bannedUsers/${currentUserId}/${selectedUser.senderId}`);
 
-  Alert.alert(
-    'Block User',
-    `Are you sure you want to block ${selectedUser.sender || 'this user'}? You will no longer receive messages from them.`,
-    [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Block',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            const database = getDatabase();
-            const bannedRef = ref(database, `bannedUsers/${currentUserId}/${selectedUser.senderId}`);
+              // Save the banned user's details in the database
+              await set(bannedRef, {
+                displayName: selectedUser.sender || 'Anonymous',
+                avatar: selectedUser.avatar || 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png',
+              });
 
-            // Save the banned user's details in the database
-            await set(bannedRef, {
-              displayName: selectedUser.sender || 'Anonymous',
-              avatar: selectedUser.avatar || 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png',
-            });
-
-            Alert.alert('Success', `You have successfully blocked ${selectedUser.sender || 'this user'}.`);
-          } catch (error) {
-            console.error('Error blocking user:', error);
-            Alert.alert('Error', 'Could not block the user. Please try again.');
-          }
+              Alert.alert(
+                'Success',
+                `You have successfully blocked ${selectedUser.sender || 'this user'}.`
+              );
+              resolve(true); // Indicate success
+            } catch (error) {
+              console.error('Error blocking user:', error);
+              Alert.alert('Error', 'Could not block the user. Please try again.');
+              reject(error); // Indicate failure with the error
+            }
+          },
         },
-      },
-    ]
-  );
+      ]
+    );
+  });
 };
+
 export const unbanUserInChat = async (currentUserId, selectedUserId) => {
-  Alert.alert(
-    'Unblock User',
-    'Are you sure you want to unblock this user? You will start receiving messages from them again.',
-    [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Unblock',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            const database = getDatabase();
-            const bannedRef = ref(database, `bannedUsers/${currentUserId}/${selectedUserId}`);
+  return new Promise((resolve, reject) => {
+    Alert.alert(
+      'Unblock User',
+      'Are you sure you want to unblock this user? You will start receiving messages from them again.',
+      [
+        { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) }, // User cancels the operation
+        {
+          text: 'Unblock',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const database = getDatabase();
+              const bannedRef = ref(database, `bannedUsers/${currentUserId}/${selectedUserId}`);
 
-            // Remove the banned user's data from the database
-            await remove(bannedRef);
+              // Remove the banned user's data from the database
+              await remove(bannedRef);
 
-            Alert.alert('Success', 'You have successfully unblocked this user.');
-          } catch (error) {
-            console.error('Error unblocking user:', error);
-            Alert.alert('Error', 'Could not unblock the user. Please try again.');
-          }
+              Alert.alert('Success', 'You have successfully unblocked this user.');
+              resolve(true); // Indicate success
+            } catch (error) {
+              console.error('Error unblocking user:', error);
+              Alert.alert('Error', 'Could not unblock the user. Please try again.');
+              reject(error); // Indicate failure with the error
+            }
+          },
         },
-      },
-    ]
-  );
+      ]
+    );
+  });
 };
+
 
 
 // const deleteLast100Messages = async () => {

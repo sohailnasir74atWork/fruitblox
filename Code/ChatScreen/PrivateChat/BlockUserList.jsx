@@ -22,6 +22,17 @@ const BlockedUsersScreen = ({ route }) => {
   const [blockedUsers, setBlockedUsers] = useState(route.params?.bannedUsers || []);
   const [loading, setLoading] = useState(!route.params?.bannedUsers);
 
+
+  const handleUnblockUser = async (userId, selectedUserId) => {
+    const success = await unbanUserInChat(userId, selectedUserId);
+    if (success) {
+      setBlockedUsers((prevBlockedUsers) =>
+        prevBlockedUsers.filter((user) => user.id !== selectedUserId)
+      );
+      Alert.alert('Success', 'User has been unblocked.');
+    }
+  };
+  
   useEffect(() => {
     if (!user?.id || route.params?.bannedUsers) return; // Skip if initial params exist
 
@@ -55,12 +66,13 @@ const BlockedUsersScreen = ({ route }) => {
       <View style={styles.textContainer}>
         <Text style={styles.userName}>{item.displayName}</Text>
         <TouchableOpacity
-          style={styles.unblockButton}
-          onPress={() => unbanUserInChat(user.id, item.id)}
-        >
-          <Icon name="person-remove-outline" size={20} color={isDarkMode ? 'white' : 'black'} />
-          <Text style={styles.unblockText}>Unblock</Text>
-        </TouchableOpacity>
+  style={styles.unblockButton}
+  onPress={() => handleUnblockUser(user.id, item.id)}
+>
+  <Icon name="person-remove-outline" size={20} color={isDarkMode ? 'white' : 'black'} />
+  <Text style={styles.unblockText}>Unblock</Text>
+</TouchableOpacity>
+
       </View>
     </View>
   );
@@ -84,6 +96,7 @@ const BlockedUsersScreen = ({ route }) => {
           data={blockedUsers}
           keyExtractor={(item) => item.id}
           renderItem={renderBlockedUser}
+          showsVerticalScrollIndicator={false}
         />
       )}
     </View>

@@ -171,10 +171,10 @@ const PrivateChatScreen = () => {
   lastReadRef
     .set(Date.now())
     .then(() => {
-      console.log('Last read updated successfully for:', chatKey);
+      // console.log('Last read updated successfully for:', chatKey);
     })
     .catch((error) => {
-      console.error('Error updating last read:', error);
+      // console.error('Error updating last read:', error);
     });
 }, [chatKey, myUserId]);
 

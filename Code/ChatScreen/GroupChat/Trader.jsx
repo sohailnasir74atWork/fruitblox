@@ -45,6 +45,8 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
   const userId = selectedUser?.senderId || null;
   const [isAdVisible, setIsAdVisible] = useState(true);
   const [isCooldown, setIsCooldown] = useState(false); 
+  const [signinMessage, setSigninMessage] = useState(false); 
+
 
   useEffect(() => {
     let isMounted = true;
@@ -182,12 +184,13 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
   
 
   const handleLoadMore = async () => {
-    if (!user.id) {
+    if (!user.id & !signinMessage) {
       Alert.alert(
         'Login Required',
         'Please log in to load previous messages.',
         [{ text: 'OK', onPress: () => setIsSigninDrawerVisible(true) }]
       );
+      setSigninMessage(true)
       return;
     }
   
@@ -401,6 +404,7 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
               unbanUser={unbanUser}
               isOwner={isOwner}
               toggleDrawer={toggleDrawer}
+              setMessages={setMessages}
             />
           )}
           {user.id ? (

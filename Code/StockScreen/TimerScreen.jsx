@@ -111,7 +111,6 @@ const TimerScreen = ({ selectedTheme }) => {
   
   
 
-  // const toggleSwitch = () => setIsReminderEnabled((prev) => !prev);
 
 
   const requestPermission = async () => {
@@ -149,42 +148,42 @@ const TimerScreen = ({ selectedTheme }) => {
 
   const toggleSwitch = async () => {
     try {
-      // Request notification permissions
       const permissionGranted = await requestPermission();
       if (!permissionGranted) return;
-
-      // Check user authentication
+  
       if (user.id == null) {
-        setisSigninDrawerVisible(true); // Show sign-in drawer
+        setisSigninDrawerVisible(true);
       } else {
-        const newReminderState = !user.isReminderEnabled;
-        await updateLocalStateAndDatabase('isReminderEnabled', newReminderState)
+        const currentValue = user.isReminderEnabled;
+  
+        // Optimistically update the UI
+        updateLocalStateAndDatabase('isReminderEnabled', !currentValue);
       }
     } catch (error) {
       console.error('Error handling notification permission or sign-in:', error);
       Alert.alert('Error', 'Something went wrong while processing your request.');
     }
   };
-
+  
   const toggleSwitch2 = async () => {
     try {
-      // Request notification permissions
       const permissionGranted = await requestPermission();
       if (!permissionGranted) return;
-
-      // Check user authentication
+  
       if (user?.id == null) {
-        setisSigninDrawerVisible(true); // Show sign-in drawer
+        setisSigninDrawerVisible(true);
       } else {
-        // Toggle the selected reminder state
-        const newReminderState = !user.isSelectedReminderEnabled;
-        updateLocalStateAndDatabase('isSelectedReminderEnabled', newReminderState)
+        const currentValue = user.isSelectedReminderEnabled;
+  
+        // Optimistically update the UI
+        updateLocalStateAndDatabase('isSelectedReminderEnabled', !currentValue);
       }
     } catch (error) {
       console.error('Error handling notification permission or sign-in:', error);
       Alert.alert('Error', 'Something went wrong while processing your request.');
     }
   };
+  
 
 
 
@@ -523,7 +522,7 @@ const getStyles = (isDarkMode, user) =>
     selectedContainericon: {
       // flexDirection: 'column',
       alignItems: 'center',
-      backgroundColor: user.isReminderEnabled ? config.colors.hasBlockGreen : config.colors.primary,
+      backgroundColor: user.isSelectedReminderEnabled ? config.colors.hasBlockGreen : config.colors.primary,
       borderRadius: 20,
       marginLeft: 10
     },

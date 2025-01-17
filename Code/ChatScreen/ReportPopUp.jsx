@@ -20,9 +20,8 @@ const ReportPopup = ({ visible, message, onClose }) => {
   const [loading, setLoading] = useState(false);
   const { theme } = useGlobalState();
   const isDarkMode = theme === "dark";
-
   const handleSubmit = () => {
-    const sanitizedId = message.id.startsWith("chat-") ? message.id.replace("chat-", "") : message.id; // Remove "chat-" prefix if it exists
+    const sanitizedId = message.id.startsWith("chat-") ? message.id.replace("chat-", "") : message.id;
   
     if (!sanitizedId) {
       Alert.alert("Error", "Invalid message. Unable to report.");
@@ -47,9 +46,9 @@ const ReportPopup = ({ visible, message, onClose }) => {
         setLoading(false); // Stop loader
         Alert.alert(
           "Report Submitted",
-          `Reason: ${showCustomInput ? customReason : selectedReason}\nMessage: "${message.text}"\nThank you for reporting this message. Our team will review your report and take appropriate action if necessary.`
+          `Reason: ${showCustomInput ? customReason : selectedReason}\nMessage: "${message.text}"\nThank you for reporting this message.`
         );
-        onClose(); // Close the report modal
+        onClose(true); // Pass `true` to indicate success
       })
       .catch((error) => {
         console.error("Error reporting message:", error);
@@ -57,7 +56,6 @@ const ReportPopup = ({ visible, message, onClose }) => {
         Alert.alert("Error", "Failed to submit the report. Please try again.");
       });
   };
-  
   
   
 

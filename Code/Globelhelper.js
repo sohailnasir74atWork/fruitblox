@@ -80,10 +80,10 @@ export const firebaseConfig = {
         }
       }
   
-    //   console.log('Fetching FCM Token...');
+      // console.log('Fetching FCM Token...');
       const fcmToken = await messaging().getToken();
       // console.log('FCM Token:', fcmToken);
-  
+  // 
       if (!fcmToken) {
         console.error('Failed to fetch FCM token. Token is null or undefined.');
         return;

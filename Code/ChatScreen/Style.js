@@ -277,11 +277,7 @@ export const getStyles = (isDarkMode) =>
       color: '#1E90FF', // Blue color for links
       textDecorationLine: 'underline', // Underline to indicate a link
     },
-    emptyContainer: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center'
-    },
+ 
     menu: {
       borderRadius: 20,
       // backgroundColor:'red'
@@ -297,7 +293,7 @@ export const getStyles = (isDarkMode) =>
       // justifyContent:'space-evenly',
       maxWidth: 150,
       borderRadius: 10,
-      marginLeft:100
+      marginLeft:200
 
     },
     menuOption: {
@@ -319,6 +315,19 @@ export const getStyles = (isDarkMode) =>
       top:2,
       opacity:1
 
+    },
+    reportedMessage: {
+      opacity: .1, // Light blue color
+    },
+    emptyContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor:'red'
+
+    },
+    emptyText:{
+      color: isDarkMode ? '#1E88E5' : '#007BFF',
     }
 
 

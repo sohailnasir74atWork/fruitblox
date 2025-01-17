@@ -28,11 +28,29 @@ const ProfileBottomDrawer = ({ isVisible, toggleModal, startChat, selectedUser, 
   // Handle Ban/Unban Toggle
   const handleToggleBlock = async () => {
     if (isBlock) {
-      await unbanUserInChat(user.id, selectedUser);
+      // Unban the user
+      try {
+        await unbanUserInChat(user.id, selectedUser);
+      } catch (error) {
+        console.error('Error unbanning user:', error);
+        Alert.alert('Error', 'Failed to unban the user. Please try again.');
+      }
     } else {
-      await banUserInChat(user.id, selectedUser);
+      // Ban the user
+      try {
+        const isBanned = await banUserInChat(user.id, selectedUser); // Check if user is successfully banned
+        if (isBanned) {
+          await toggleModal(); // Close the drawer if the user is successfully banned
+        } else {
+          // console.log('User canceled the block operation.');
+        }
+      } catch (error) {
+        console.error('Error banning user:', error);
+        Alert.alert('Error', 'Failed to ban the user. Please try again.');
+      }
     }
   };
+  
 
   // Handle Start Chat
   const handleStartChat = () => {

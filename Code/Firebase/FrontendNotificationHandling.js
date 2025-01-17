@@ -35,7 +35,6 @@ const NotificationHandler = () => {
         console.warn('Already processing a notification. Skipping...');
         return;
       }
-      console.log(remoteMessage)
 
       isProcessingNotification = true;
 

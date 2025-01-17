@@ -16,7 +16,7 @@ const interstitialAdUnitId = getAdUnitId('interstitial');
 const interstitial = InterstitialAd.createForAdRequest(interstitialAdUnitId);
 
 const HomeScreen = ({ selectedTheme }) => {
-  const { state, theme, loading } = useGlobalState();
+  const { state, theme } = useGlobalState();
   const initialItems = [null, null];
   const [hasItems, setHasItems] = useState(initialItems);
   const [fruitRecords, setFruitRecords] = useState([]);
@@ -252,12 +252,6 @@ const HomeScreen = ({ selectedTheme }) => {
     <>
       <GestureHandlerRootView>
         <View style={styles.container}>
-
-          {loading ? (
-            <View style={styles.loaderContainer}>
-              <Text style={[styles.loaderText, { color: selectedTheme.colors.text }]}>Loading...</Text>
-            </View>
-          ) : (
             <ScrollView showsVerticalScrollIndicator={false}>
               <ViewShot ref={viewRef} style={styles.screenshotView}>
                 <View style={styles.summaryContainer}>
@@ -368,7 +362,7 @@ const HomeScreen = ({ selectedTheme }) => {
                   ))}
                 </View>
               </ViewShot>
-            </ScrollView>)}
+            </ScrollView>
           <TouchableOpacity onPress={proceedWithScreenshotShare} style={styles.float}>
 
             <Icon name={!config.isNoman ? "chevron-down-circle" : 'arrow-down-circle'} size={60} color={config.colors.hasBlockGreen} />

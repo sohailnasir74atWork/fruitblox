@@ -55,10 +55,6 @@ const InboxScreen = () => {
 
   
 
-
-
-
-
   const fetchChats = useCallback(async () => {
     if (!user?.id) return;
   
@@ -69,81 +65,70 @@ const InboxScreen = () => {
       const bannedRef = database().ref(`bannedUsers/${user.id}`);
       const lastReadRef = database().ref(`lastseen/${user.id}`);
   
-      // Fetch necessary data concurrently
-      const [userChatsSnapshot, bannedSnapshot, lastReadSnapshot] = await Promise.all([
-        privateChatsRef.orderByChild(`participants/${user.id}`).once('value'),
+      // Fetch banned users and last read timestamps concurrently
+      const [bannedSnapshot, lastReadSnapshot] = await Promise.all([
         bannedRef.once('value'),
         lastReadRef.once('value'),
       ]);
   
-      const userChats = userChatsSnapshot.val() || {};
       const bannedData = bannedSnapshot.val() || {};
       const lastReadData = lastReadSnapshot.val() || {};
-  
-      // Extract banned user IDs
       const bannedUserIds = Object.keys(bannedData);
-      // console.log('Banned User IDs:', bannedUserIds);
   
-      // Filter and map chats
+      // Fetch chats where the current user is a participant
+      const userChatsSnapshot = await privateChatsRef
+        .orderByChild(`participants/${user.id}/name`)
+        .once('value');
+  
+      const userChats = userChatsSnapshot.val() || {};
+  
+      // Map filtered chats to the desired format
       const filteredChats = await Promise.all(
-        Object.entries(userChats)
-          .filter(([chatKey, chatData]) => {
-            const otherUserId = Object.keys(chatData.participants).find((id) => id !== user.id);
+        Object.entries(userChats).map(async ([chatKey, chatData]) => {
+          // Find the other user's details
+          const otherUserId = Object.keys(chatData.participants).find((id) => id !== user.id);
+          const otherUserInfo = chatData.participants[otherUserId] || {};
   
-            // Exclude chats with banned users
-            return otherUserId && !bannedUserIds.includes(otherUserId);
-          })
-          .map(async ([chatKey, chatData]) => {
-            const messages = Object.entries(chatData.messages || {}).map(([key, msg]) => ({
-              id: key,
-              ...msg,
-            }));
+          // Exclude chats with banned users
+          if (bannedUserIds.includes(otherUserId)) {
+            return null;
+          }
   
-            // Sort messages by timestamp to get the latest message
-            const sortedMessages = messages.sort((a, b) => a.timestamp - b.timestamp);
-            const lastMessage = sortedMessages[sortedMessages.length - 1] || {};
+          // Fetch the latest message for the chat
+          const lastMessageSnapshot = await database()
+            .ref(`privateChat/${chatKey}/messages`)
+            .orderByKey()
+            .limitToLast(1)
+            .once('value');
   
-            const otherUserId = Object.keys(chatData.participants).find((id) => id !== user.id);
-            const otherUserInfo = {
-              userName:
-                lastMessage.senderId === user.id
-                  ? lastMessage.receiverName
-                  : lastMessage.senderName || 'Unknown User',
-              avatar:
-                lastMessage.senderId === user.id
-                  ? lastMessage.receiverAvatar
-                  : lastMessage.senderAvatar || config.defaultAvatar,
-            };
+          const lastMessageData = Object.values(lastMessageSnapshot.val() || {})[0] || {};
   
-            // Calculate unread messages
-            const lastReadTimestamp = lastReadData[chatKey] || 0;
-            const unreadCount = messages.filter(
-              (msg) => msg.receiverId === user.id && msg.timestamp > lastReadTimestamp
-            ).length;
+          // Calculate unread messages
+          const lastReadTimestamp = lastReadData[chatKey] || 0;
+          const unreadCount = Object.values(chatData.messages || {}).filter(
+            (msg) => msg.receiverId === user.id && msg.timestamp > lastReadTimestamp
+          ).length;
   
-            // Check if the other user is online
-            const isOnline = await isUserOnline(otherUserId);
-  
-            return {
-              chatKey,
-              userName: otherUserInfo.userName,
-              avatar: otherUserInfo.avatar,
-              lastMessage: lastMessage.text || '',
-              unreadCount,
-              otherUserId,
-              isOnline,
-            };
-          })
+          return {
+            chatKey,
+            userName: otherUserInfo.name || 'Unknown User',
+            avatar: otherUserInfo.avatar || config.defaultAvatar,
+            lastMessage: lastMessageData.text || '',
+            unreadCount,
+            otherUserId,
+          };
+        })
       );
   
-      setChats(filteredChats);
+      // Remove null entries caused by banned users
+      setChats(filteredChats.filter(Boolean));
     } catch (error) {
       console.error('Error fetching chats:', error);
+      Alert.alert('Error', 'Unable to fetch chats. Please try again later.');
     } finally {
       setLoading(false);
     }
   }, [user]);
-  
   
   
   
@@ -212,7 +197,7 @@ const InboxScreen = () => {
       <ActivityIndicator size="large" color="#1E88E5" style={{ flex: 1 }} />
     ) : chats.length === 0 ? (
       <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>Currently there is no chats available</Text>
+        <Text style={styles.emptyText}>Currently, there are no chats available. To start a chat, select a user's profile picture and initiate a conversation.</Text>
       </View>
     ) : (
       <FlatList
@@ -261,7 +246,8 @@ const getStyles = (isDarkMode) =>
     },
     userName: {
       fontSize: 14,
-      fontWeight: '600',
+      fontFamily: 'Lato-Bold',
+      color: isDarkMode ? '#fff' : '#333',
     },
     lastMessage: {
       fontSize: 14,
@@ -283,6 +269,10 @@ const getStyles = (isDarkMode) =>
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
+    },
+    emptyText:{
+      color: isDarkMode ? 'white' : 'black',
+      textAlign:'center'
     }
   });
 

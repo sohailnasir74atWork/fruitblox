@@ -25,14 +25,14 @@ const interstitial = InterstitialAd.createForAdRequest(interstitialAdUnitId);
 
 const ValueScreen = ({ selectedTheme }) => {
   const [searchText, setSearchText] = useState('');
-  const [selectedFilter, setSelectedFilter] = useState('ALL');
+  const [selectedFilter, setSelectedFilter] = useState('All');
   const [filterDropdownVisible, setFilterDropdownVisible] = useState(false);
   const [filteredData, setFilteredData] = useState([]);
   const { state } = useGlobalState();
   const valuesData = useMemo(() => (state.data ? Object.values(state.data) : []), [state.data]);
   const codesData = useMemo(() => (state.codes ? Object.values(state.codes) : []), [state.codes]);
   const [isAdVisible, setIsAdVisible] = useState(true);
-  const filters = ['ALL', 'COMMON', 'UNCOMMON', 'RARE', 'LEGENDARY', 'MYTHICAL', 'GAME PASS'];
+  const filters = ['All', 'COMMON', 'UNCOMMON', 'RARE', 'LEGENDARY', 'MYTHICAL', 'GAME PASS'];
   const displayedFilter = selectedFilter === 'PREMIUM' ? 'GAME PASS' : selectedFilter;
   const formatName = (name) => name.replace(/^\+/, '').replace(/\s+/g, '-');
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
@@ -78,7 +78,7 @@ const ValueScreen = ({ selectedTheme }) => {
       const itemType = item.Type.toUpperCase() === 'GAME PASS' ? 'PREMIUM' : item.Type.toUpperCase();
       return (
         item.Name.toLowerCase().includes(searchText.toLowerCase()) &&
-        (selectedFilter === 'ALL' || itemType === selectedFilter)
+        (selectedFilter === 'All' || itemType === selectedFilter)
       );
     });
     setFilteredData(filtered);

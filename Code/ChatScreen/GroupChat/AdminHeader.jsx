@@ -158,55 +158,51 @@ const AdminHeader = ({
         />
       </TouchableOpacity>
       <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisibleChatinfo}
-        onRequestClose={() => setModalVisibleChatinfo(false)}
-      >
-        <ScrollView>
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Chat Rules</Text>
+  animationType="slide"
+  transparent={true}
+  visible={modalVisibleChatinfo}
+  onRequestClose={() => setModalVisibleChatinfo(false)}
+>
+  <View style={styles.modalContainer}>
+    <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}>
+      <View style={styles.modalContent}>
+        <Text style={styles.modalTitle}>Chat Rules</Text>
 
-            
-            {
-  rules.map((rule, index) => {
-    if (rule.includes("Terms of Service and Privacy Policy")) {
-      const beforeText = rule.split("Terms of Service and Privacy Policy")[0];
-      return (
-        <Text key={index} style={styles.ruleText}>
-          {index + 1}. {beforeText}
-          <Text
-            style={{ color: config.colors.hasBlockGreen, textDecorationLine: 'underline' }}
-            onPress={() => Linking.openURL("https://bloxfruitscalc.com/privacy-policy/")}
-          >
-            Terms of Service and Privacy Policy
-          </Text>
-        </Text>
-      );
-    }
+        {rules.map((rule, index) => {
+          if (rule.includes("Terms of Service and Privacy Policy")) {
+            const beforeText = rule.split("Terms of Service and Privacy Policy")[0];
+            return (
+              <Text key={index} style={styles.ruleText}>
+                {index + 1}. {beforeText}
+                <Text
+                  style={{ color: config.colors.hasBlockGreen, textDecorationLine: 'underline' }}
+                  onPress={() => Linking.openURL("https://bloxfruitscalc.com/privacy-policy/")}
+                >
+                  Terms of Service and Privacy Policy
+                </Text>
+              </Text>
+            );
+          }
 
-    return (
-      <Text key={index} style={styles.ruleText}>
-        {index + 1}. {rule} {'\n'}
-      </Text>
-    );
-  })
-}
+          return (
+            <Text key={index} style={styles.ruleText}>
+              {index + 1}. {rule} <View style={{ height: 8 }} />
+            </Text>
+          );
+        })}
 
-           
+        {/* Close button */}
+        <TouchableOpacity
+          style={styles.closeButton}
+          onPress={() => setModalVisibleChatinfo(false)}
+        >
+          <Text style={styles.closeButtonText}>Got it</Text>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
+  </View>
+</Modal>
 
-            {/* Close button */}
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setModalVisibleChatinfo(false)}
-            >
-              <Text style={styles.closeButtonText}>Got it</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-        </ScrollView>
-      </Modal>
     </Animated.View>
   );
 };
@@ -288,43 +284,43 @@ StyleSheet.create({
   },
   modalContainer: {
     flex: 1,
-    justifyContent: 'center',
-    margin:0,
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center', // Centers vertically
+    alignItems: 'center', // Centers horizontally
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Darkened background
   },
   modalContent: {
-    width: '95%',
+    width: '90%', // Width of the modal content
     backgroundColor: isDarkMode ? '#121212' : '#f2f2f7',
     borderRadius: 10,
-    margin:10,
     padding: 20,
-    // alignItems: 'center',
+    // maxHeight: '85%', // To prevent overflow
+    margin:'auto'
   },
   modalTitle: {
     fontSize: 20,
-    fontFamily:'Lato-Bold',
+    fontFamily: 'Lato-Bold',
     marginBottom: 20,
+    color: isDarkMode ? 'white' : 'black',
   },
   closeButton: {
     backgroundColor: config.colors.hasBlockGreen,
     padding: 10,
     borderRadius: 5,
-    width: '100%',
     alignItems: 'center',
-    marginTop:20
+    marginTop: 20,
   },
   closeButtonText: {
     color: '#fff',
     fontSize: 16,
-    fontFamily:'Lato-Bold',
+    fontFamily: 'Lato-Bold',
   },
-  ruleText:{
-    fontFamily:'Lato-Regular',
+  ruleText: {
+    fontFamily: 'Lato-Regular',
     color: isDarkMode ? 'white' : 'black',
-    lineHeight:24,
-  }
-  
+    lineHeight: 16,
+    fontSize: 12,
+    marginBottom: 10,
+  },  
 });
 
 export default AdminHeader;

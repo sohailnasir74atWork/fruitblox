@@ -34,30 +34,62 @@ const HeaderRight = ({ selectedTheme, navigateToInbox, setModalVisibleChatinfo, 
     </View>
 
     <Menu>
-      <MenuTrigger>
+  <MenuTrigger>
+    <Icon
+      name="ellipsis-vertical-outline"
+      size={24}
+      color={config.colors.primary}
+      
+    />
+  </MenuTrigger>
+  <MenuOptions
+    customStyles={{
+      optionsContainer: {
+        marginTop: 8, // Space between menu trigger and options
+        borderRadius: 8,
+        width: 200, // Adjust width as needed
+        padding: 5,
+        margin:140,
+        backgroundColor: config.colors.background || '#fff', // Adjust for theme
+      },
+    }}
+  >
+    <MenuOption onSelect={() => setModalVisibleChatinfo((prev) => !prev)}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', padding: 10 }}>
         <Icon
-          name="ellipsis-vertical-outline"
-          size={24}
+          name="information-circle-outline"
+          size={20}
           color={config.colors.primary}
+          style={{ marginRight: 10 }}
         />
-      </MenuTrigger>
-      <MenuOptions customStyles={{ optionsContainer: styles.menuOptions }}>
-        <MenuOption onSelect={ ()=> setModalVisibleChatinfo((prev) => !prev)}>
-          <View style={[styles.menuItem]}>
-            <Icon name="information-circle-outline" size={20} color={config.colors.primary} style={{paddingLeft:10}} />
-            <Text style={styles.menuText}>Chat Rules</Text>
-          </View>
-        </MenuOption>
-        <View style={styles.separator} />
-        <MenuOption onSelect={() => navigation.navigate('BlockedUsers')} >
-  <View style={styles.menuItem}>
-    <Icon name="ban-outline" size={20} color={config.colors.primary} style={{paddingLeft:10}}/>
-    <Text style={styles.menuText}>Blocked Users</Text>
-  </View>
-</MenuOption>
+        <Text style={{ fontSize: 16, color: config.colors.text || '#000' }}>
+          Chat Rules
+        </Text>
+      </View>
+    </MenuOption>
+    <View
+      style={{
+        height: 1,
+        backgroundColor: '#ccc',
+        marginHorizontal: 10,
+      }}
+    />
+    <MenuOption onSelect={() => navigation.navigate('BlockedUsers')}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', padding: 10 }}>
+        <Icon
+          name="ban-outline"
+          size={20}
+          color={config.colors.primary}
+          style={{ marginRight: 10 }}
+        />
+        <Text style={{ fontSize: 16, color: config.colors.text || '#000' }}>
+          Blocked Users
+        </Text>
+      </View>
+    </MenuOption>
+  </MenuOptions>
+</Menu>
 
-      </MenuOptions>
-    </Menu>
   </View>
 );
 
