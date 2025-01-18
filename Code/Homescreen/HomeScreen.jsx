@@ -10,7 +10,8 @@ import { useGlobalState } from '../GlobelStats';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import config from '../Helper/Environment';
 import ConditionalKeyboardWrapper from '../Helper/keyboardAvoidingContainer';
-
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+import Icons from 'react-native-vector-icons/FontAwesome';
 const bannerAdUnitId = getAdUnitId('banner');
 const interstitialAdUnitId = getAdUnitId('interstitial');
 const interstitial = InterstitialAd.createForAdRequest(interstitialAdUnitId);
@@ -365,7 +366,8 @@ const HomeScreen = ({ selectedTheme }) => {
             </ScrollView>
           <TouchableOpacity onPress={proceedWithScreenshotShare} style={styles.float}>
 
-            <Icon name={!config.isNoman ? "chevron-down-circle" : 'arrow-down-circle'} size={60} color={config.colors.hasBlockGreen} />
+            {/* <Icon name={!config.isNoman ? "chevron-down-circle" : 'share-social'} size={40} color={config.colors.hasBlockGreen} /> */}
+            <Icons name="share-alt-square" size={40} color={config.colors.hasBlockGreen} />
           </TouchableOpacity>
           <Modal
             visible={isDrawerVisible}
@@ -629,7 +631,7 @@ const getStyles = (isDarkMode) =>
     float: {
       position: 'absolute',
       right: 5,
-      bottom: 0,
+      bottom: 5,
       // width:40,
       zIndex: 1,
       // height:40,

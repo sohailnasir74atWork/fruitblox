@@ -54,7 +54,6 @@ const InboxScreen = () => {
   };
 
   
-
   const fetchChats = useCallback(async () => {
     if (!user?.id) return;
   
@@ -75,16 +74,20 @@ const InboxScreen = () => {
       const lastReadData = lastReadSnapshot.val() || {};
       const bannedUserIds = Object.keys(bannedData);
   
-      // Fetch chats where the current user is a participant
-      const userChatsSnapshot = await privateChatsRef
-        .orderByChild(`participants/${user.id}/name`)
-        .once('value');
+      // Fetch all chat keys initially
+      const allChatsSnapshot = await privateChatsRef.once('value');
+      const allChats = allChatsSnapshot.val() || {};
   
-      const userChats = userChatsSnapshot.val() || {};
+      // Filter chat keys where the current user is a participant
+      const userChatKeys = Object.entries(allChats)
+        .filter(([_, chatData]) => chatData.participants && chatData.participants[user.id])
+        .map(([key]) => key);
   
-      // Map filtered chats to the desired format
-      const filteredChats = await Promise.all(
-        Object.entries(userChats).map(async ([chatKey, chatData]) => {
+      // Fetch chats for the filtered keys
+      const userChats = await Promise.all(
+        userChatKeys.map(async (chatKey) => {
+          const chatData = allChats[chatKey];
+  
           // Find the other user's details
           const otherUserId = Object.keys(chatData.participants).find((id) => id !== user.id);
           const otherUserInfo = chatData.participants[otherUserId] || {};
@@ -94,13 +97,12 @@ const InboxScreen = () => {
             return null;
           }
   
-          // Fetch the latest message for the chat
-          const lastMessageSnapshot = await database()
-            .ref(`privateChat/${chatKey}/messages`)
+          // Fetch the latest message
+          const lastMessageSnapshot = await privateChatsRef
+            .child(`${chatKey}/messages`)
             .orderByKey()
             .limitToLast(1)
             .once('value');
-  
           const lastMessageData = Object.values(lastMessageSnapshot.val() || {})[0] || {};
   
           // Calculate unread messages
@@ -121,7 +123,7 @@ const InboxScreen = () => {
       );
   
       // Remove null entries caused by banned users
-      setChats(filteredChats.filter(Boolean));
+      setChats(userChats.filter(Boolean));
     } catch (error) {
       console.error('Error fetching chats:', error);
       Alert.alert('Error', 'Unable to fetch chats. Please try again later.');

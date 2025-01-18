@@ -49,7 +49,7 @@ const HeaderRight = ({ selectedTheme, navigateToInbox, setModalVisibleChatinfo, 
         borderRadius: 8,
         width: 200, // Adjust width as needed
         padding: 5,
-        margin:140,
+        margin:120,
         backgroundColor: config.colors.background || '#fff', // Adjust for theme
       },
     }}

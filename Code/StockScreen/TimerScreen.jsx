@@ -338,7 +338,7 @@ const TimerScreen = ({ selectedTheme }) => {
               </View>
 
               <View style={styles.row2}>
-                <Text style={[styles.title]}>Selected Fruit Updates</Text>
+                <Text style={[styles.title]}>Selected Fruit Notification</Text>
                 <View style={styles.rightSide}>
                   <Switch value={user.isSelectedReminderEnabled} onValueChange={toggleSwitch2} />
                   <TouchableOpacity

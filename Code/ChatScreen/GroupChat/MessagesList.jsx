@@ -171,7 +171,9 @@ const MessagesList = ({
               </MenuOptions>
             </Menu>
 
-            {item.reportCount > 0 && <Icon name="alert-circle-outline" size={14} style={styles.reportIcon} color={config.colors.wantBlockRed} />}
+            {item.reportCount > 0 || item.isReportedByUser && 
+            <Text style={styles.reportIcon}>Reported</Text>
+            }
 
           </View>
 

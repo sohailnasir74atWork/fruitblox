@@ -71,7 +71,9 @@ export const getStyles = (isDarkMode) =>
       paddingVertical: 5,
       paddingHorizontal: 10,
       borderRadius: 10,
-      fontFamily: 'Lato-Regular'
+      fontFamily: 'Lato-Regular',
+      lineHeight:18
+
     },
     otherMessageText: {
       fontSize: 14,
@@ -82,7 +84,8 @@ export const getStyles = (isDarkMode) =>
       borderRadius: 10,
       paddingVertical: 5,
       fontFamily: 'Lato-Regular',
-      paddingRight:20
+      paddingRight:20,
+      lineHeight:18
 
     },
     timestamp: {
@@ -246,7 +249,8 @@ export const getStyles = (isDarkMode) =>
       height: 30,
       width: 30,
       borderRadius: 15,
-      marginHorizontal: 5
+      marginHorizontal: 5,
+      backgroundColor:'white'
     },
 
     userName: {
@@ -284,7 +288,7 @@ export const getStyles = (isDarkMode) =>
     },
     menuTrig: {
       borderRadius: 50,
-      backgroundColor: 'red',
+      // backgroundColor: 'red',
       marginBottom: 100
 
     },
@@ -313,7 +317,10 @@ export const getStyles = (isDarkMode) =>
       position:'absolute',
       right:2,
       top:2,
-      opacity:1
+      opacity:1,
+      color:config.colors.wantBlockRed,
+      fontSize:8,
+      fontStyle:'italic'
 
     },
     reportedMessage: {
@@ -323,11 +330,11 @@ export const getStyles = (isDarkMode) =>
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
-      backgroundColor:'red'
+      // backgroundColor:'red'
 
     },
     emptyText:{
-      color: isDarkMode ? '#1E88E5' : '#007BFF',
+      color: isDarkMode ? 'white' : 'black',
     }
 
 
