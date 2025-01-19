@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Modal, FlatList, TextInput, Image, Alert, useColorScheme, Keyboard, KeyboardAvoidingView, Pressable } from 'react-native';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Modal, FlatList, TextInput, Image, Alert, useColorScheme, Keyboard, KeyboardAvoidingView, Pressable, Linking, Platform } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { InterstitialAd, AdEventType, TestIds, BannerAd, BannerAdSize } from 'react-native-google-mobile-ads';
 import getAdUnitId from '../Ads/ads';
@@ -10,8 +10,8 @@ import { useGlobalState } from '../GlobelStats';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import config from '../Helper/Environment';
 import ConditionalKeyboardWrapper from '../Helper/keyboardAvoidingContainer';
-import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import Icons from 'react-native-vector-icons/FontAwesome';
+import { useHaptic } from '../Helper/HepticFeedBack';
 const bannerAdUnitId = getAdUnitId('banner');
 const interstitialAdUnitId = getAdUnitId('interstitial');
 const interstitial = InterstitialAd.createForAdRequest(interstitialAdUnitId);
@@ -29,11 +29,31 @@ const HomeScreen = ({ selectedTheme }) => {
   const [wantsTotal, setWantsTotal] = useState({ price: 0, value: 0 });
   const [isAdLoaded, setIsAdLoaded] = useState(false);
   const [isShowingAd, setIsShowingAd] = useState(false);
-  
   const [isAdVisible, setIsAdVisible] = useState(true);
+  const { triggerHapticFeedback } = useHaptic();
 
   const isDarkMode = theme === 'dark'
   const viewRef = useRef();
+
+  const resetState = () => {
+    triggerHapticFeedback('impactLight');
+    setSelectedSection(null);
+    setHasTotal({ price: 0, value: 0 });
+    setWantsTotal({ price: 0, value: 0 });
+    setIsAdLoaded(false);
+    setIsShowingAd(false);
+    setHasItems([...initialItems]); // Use a new array to avoid mutating the original reference
+    setWantsItems([...initialItems]); // Use a new array to avoid mutating the original reference
+  };
+  
+
+
+
+  
+  
+
+
+
   useEffect(() => {
     if (state.data && Object.keys(state.data).length > 0) {
       setFruitRecords(Object.values(state.data));
@@ -87,7 +107,7 @@ const HomeScreen = ({ selectedTheme }) => {
 
   const openDrawer = (section) => {
     const wantsItemCount = wantsItems.filter((item) => item !== null).length;
-    
+    triggerHapticFeedback('impactLight');
     if (section === 'wants' && wantsItemCount === 1 && !isShowingAd) {
       showInterstitialAd(() => {
         setSelectedSection(section);
@@ -110,6 +130,7 @@ const HomeScreen = ({ selectedTheme }) => {
   const toggleItemValueMode = (index, section) => {
     const items = section === 'has' ? [...hasItems] : [...wantsItems];
     const item = items[index];
+    triggerHapticFeedback('impactLight');
 
     if (item) {
       updateTotal(item, section, false);
@@ -146,6 +167,7 @@ const HomeScreen = ({ selectedTheme }) => {
     return formattedName;
   }
   const selectItem = (item) => {
+    triggerHapticFeedback('impactLight');
     const newItem = { ...item, usePermanent: false };
     const updateItems = selectedSection === 'has' ? [...hasItems] : [...wantsItems];
     const nextEmptyIndex = updateItems.indexOf(null);
@@ -166,6 +188,7 @@ const HomeScreen = ({ selectedTheme }) => {
   };
 
   const removeItem = (index, isHas) => {
+    triggerHapticFeedback('impactLight');
     const section = isHas ? 'has' : 'wants';
     const items = isHas ? hasItems : wantsItems;
     const updatedItems = [...items];
@@ -227,6 +250,7 @@ const HomeScreen = ({ selectedTheme }) => {
 
 
   const proceedWithScreenshotShare = async () => {
+    triggerHapticFeedback('impactLight');
     try {
       const filePath = await captureAndSave();
 
@@ -246,7 +270,7 @@ const HomeScreen = ({ selectedTheme }) => {
     }
   };
 
-  const styles = getStyles(isDarkMode);
+  const styles = useMemo(() => getStyles(isDarkMode), [isDarkMode]);
 
 
   return (
@@ -286,7 +310,7 @@ const HomeScreen = ({ selectedTheme }) => {
 
                 <Text style={[styles.sectionTitle, { color: selectedTheme.colors.text }]}>You</Text>
                 <View style={styles.itemRow}>
-                  <TouchableOpacity onPress={() => openDrawer('has')} style={styles.addItemBlock}>
+                  <TouchableOpacity onPress={() => {openDrawer('has')}} style={styles.addItemBlock}>
                     <Icon name="add-circle" size={40} color="white" />
                     <Text style={styles.itemText}>Add Item</Text>
                   </TouchableOpacity>
@@ -323,12 +347,16 @@ const HomeScreen = ({ selectedTheme }) => {
                 </View>
 
                 <View style={styles.divider}>
-                  <Icon name="git-commit" size={24} color="white" />
+                <Image
+  source={require('../../assets/reset.png')} // Replace with your image path
+  style={{ width: 24, height: 24, tintColor: 'white' }} // Customize size and color
+  onTouchEnd={resetState} // Add event handler
+/>
                 </View>
 
                 <Text style={[styles.sectionTitle, { color: selectedTheme.colors.text }]}>Them</Text>
                 <View style={styles.itemRow}>
-                  <TouchableOpacity onPress={() => openDrawer('wants')} style={styles.addItemBlock}>
+                  <TouchableOpacity onPress={() => {openDrawer('wants');}} style={styles.addItemBlock}>
                     <Icon name="add-circle" size={40} color="white" />
                     <Text style={styles.itemText}>Add Item</Text>
                   </TouchableOpacity>
@@ -425,6 +453,9 @@ const HomeScreen = ({ selectedTheme }) => {
             </View>
             </ConditionalKeyboardWrapper>
           </Modal>
+          
+
+
         </View>
       </GestureHandlerRootView>
 

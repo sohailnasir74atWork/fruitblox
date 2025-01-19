@@ -9,6 +9,7 @@ import { AdEventType, BannerAd, BannerAdSize, InterstitialAd } from 'react-nativ
 import getAdUnitId from '../Ads/ads';
 import config from '../Helper/Environment';
 import notifee, { AuthorizationStatus } from '@notifee/react-native';
+import { useHaptic } from '../Helper/HepticFeedBack';
 const bannerAdUnitId = getAdUnitId('banner');
 const interstitialAdUnitId = getAdUnitId('interstitial');
 const interstitial = InterstitialAd.createForAdRequest(interstitialAdUnitId);
@@ -25,6 +26,7 @@ const TimerScreen = ({ selectedTheme }) => {
   const [refreshing, setRefreshing] = useState(false); // State for pull-to-refresh
   const [isSigninDrawerVisible, setisSigninDrawerVisible] = useState(false);
   const [isAdVisible, setIsAdVisible] = useState(true);
+  const { triggerHapticFeedback } = useHaptic();
 
   const isDarkMode = theme === 'dark';
   useEffect(() => {
@@ -36,6 +38,7 @@ const TimerScreen = ({ selectedTheme }) => {
   }, [state.data]);
 
   const openDrawer = () => {
+    triggerHapticFeedback('impactLight');
     if (!hasAdBeenShown) {
       showInterstitialAd(() => {
         setHasAdBeenShown(true); // Mark the ad as shown
@@ -52,6 +55,7 @@ const TimerScreen = ({ selectedTheme }) => {
   const closeDrawerSignin = () => setisSigninDrawerVisible(false);
 
   const handleFruitSelect = (fruit) => {
+    triggerHapticFeedback('impactLight');
     const userPoints = user.points || 0; // Ensure `points` exists and default to 0 if undefined
     const selectedFruits = user.selectedFruits || []; // Ensure `selectedFruits` is always an array
     const isAlreadySelected = selectedFruits.some((item) => item.Name === fruit.Name);
@@ -100,6 +104,7 @@ const TimerScreen = ({ selectedTheme }) => {
   };
   
   const handleRemoveFruit = (fruit) => {
+    triggerHapticFeedback('impactLight');
     const selectedFruits = user.selectedFruits || []; // Ensure `selectedFruits` is always an array
   
     // Remove the selected fruit and update state/database

@@ -5,6 +5,7 @@ import auth from '@react-native-firebase/auth';
 import { Appearance } from 'react-native';
 import { createNewUser, firebaseConfig, registerForNotifications } from './Globelhelper';
 import database from '@react-native-firebase/database';
+import { useLocalState } from './LocalGlobelStats';
 
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 
@@ -17,7 +18,9 @@ const GlobalStateContext = createContext();
 export const useGlobalState = () => useContext(GlobalStateContext);
 
 export const GlobalStateProvider = ({ children }) => {
-  const [theme, setTheme] = useState(Appearance.getColorScheme() || 'light');
+
+  const {localState} = useLocalState()
+  const [theme, setTheme] = useState(localState.theme || 'light');
 
   const [state, setState] = useState({
     data: {},
@@ -51,11 +54,9 @@ export const GlobalStateProvider = ({ children }) => {
   
   // Track theme changes
   useEffect(() => {
-    const listener = Appearance.addChangeListener(({ colorScheme }) => {
-      setTheme(colorScheme || 'light'); 
-    });
-    return () => listener.remove();
-  }, []);
+      setTheme(localState.theme); 
+
+  }, [localState.theme]);
   useEffect(() => {
     if (!user?.id) return;
   

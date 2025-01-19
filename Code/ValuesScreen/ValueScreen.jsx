@@ -17,6 +17,7 @@ import getAdUnitId from '../Ads/ads';
 import config from '../Helper/Environment';
 import { useGlobalState } from '../GlobelStats';
 import CodesDrawer from './Code';
+import { useHaptic } from '../Helper/HepticFeedBack';
 
 const bannerAdUnitId = getAdUnitId('banner');
 const interstitialAdUnitId = getAdUnitId('interstitial');
@@ -39,6 +40,7 @@ const ValueScreen = ({ selectedTheme }) => {
   const [hasAdBeenShown, setHasAdBeenShown] = useState(false);
   const [isAdLoaded, setIsAdLoaded] = useState(false);
   const [isShowingAd, setIsShowingAd] = useState(false);
+  const { triggerHapticFeedback } = useHaptic();
 
   // const toggleDrawer = () => {
   //   setIsDrawerVisible(!isDrawerVisible);
@@ -46,6 +48,7 @@ const ValueScreen = ({ selectedTheme }) => {
 
 
   const toggleDrawer = () => {
+    triggerHapticFeedback('impactLight');
     if (!hasAdBeenShown) {
       showInterstitialAd(() => {
         setHasAdBeenShown(true); // Mark the ad as shown
@@ -63,6 +66,7 @@ const ValueScreen = ({ selectedTheme }) => {
 
 
   const handleFilterChange = (filter) => {
+    triggerHapticFeedback('impactLight');
     setSelectedFilter(filter === 'GAME PASS' ? 'PREMIUM' : filter);
     setFilterDropdownVisible(false);
   };

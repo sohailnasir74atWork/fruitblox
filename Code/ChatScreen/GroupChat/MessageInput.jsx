@@ -3,6 +3,7 @@ import { View, TextInput, TouchableOpacity, Text } from 'react-native';
 import { getStyles } from './../Style';
 import Icon from 'react-native-vector-icons/Ionicons'; // Import Icon
 import config from '../../Helper/Environment';
+import { useHaptic } from '../../Helper/HepticFeedBack';
 
 const MessageInput = ({
   input,
@@ -14,8 +15,11 @@ const MessageInput = ({
 }) => {
   const styles = getStyles(selectedTheme.colors.text === 'white');
   const [isSending, setIsSending] = useState(false);
+  const { triggerHapticFeedback } = useHaptic();
+
 
   const handleSend = async () => {
+    triggerHapticFeedback('impactLight');
     const trimmedInput = input.trim();
     if (!trimmedInput || isSending) return; // Prevent empty messages or multiple sends
     setIsSending(true);

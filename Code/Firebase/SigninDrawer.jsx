@@ -17,6 +17,7 @@ import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import auth from '@react-native-firebase/auth';
 import Icon from 'react-native-vector-icons/FontAwesome'; // Ensure FontAwesome is installed
 import appleAuth, { AppleButton } from '@invertase/react-native-apple-authentication';
+import { useHaptic } from '../Helper/HepticFeedBack';
 
 
 
@@ -26,6 +27,7 @@ const SignInDrawer = ({ visible, onClose, selectedTheme, message }) => {
     const [isRegisterMode, setIsRegisterMode] = useState(false);
     const [isLoading, setIsLoading] = useState(false)
     const [isLoadingSecondary, setIsLoadingSecondary] = useState(false);
+    const { triggerHapticFeedback } = useHaptic();
 
     const colorScheme = useColorScheme(); // Returns 'light' or 'dark'
 
@@ -39,6 +41,7 @@ const SignInDrawer = ({ visible, onClose, selectedTheme, message }) => {
     
     
     async function onAppleButtonPress() {
+        triggerHapticFeedback('impactLight');
         try {
           // Start the sign-in request
           const appleAuthRequestResponse = await appleAuth.performRequest({
@@ -94,6 +97,7 @@ const SignInDrawer = ({ visible, onClose, selectedTheme, message }) => {
    
     
     const handleSignInOrRegister = async () => {
+        triggerHapticFeedback('impactLight');
         if (!email || !password) {
             alert('Input Error', 'Please enter both email and password.');
             return;
@@ -144,6 +148,8 @@ const SignInDrawer = ({ visible, onClose, selectedTheme, message }) => {
     
 
     const handleGoogleSignIn = async () => {
+        triggerHapticFeedback('impactLight');
+
         try {
             setIsLoading(true);
             await signInWithGoogle();

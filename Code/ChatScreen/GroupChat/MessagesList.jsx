@@ -18,6 +18,7 @@ import Icon from 'react-native-vector-icons/Ionicons'; // Import Icon
 import config from '../../Helper/Environment';
 import { parseMessageText } from '../ChatHelper';
 import { useGlobalState } from '../../GlobelStats';
+import { useHaptic } from '../../Helper/HepticFeedBack';
 
 
 const MessagesList = ({
@@ -43,6 +44,8 @@ const MessagesList = ({
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [showReportPopup, setShowReportPopup] = useState(false);
   const {updateLocalStateAndDatabase} = useGlobalState()
+  const { triggerHapticFeedback } = useHaptic();
+
   const handleLongPress = (item) => {
     if (!user?.id) return;
     Vibration.vibrate(20); // Vibrate for feedback
@@ -50,11 +53,13 @@ const MessagesList = ({
   };
 
   const handleReport = (message) => {
+    triggerHapticFeedback('impactLight');
     setSelectedMessage(message);
     setShowReportPopup(true);
   };
 
   const handleReportSuccess = (reportedMessageId) => {
+    triggerHapticFeedback('impactLight');
     setMessages((prevMessages) =>
       prevMessages.map((msg) =>
         msg.id === reportedMessageId ? { ...msg, isReportedByUser: true } : msg
@@ -63,7 +68,7 @@ const MessagesList = ({
   };
 
   const handleProfileClick = (item) => {
-    if (user.id) { toggleDrawer(item) }
+    if (user.id) { toggleDrawer(item); triggerHapticFeedback('impactLight'); }
     else return
 
   };

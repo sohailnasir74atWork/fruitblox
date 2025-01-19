@@ -23,6 +23,7 @@ import { useNavigation } from '@react-navigation/native';
 import ProfileBottomDrawer from './BottomDrawer';
 import leoProfanity from 'leo-profanity';
 import ConditionalKeyboardWrapper from '../../Helper/keyboardAvoidingContainer';
+import { useHaptic } from '../../Helper/HepticFeedBack';
 leoProfanity.add(['hell', 'shit']);
 leoProfanity.loadDictionary('en');
 
@@ -46,6 +47,7 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
   const [isAdVisible, setIsAdVisible] = useState(true);
   const [isCooldown, setIsCooldown] = useState(false); 
   const [signinMessage, setSigninMessage] = useState(false); 
+  const { triggerHapticFeedback } = useHaptic();
 
 
   useEffect(() => {
@@ -396,7 +398,7 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
               refreshing={refreshing}
               onRefresh={handleRefresh}
               handleLoadMore={handleLoadMore}
-              onReply={(message) => setReplyTo(message)} // Pass selected message to MessageInput
+              onReply={(message) => {setReplyTo(message); triggerHapticFeedback('impactLight');}} // Pass selected message to MessageInput
               banUser={banUser}
               makeadmin={makeAdmin}
               // onReport={onReport}

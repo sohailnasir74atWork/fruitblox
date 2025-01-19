@@ -62,7 +62,8 @@ export const getStyles = (isDarkMode) =>
         fontSize: 16,
         marginLeft: 10,
         color: isDarkMode ? '#fff' : '#000',
-        fontFamily:'Lato-Regular'
+        fontFamily:'Lato-Regular',
+        lineHeight:24
       },
       overlay: {
         flex: 1,
@@ -119,6 +120,11 @@ export const getStyles = (isDarkMode) =>
         fontFamily:'Lato-Bold',
         // marginBottom:10
       },
+      subtitle:{
+        color: isDarkMode ? '#fff' : '#000',
+        fontFamily:'Lato-Bold',
+        marginVertical:10
+      },
       rewardDescription:{
         color: isDarkMode ? '#fff' : '#000',
         fontFamily:'Lato-Regular'
@@ -146,5 +152,38 @@ export const getStyles = (isDarkMode) =>
         fontFamily:'Lato-Regular'
 
       },
+      containertheme:{
+        flexDirection:'row',
+        borderWidth:1,
+        borderRadius:50,
+        borderColor: config.colors.hasBlockGreen,
+      },
+      box: {
+        paddingVertical: 7,
+        paddingHorizontal: 10,
+        // backgroundColor: '#ccc',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color:'white',
+        fontFamily:'Lato-Regular',
+        borderRadius:50,
+
+
+
+      },
+      selectedBox: {
+        backgroundColor: config.colors.hasBlockGreen, // Highlight selected box
+      },
+      text:{
+        fontFamily:'Lato-Regular',
+        fontSize:10,
+        color: isDarkMode ? '#fff' : '#000',
+
+      },
+      selectedText:{
+        color:'white',
+        fontFamily:'Lato-Regular',
+        fontSize:10,
+      }
     });
   

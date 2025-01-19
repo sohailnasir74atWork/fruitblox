@@ -324,7 +324,7 @@ export const getStyles = (isDarkMode) =>
 
     },
     reportedMessage: {
-      opacity: .1, // Light blue color
+      opacity: .3, // Light blue color
     },
     emptyContainer: {
       flex: 1,

@@ -11,6 +11,7 @@ import {
   Alert,
   KeyboardAvoidingView,
   ScrollView,
+  Switch,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useGlobalState } from '../GlobelStats';
@@ -26,6 +27,8 @@ import { appleAuth } from '@invertase/react-native-apple-authentication';
 import { deleteUser } from '@react-native-firebase/auth';
 import { resetUserState } from '../Globelhelper';
 import ConditionalKeyboardWrapper from '../Helper/keyboardAvoidingContainer';
+import { useHaptic } from '../Helper/HepticFeedBack';
+import { useLocalState } from '../LocalGlobelStats';
 
 const adUnitId = getAdUnitId('rewarded')
 
@@ -42,6 +45,22 @@ export default function SettingsScreen({ selectedTheme }) {
   const [loaded, setLoaded] = useState(false);
   const [openSingnin, setOpenSignin] = useState(false);
   const { user, theme, updateLocalStateAndDatabase, setUser } = useGlobalState()
+  const {updateLocalState, localState} = useLocalState()
+  const { triggerHapticFeedback } = useHaptic();
+  const themes = ['system', 'light', 'dark'];
+
+
+  const toggleTheme = () => {
+    const currentIndex = themes.indexOf(localState.theme);
+    const nextIndex = (currentIndex + 1) % themes.length;
+    updateLocalState('theme', themes[nextIndex]); // Update global state
+  };
+
+
+
+  const handleToggle = (value) => {
+    updateLocalState('isHaptic', value); // Update isHaptic state globally
+  };
   const isDarkMode = theme === 'dark';
   // Fetch user data on component mount
   useEffect(() => {
@@ -58,6 +77,7 @@ export default function SettingsScreen({ selectedTheme }) {
 
 
   const handleSaveChanges = async () => {
+    triggerHapticFeedback('impactLight');
     const MAX_NAME_LENGTH = 20;
 
     if (!user?.id) return;
@@ -95,6 +115,7 @@ export default function SettingsScreen({ selectedTheme }) {
 
 
   const handleLogout = async () => {
+    triggerHapticFeedback('impactLight');
     try {
       await logoutUser(setUser); // Await the logout process
       // setSelectedImage('https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png');
@@ -106,6 +127,7 @@ export default function SettingsScreen({ selectedTheme }) {
     }
   };
   const handleDeleteUser = async () => {
+    triggerHapticFeedback('impactLight');
     try {
       if (!user || !user?.id) {
         Alert.alert('Error', 'No user is currently logged in.');
@@ -167,6 +189,7 @@ export default function SettingsScreen({ selectedTheme }) {
 
 
   const handleProfileUpdate = () => {
+    triggerHapticFeedback('impactLight');
     if (user?.id) {
       setDrawerVisible(true); // Open the profile drawer if the user is logged in
     } else {
@@ -188,7 +211,7 @@ export default function SettingsScreen({ selectedTheme }) {
         const now = new Date().getTime(); // Current time in milliseconds
         updateLocalStateAndDatabase('lastRewardtime', now);
 
-        alert('Reward Granted', `You earned ${reward.amount} points!`);
+        Alert.alert('Reward Granted', `You earned ${reward.amount} points!`);
       },
     );
 
@@ -241,6 +264,7 @@ export default function SettingsScreen({ selectedTheme }) {
 
 
   const handleGetPoints = () => {
+    triggerHapticFeedback('impactLight');
     if (!user?.id) {
       setOpenSignin(true);
     } else {
@@ -279,32 +303,87 @@ export default function SettingsScreen({ selectedTheme }) {
 
       {/* Options Section */}
       <ScrollView showsVerticalScrollIndicator={false}>
+        <Text style={styles.subtitle}>APP SETTINGS</Text>
       <View style={styles.cardContainer}>
-        <TouchableOpacity style={styles.option} onPress={handleGetPoints}>
+        <View style={styles.option} onPress={()=>{handleShareApp(); triggerHapticFeedback('impactLight');
+}}>
+  <View style={{flexDirection:'row', justifyContent:'space-between', width:'100%'}}>
+    <TouchableOpacity style={{flexDirection:'row', alignItems:'center'}}>
+          <Icon name="logo-rss" size={24} color={'#B76E79'} />
+          <Text style={styles.optionText}>Heptic Feedback</Text></TouchableOpacity>
+          <Switch value={localState.isHaptic} onValueChange={handleToggle} />
+          </View>
+        </View>
+        <View style={styles.optionLast} onPress={()=>{handleShareApp(); triggerHapticFeedback('impactLight');
+}}>
+  <View style={{flexDirection:'row', justifyContent:'space-between', width:'100%'}}>
+    <TouchableOpacity style={{flexDirection:'row', alignItems:'center'}}>
+          <Icon name="contrast-outline" size={24} color={'#4A90E2'} />
+          <Text style={styles.optionText}>Dark/LiMode</Text></TouchableOpacity>
+          <View style={styles.containertheme}>
+      {themes.map((theme) => (
+        <TouchableOpacity
+          key={theme}
+          style={[
+            styles.box,
+            localState.theme === theme.toLowerCase() && styles.selectedBox, // Highlight selected box
+          ]}
+          onPress={() => updateLocalState('theme', theme.toLowerCase())}
+        >
+          <Text
+            style={[
+              styles.text,
+              localState.theme === theme.toLowerCase() && styles.selectedText, // Highlight selected text
+            ]}
+          >
+                       {theme.toUpperCase()}
+
+          </Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+          </View>
+        </View>
+      </View>
+      <Text style={styles.subtitle}>REWARD SETTINGS</Text>
+      <View style={styles.cardContainer}>
+        
+        <TouchableOpacity style={styles.optionLast} onPress={handleGetPoints}>
           <Icon name="trophy-outline" size={24} color={'#4B4453'} />
           <Text style={styles.optionText}>Get Points</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.option} onPress={handleShareApp}>
+      </View>
+      <Text style={styles.subtitle}>OTHER SETTINGS</Text>
+
+      <View style={styles.cardContainer}>
+  
+     
+        <TouchableOpacity style={styles.option} onPress={()=>{handleShareApp(); triggerHapticFeedback('impactLight');
+}}>
           <Icon name="share-social-outline" size={24} color={'#B76E79'} />
           <Text style={styles.optionText}>Share App</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.option} onPress={handleGetSuggestions}>
+        <TouchableOpacity style={styles.option} onPress={()=>{handleGetSuggestions();        triggerHapticFeedback('impactLight');
+}}>
           <Icon name="mail-outline" size={24} color={'#566D5D'} />
           <Text style={styles.optionText}>Give Suggestions</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.option} onPress={handleRateApp}>
+        <TouchableOpacity style={styles.option} onPress={()=>{handleRateApp(); triggerHapticFeedback('impactLight');}
+}>
           <Icon name="star-outline" size={24} color={'#A2B38B'} />
           <Text style={styles.optionText}>Rate Us</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.option} onPress={handleOpenFacebook}>
+        <TouchableOpacity style={styles.option} onPress={()=>{handleOpenFacebook();         triggerHapticFeedback('impactLight');
+}}>
           <Icon name="logo-facebook" size={24} color={'#566D5D'} />
           <Text style={styles.optionText}>Visit Facebook Group</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={user?.id ? styles.option : styles.optionLast} onPress={handleOpenWebsite}>
+        <TouchableOpacity style={user?.id ? styles.option : styles.optionLast} onPress={()=>{handleOpenWebsite();         triggerHapticFeedback('impactLight');
+}}>
           <Icon name="link-outline" size={24} color={'#4B4453'} />
           <Text style={styles.optionText}>Visit Website</Text>
         </TouchableOpacity>
-        {user?.id && <TouchableOpacity style={styles.option} onPress={() => { handleLogout() }} >
+        {user?.id && <TouchableOpacity style={styles.option} onPress={handleLogout} >
           <Icon name="person-outline" size={24} color={'#4B4453'} />
           <Text style={styles.optionTextLogout}>Logout</Text>
         </TouchableOpacity>}

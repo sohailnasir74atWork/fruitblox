@@ -12,11 +12,12 @@ import PrivateChatHeader from './PrivateChat/PrivateChatHeader';
 import { Menu, MenuOptions, MenuOption, MenuTrigger } from 'react-native-popup-menu';
 import BlockedUsersScreen from './PrivateChat/BlockUserList';
 import { BannerAdSize } from 'react-native-google-mobile-ads';
+import { useHaptic } from '../Helper/HepticFeedBack';
 
 
 const Stack = createNativeStackNavigator();
 
-const HeaderRight = ({ selectedTheme, navigateToInbox, setModalVisibleChatinfo, navigation, unreadMessagesCount }) => (
+const HeaderRight = ({ selectedTheme, navigateToInbox, setModalVisibleChatinfo, navigation, unreadMessagesCount, triggerHapticFeedback }) => (
   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
     <View style={styles.iconContainer}>
       <Icon
@@ -24,7 +25,7 @@ const HeaderRight = ({ selectedTheme, navigateToInbox, setModalVisibleChatinfo, 
         size={24}
         color={selectedTheme.colors.text}
         style={styles.icon2}
-        onPress={() => navigateToInbox(navigation)}
+        onPress={() => {navigateToInbox(navigation);  triggerHapticFeedback('impactLight');}}
       />
       {unreadMessagesCount > 0 && (
         <View style={styles.badge}>
@@ -96,6 +97,8 @@ const HeaderRight = ({ selectedTheme, navigateToInbox, setModalVisibleChatinfo, 
 export const ChatStack = ({ selectedTheme, setChatFocused, modalVisibleChatinfo, setModalVisibleChatinfo }) => {
   const { user, unreadMessagesCount } = useGlobalState();
   const [bannedUsers, setBannedUsers] = useState([]);
+  const { triggerHapticFeedback } = useHaptic();
+
   // console.log(bannedUsers)
   useEffect(() => {
     if (!user?.id) return;
@@ -188,6 +191,7 @@ export const ChatStack = ({ selectedTheme, setChatFocused, modalVisibleChatinfo,
                 selectedTheme={selectedTheme}
                 bannedUsers={bannedUsers}
                 setBannedUsers={setBannedUsers}
+                triggerHapticFeedback={triggerHapticFeedback}
               />
             ),
           };
