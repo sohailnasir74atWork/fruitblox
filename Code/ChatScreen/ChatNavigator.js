@@ -144,6 +144,7 @@ export const ChatStack = ({ selectedTheme, setChatFocused, modalVisibleChatinfo,
               navigateToInbox={(nav) => nav.navigate('Inbox')}
               setModalVisibleChatinfo={setModalVisibleChatinfo}
               navigation={navigation}
+              triggerHapticFeedback={triggerHapticFeedback}
               unreadMessagesCount={unreadMessagesCount}
             /> : null
           ),
