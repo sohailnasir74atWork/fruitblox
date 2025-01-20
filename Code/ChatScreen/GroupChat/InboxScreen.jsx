@@ -63,8 +63,9 @@ const InboxScreen = () => {
       const privateChatsRef = database().ref('privateChat');
       const bannedRef = database().ref(`bannedUsers/${user.id}`);
       const lastReadRef = database().ref(`lastseen/${user.id}`);
+      const onlineStatusRef = database().ref('onlineUsers'); // Assuming an online status node exists
   
-      // Fetch banned users and last read timestamps concurrently
+      // Step 1: Fetch banned users and last read timestamps concurrently
       const [bannedSnapshot, lastReadSnapshot] = await Promise.all([
         bannedRef.once('value'),
         lastReadRef.once('value'),
@@ -74,36 +75,34 @@ const InboxScreen = () => {
       const lastReadData = lastReadSnapshot.val() || {};
       const bannedUserIds = Object.keys(bannedData);
   
-      // Fetch all chat keys initially
-      const allChatsSnapshot = await privateChatsRef.once('value');
-      const allChats = allChatsSnapshot.val() || {};
+      // Step 2: Fetch only chat keys
+      const chatKeysSnapshot = await privateChatsRef.once('value');
+      const allKeys = chatKeysSnapshot.exists() ? Object.keys(chatKeysSnapshot.val()) : [];
   
-      // Filter chat keys where the current user is a participant
-      const userChatKeys = Object.entries(allChats)
-        .filter(([_, chatData]) => chatData.participants && chatData.participants[user.id])
-        .map(([key]) => key);
+      // Step 3: Filter keys relevant to the current user
+      const relevantKeys = allKeys.filter((key) => {
+        const [user1, user2] = key.split('_');
+        return user1 === user.id || user2 === user.id;
+      });
   
-      // Fetch chats for the filtered keys
+      // Step 4: Fetch and process chat data for relevant keys
       const userChats = await Promise.all(
-        userChatKeys.map(async (chatKey) => {
-          const chatData = allChats[chatKey];
+        relevantKeys.map(async (chatKey) => {
+          const chatDataSnapshot = await privateChatsRef.child(chatKey).once('value');
+          const chatData = chatDataSnapshot.val();
   
-          // Find the other user's details
+          // Skip if chatData is undefined or invalid
+          if (!chatData || !chatData.participants) return null;
+  
+          // Identify the other user in the chat
           const otherUserId = Object.keys(chatData.participants).find((id) => id !== user.id);
           const otherUserInfo = chatData.participants[otherUserId] || {};
   
-          // Exclude chats with banned users
-          if (bannedUserIds.includes(otherUserId)) {
-            return null;
-          }
+          // Skip if the other user is banned
+          if (bannedUserIds.includes(otherUserId)) return null;
   
           // Fetch the latest message
-          const lastMessageSnapshot = await privateChatsRef
-            .child(`${chatKey}/messages`)
-            .orderByKey()
-            .limitToLast(1)
-            .once('value');
-          const lastMessageData = Object.values(lastMessageSnapshot.val() || {})[0] || {};
+          const latestMessage = Object.values(chatData.messages || {}).pop();
   
           // Calculate unread messages
           const lastReadTimestamp = lastReadData[chatKey] || 0;
@@ -115,15 +114,27 @@ const InboxScreen = () => {
             chatKey,
             userName: otherUserInfo.name || 'Unknown User',
             avatar: otherUserInfo.avatar || config.defaultAvatar,
-            lastMessage: lastMessageData.text || '',
+            lastMessage: latestMessage?.text || '',
             unreadCount,
             otherUserId,
           };
         })
       );
   
-      // Remove null entries caused by banned users
-      setChats(userChats.filter(Boolean));
+      // Step 5: Remove null entries and sort chats
+      const filteredChats = userChats.filter(Boolean);
+  
+      // Step 6: Fetch online status for participants
+      const onlineSnapshot = await onlineStatusRef.once('value');
+      const onlineUsers = onlineSnapshot.val() || {};
+  
+      const finalChats = filteredChats.map((chat) => ({
+        ...chat,
+        isOnline: !!onlineUsers[chat.otherUserId], // Check if the other user is online
+      }));
+      console.log(finalChats)
+
+      setChats(finalChats);
     } catch (error) {
       console.error('Error fetching chats:', error);
       Alert.alert('Error', 'Unable to fetch chats. Please try again later.');
@@ -131,6 +142,8 @@ const InboxScreen = () => {
       setLoading(false);
     }
   }, [user]);
+  
+  
   
   
   
