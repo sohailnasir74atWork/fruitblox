@@ -24,7 +24,7 @@ const bannerAdUnitId = getAdUnitId('banner');
 
 const PrivateChatScreen = () => {
   const route = useRoute();
-  const { selectedUser, selectedTheme, bannedUsers } = route.params || {};
+  const { selectedUser, selectedTheme, bannedUsers , } = route.params || {};
   const { user, theme } = useGlobalState();
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);

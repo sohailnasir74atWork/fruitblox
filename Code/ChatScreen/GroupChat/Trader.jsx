@@ -30,7 +30,7 @@ leoProfanity.loadDictionary('en');
 const bannerAdUnitId = getAdUnitId('banner');
 let lastMessageTimestamp = 0; 
 const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatFocused,
-  setModalVisibleChatinfo }) => {
+  setModalVisibleChatinfo, navigateToInbox, unreadMessagesCount  }) => {
   const { user, theme, onlineMembersCount } = useGlobalState();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
@@ -382,6 +382,10 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
             isOwner={isOwner}
             modalVisibleChatinfo={modalVisibleChatinfo}
             setModalVisibleChatinfo={setModalVisibleChatinfo}
+            navigateToInbox={navigateToInbox}
+            navigation={navigation}
+            triggerHapticFeedback={triggerHapticFeedback}
+            unreadMessagesCount={unreadMessagesCount}
           />
                   
                  <ConditionalKeyboardWrapper style={{flex:1}} chatscreen={true}>
@@ -421,7 +425,7 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
           ) : (
             <TouchableOpacity
               style={styles.login}
-              onPress={() => setIsSigninDrawerVisible(true)}
+              onPress={() => {setIsSigninDrawerVisible(true); triggerHapticFeedback('impactLight');}}
             >
               <Text style={styles.loginText}>Login to Start Chat</Text>
             </TouchableOpacity>

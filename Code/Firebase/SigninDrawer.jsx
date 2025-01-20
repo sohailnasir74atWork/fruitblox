@@ -18,6 +18,7 @@ import auth from '@react-native-firebase/auth';
 import Icon from 'react-native-vector-icons/FontAwesome'; // Ensure FontAwesome is installed
 import appleAuth, { AppleButton } from '@invertase/react-native-apple-authentication';
 import { useHaptic } from '../Helper/HepticFeedBack';
+import { useGlobalState } from '../GlobelStats';
 
 
 
@@ -28,10 +29,10 @@ const SignInDrawer = ({ visible, onClose, selectedTheme, message }) => {
     const [isLoading, setIsLoading] = useState(false)
     const [isLoadingSecondary, setIsLoadingSecondary] = useState(false);
     const { triggerHapticFeedback } = useHaptic();
+    const {theme} = useGlobalState()
 
-    const colorScheme = useColorScheme(); // Returns 'light' or 'dark'
 
-    const isDarkMode = colorScheme === 'dark';
+    const isDarkMode = theme === 'dark';
     useEffect(() => {
         GoogleSignin.configure({
             webClientId: '409137828081-ig2uul01r95lj9fu6l1jgbgrp1es9060.apps.googleusercontent.com', // Replace with your web client ID

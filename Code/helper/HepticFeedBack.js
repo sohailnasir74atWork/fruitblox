@@ -10,7 +10,7 @@ export const useHaptic = () => {
 
     const options = {
       enableVibrateFallback: true, // Fallback to vibration if haptics aren't supported
-      ignoreAndroidSystemSettings: false, // Respect system-level haptic settings
+      ignoreAndroidSystemSettings: true, // Respect system-level haptic settings
     };
 
     HapticFeedback.trigger(type, options);

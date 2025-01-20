@@ -11,7 +11,6 @@ import { useGlobalState } from '../GlobelStats';
 import PrivateChatHeader from './PrivateChat/PrivateChatHeader';
 import { Menu, MenuOptions, MenuOption, MenuTrigger } from 'react-native-popup-menu';
 import BlockedUsersScreen from './PrivateChat/BlockUserList';
-import { BannerAdSize } from 'react-native-google-mobile-ads';
 import { useHaptic } from '../Helper/HepticFeedBack';
 
 
@@ -55,7 +54,7 @@ const HeaderRight = ({ selectedTheme, navigateToInbox, setModalVisibleChatinfo, 
       },
     }}
   >
-    <MenuOption onSelect={() => setModalVisibleChatinfo((prev) => !prev)}>
+    <MenuOption onSelect={() => {setModalVisibleChatinfo((prev) => !prev); triggerHapticFeedback('impactLight');}}>
       <View style={{ flexDirection: 'row', alignItems: 'center', padding: 10 }}>
         <Icon
           name="information-circle-outline"
@@ -138,6 +137,7 @@ export const ChatStack = ({ selectedTheme, setChatFocused, modalVisibleChatinfo,
         options={({ navigation }) => ({
           headerTitleAlign: 'left',
           headerTitle: 'Community Chat',
+          headerShown:false,
           headerRight: () => (
            user.id ? <HeaderRight
               selectedTheme={selectedTheme}
@@ -158,6 +158,9 @@ export const ChatStack = ({ selectedTheme, setChatFocused, modalVisibleChatinfo,
             setModalVisibleChatinfo={setModalVisibleChatinfo}
             bannedUsers={bannedUsers}
             setBannedUsers={setBannedUsers}
+            navigateToInbox={(nav) => nav.navigate('Inbox')}
+            triggerHapticFeedback={triggerHapticFeedback}
+            unreadMessagesCount={unreadMessagesCount}
           />
         )}
       </Stack.Screen>

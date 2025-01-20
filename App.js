@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   StatusBar,
@@ -8,9 +8,8 @@ import {
   Alert,
   ActivityIndicator,
   AppState,
-  TouchableOpacity,
 } from 'react-native';
-import { NavigationContainer, DefaultTheme, DarkTheme, useNavigation } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/Ionicons';
 import HomeScreen from './Code/Homescreen/HomeScreen';
@@ -27,9 +26,7 @@ import getAdUnitId from './Code/Ads/ads';
 import { ChatStack } from './Code/ChatScreen/ChatNavigator';
 import { MenuProvider } from 'react-native-popup-menu';
 import { LocalStateProvider, useLocalState } from './Code/LocalGlobelStats';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import InAppReview from 'react-native-in-app-review';
-import TradeScreen from './Code/TradeScreen/TradeScreen';
 
 
 const adUnitId =  getAdUnitId('openapp');
@@ -60,78 +57,43 @@ function App() {
   const { theme } = useGlobalState();
   const selectedTheme = theme === 'dark' ? MyDarkTheme : MyLightTheme;
   const [consentStatus, setConsentStatus] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [lastAdShownTime, setLastAdShownTime] = useState(0);
+  const [isAdLoaded, setIsAdLoaded] = useState(false);
   const [chatFocused, setChatFocused] = useState(true);
   const [modalVisibleChatinfo, setModalVisibleChatinfo] = useState(false);
-  const {updateLocalState, localState} = useLocalState()
-  const [adState, setAdState] = useState({
-    lastAdShownTime: 0,
-    isAdLoaded: false,
-    loading: false,
-  });
-
-  // const Stack = createNativeStackNavigator();
-  const CalculatorStack = ({ selectedTheme }) => {
-    const Stack = createNativeStackNavigator();
+  const {localState, updateLocalState}= useLocalState()
   
-    return (
-      <Stack.Navigator
-        screenOptions={{
-          headerTintColor: selectedTheme?.colors.text,
-          headerTitleStyle: { fontFamily: 'Lato-Bold', fontSize: 24 },
-          headerStyle: {
-            backgroundColor: selectedTheme?.colors.background,
-          },
-        }}
-      >
-        <Stack.Screen
-          name="Calculator"
-          options={({ navigation }) => ({
-            title: 'Calculator',
-            headerRight: () => (
-              <TouchableOpacity
-                style={{ marginRight: 15 }}
-                onPress={() => navigation.navigate('Settingss')} // Navigate to "Settingss"
-              >
-                <Icon name="settings-outline" size={24} color={selectedTheme?.colors.text} />
-              </TouchableOpacity>
-            ),
-          })}
-        >
-          {() => <HomeScreen selectedTheme={selectedTheme} />}
-        </Stack.Screen>
-        <Stack.Screen
-  name="Settingss"
-  options={{ title: 'Settings' }}
->
-  {() => <SettingsScreen selectedTheme={selectedTheme} />}
-</Stack.Screen>
-      </Stack.Navigator>
-    );
-  };
-  const requestReview = () => {
-    if (InAppReview.isAvailable()) {
-      InAppReview.RequestInAppReview()
-        .then((hasFlowFinishedSuccessfully) => {
-          console.log(
-            hasFlowFinishedSuccessfully
-              ? 'In-App review flow completed successfully'
-              : 'In-App review flow not completed'
-          );
-        })
-        .catch((error) => {
-          console.error('In-App review error:', error);
-        });
-    }
-  };
+const requestReview = () => {
+  if (InAppReview.isAvailable()) {
+    InAppReview.RequestInAppReview()
+      .then((hasFlowFinishedSuccessfully) => {
+        // console.log(
+        //   hasFlowFinishedSuccessfully
+        //     ? 'In-App review flow completed successfully'
+        //     : 'In-App review flow not completed'
+        // );
+      })
+      .catch((error) => {
+        // console.error('In-App review error:', error);
+      });
+  }
+};
 
-  useEffect(() => {
-    const { reviewCount } = localState;
-    if (reviewCount % 20 === 0 && reviewCount > 0) {
-      requestReview();
-    }
-        updateLocalState('reviewCount', Number(reviewCount) + 1);
-  }, []);
+useEffect(() => {
+  const { reviewCount } = localState;
+  // Check if the review count is divisible by 20
+  if (reviewCount % 5 === 0 && reviewCount > 0) {
+    requestReview();
+  }
 
+  // Increment the review count on every app open
+  updateLocalState('reviewCount', Number(reviewCount) + 1);
+}, []);
+
+
+
+  const adCooldown = 120000;
   useEffect(() => {
     mobileAds()
       .initialize()
@@ -140,92 +102,88 @@ function App() {
 
 const handleUserConsent = async () => {
   try {
+    // Enable debug settings for testing consent
     await AdsConsent.requestInfoUpdate();
 
     const consentInfo = await AdsConsent.requestInfoUpdate();
+    // console.log('Consent Info:', consentInfo);
+
     if (consentInfo.isConsentFormAvailable) {
       if (consentInfo.status === AdsConsentStatus.REQUIRED) {
         const formResult = await AdsConsent.showForm();
+        // console.log('Consent Form Result:', formResult);
+
+        // Update the consent status based on the user's action
         setConsentStatus(formResult.status);
+
         if (formResult.status === AdsConsentStatus.OBTAINED) {
+          // Alert.alert('Thank You!', 'You have provided your consent.');
         } else {
           // Alert.alert('Notice', 'You have chosen limited ad tracking.');
         }
       } else {
+        // Consent not required; update status silently
         setConsentStatus(consentInfo.status);
         // console.log('Consent already up to date:', consentInfo.status);
       }
     } else {
+      // Handle cases where the consent form is not available
       // console.log('Consent form is not available.', consentInfo);
     }
   } catch (error) {
     console.error('Error handling consent:', error);
+    // Alert.alert('Error', 'An error occurred while handling consent.');
   } finally {
     setLoading(false);
   }
 };
-
-
-
-const adCooldown = 120000;
-
-const loadAppOpenAd = useCallback(async () => {
+const loadAppOpenAd = async () => {
   const now = Date.now();
-
-  if (now - adState.lastAdShownTime < adCooldown || adState.isAdLoaded) {
-    console.log('Ad skipped due to cooldown or loading state.');
+  if (now - lastAdShownTime < adCooldown || isAdLoaded) {
+    // console.log('Skipping ad due to cooldown or ad already loaded.');
     return;
   }
 
-  const appOpenAd = AppOpenAd.createForAdRequest(adUnitId);
-
-  setAdState((prev) => ({ ...prev, isAdLoaded: true })); // Set loading to true
-
-  appOpenAd.addAdEventListener(AdEventType.LOADED, () => {
-    console.log('Ad Loaded');
-    appOpenAd.show();
-    setAdState((prev) => ({
-      ...prev,
-      lastAdShownTime: Date.now(),
-      isAdLoaded: false,
-    }));
-  });
-
-  appOpenAd.addAdEventListener(AdEventType.ERROR, (error) => {
-    console.error('Ad Load Error:', error);
-    setAdState((prev) => ({ ...prev, isAdLoaded: false }));
-  });
-
   try {
+    const appOpenAd = AppOpenAd.createForAdRequest(adUnitId);
+
+    appOpenAd.addAdEventListener(AdEventType.LOADED, () => {
+      // console.log('App Open Ad Loaded');
+      appOpenAd.show();
+      setLastAdShownTime(Date.now());
+      setIsAdLoaded(false); // Reset after showing
+    });
+
+    appOpenAd.addAdEventListener(AdEventType.ERROR, (error) => {
+      console.error('App Open Ad Error:', error);
+      setIsAdLoaded(false);
+    });
+
+    setIsAdLoaded(true);
     await appOpenAd.load();
   } catch (error) {
-    console.error('Error loading Ad:', error);
-    setAdState((prev) => ({ ...prev, isAdLoaded: false }));
+    console.error('Error loading App Open Ad:', error);
+    setIsAdLoaded(false);
   }
-}, [adState.lastAdShownTime, adState.isAdLoaded, adCooldown, adUnitId]);
+};
 
-
-// Ad loading logic on app state change
-const handleAppStateChange = useCallback(
-  (state) => {
-    if (state === 'active') {
-      loadAppOpenAd();
-    }
-  },
-  [loadAppOpenAd]
-);
-
+// Handle App State Changes
 useEffect(() => {
+  const handleAppStateChange = (state) => {
+    if (state === 'active') {
+      loadAppOpenAd(); // Load ad when app comes to foreground
+    }
+  };
+
   const subscription = AppState.addEventListener('change', handleAppStateChange);
   return () => subscription.remove();
-}, [handleAppStateChange]);
-
+}, [lastAdShownTime, isAdLoaded]);
   
   useEffect(() => {
     handleUserConsent();
   }, []);
 
-  if (adState.loading) {
+  if (loading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" color="#1E88E5" />
@@ -233,77 +191,6 @@ useEffect(() => {
     );
   }
 
-  const renderTabBarIcon = useMemo(
-    () => 
-      ({ routeName, focused, color, size }) => {
-        const scaleValue = new Animated.Value(focused ? 1.2 : 1);
-  
-        Animated.spring(scaleValue, {
-          toValue: focused ? 1.2 : 1, // Scale up when focused, back to normal otherwise
-          friction: 3,
-          useNativeDriver: true,
-        }).start();
-  
-        let iconName;
-        switch (routeName) {
-          case 'Home':
-            iconName = focused
-              ? config.isNoman
-                ? 'home'
-                : 'calculator'
-              : config.isNoman
-              ? 'home-outline'
-              : 'calculator-outline';
-            break;
-          case 'Values':
-            iconName = focused
-              ? config.isNoman
-                ? 'trending-up'
-                : 'pricetags'
-              : config.isNoman
-              ? 'trending-up-outline'
-              : 'pricetags-outline';
-            break;
-          case 'Stock':
-            iconName = focused
-              ? config.isNoman
-                ? 'newspaper'
-                : 'notifications'
-              : config.isNoman
-              ? 'newspaper-outline'
-              : 'notifications-outline';
-            break;
-          case 'Chat':
-            iconName = focused
-              ? config.isNoman
-                ? 'chatbubble-ellipses'
-                : 'chatbubbles'
-              : config.isNoman
-              ? 'chatbubble-ellipses-outline'
-              : 'chatbubbles-outline';
-            break;
-          case 'Trade':
-            iconName = focused
-              ? config.isNoman
-                ? 'storefront'
-                : 'cog'
-              : config.isNoman
-              ? 'storefront-outline'
-              : 'cog-outline';
-            break;
-          default:
-            iconName = 'alert-circle-outline';
-        }
-  
-        return (
-          <Animated.View style={{ transform: [{ scale: scaleValue }] }}>
-            <Icon name={iconName} size={size} color={color} />
-          </Animated.View>
-        );
-      },
-    [theme]
-  );
-  
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: selectedTheme.colors.background }}>
       <Animated.View style={{ flex: 1 }}>
@@ -316,8 +203,74 @@ useEffect(() => {
           />
           <Tab.Navigator
             screenOptions={({ route }) => ({
-              tabBarIcon: ({ focused, color, size }) =>
-                renderTabBarIcon({ routeName: route.name, focused, color, size }),
+              tabBarIcon: ({ focused, color, size }) => {
+                const scaleValue = useRef(new Animated.Value(1)).current;
+
+                useEffect(() => {
+                  Animated.spring(scaleValue, {
+                    toValue: focused ? 1.2 : 1, // Scale up when focused, back to normal otherwise
+                    friction: 3,
+                    useNativeDriver: true,
+                  }).start();
+                }, [focused]);
+
+                let iconName;
+                switch (route.name) {
+                  case 'Calculator':
+                    iconName = focused
+                      ? config.isNoman
+                        ? 'home'
+                        : 'calculator'
+                      : config.isNoman
+                      ? 'home-outline'
+                      : 'calculator-outline';
+                    break;
+                  case 'Values':
+                    iconName = focused
+                      ? config.isNoman
+                        ? 'trending-up'
+                        : 'pricetags'
+                      : config.isNoman
+                      ? 'trending-up-outline'
+                      : 'pricetags-outline';
+                    break;
+                  case 'Stock':
+                    iconName = focused
+                      ? config.isNoman
+                        ? 'newspaper'
+                        : 'notifications'
+                      : config.isNoman
+                      ? 'newspaper-outline'
+                      : 'notifications-outline';
+                    break;
+                  case 'Chat':
+                    iconName = focused
+                      ? config.isNoman
+                        ? 'chatbubble-ellipses'
+                        : 'chatbubbles'
+                      : config.isNoman
+                      ? 'chatbubble-ellipses-outline'
+                      : 'chatbubbles-outline';
+                    break;
+                  case 'Setting':
+                    iconName = focused
+                      ? config.isNoman
+                        ? 'settings'
+                        : 'cog'
+                      : config.isNoman
+                      ? 'settings-outline'
+                      : 'cog-outline';
+                    break;
+                  default:
+                    iconName = 'alert-circle-outline';
+                }
+
+                return (
+                  <Animated.View style={{ transform: [{ scale: scaleValue }] }}>
+                    <Icon name={iconName} size={size} color={color} />
+                  </Animated.View>
+                );
+              },
               tabBarStyle: { height: 60, backgroundColor: theme === 'dark' ? '#121212' : '#f2f2f7' },
               tabBarActiveTintColor: selectedTheme.colors.primary,
               tabBarInactiveTintColor: theme === 'dark' ? '#888' : 'gray',
@@ -335,37 +288,41 @@ useEffect(() => {
                 backgroundColor: selectedTheme.colors.background,
               },
               headerTintColor: selectedTheme.colors.text,
-              headerShown: route.name !== 'Home',
             })}
           >
-            <Tab.Screen name="Home">
-              {({ navigation }) => <CalculatorStack selectedTheme={selectedTheme} navigation={navigation} />}
+            <Tab.Screen name="Calculator">
+              {() => <HomeScreen selectedTheme={selectedTheme} />}
+            </Tab.Screen>
+            <Tab.Screen name="Values">
+              {() => <ValueScreen selectedTheme={selectedTheme} />}
             </Tab.Screen>
             <Tab.Screen name="Stock">
               {() => <TimerScreen selectedTheme={selectedTheme} />}
             </Tab.Screen>
-            <Tab.Screen name="Trade">
-              {() => <TradeScreen selectedTheme={selectedTheme} />}
-            </Tab.Screen>
-            <Tab.Screen name="Chat" options={{ headerShown: false }}>
-              {() => (
-                <ChatStack
-                  selectedTheme={selectedTheme}
-                  setChatFocused={setChatFocused}
-                  modalVisibleChatinfo={modalVisibleChatinfo}
-                  setModalVisibleChatinfo={setModalVisibleChatinfo}
-                />
-              )}
-            </Tab.Screen>
-            <Tab.Screen name="Values">
-              {() => <ValueScreen selectedTheme={selectedTheme} />}
+            <Tab.Screen 
+  name="Chat"
+  options={{ headerShown: false }}
+>
+  {() => (
+    <ChatStack 
+      selectedTheme={selectedTheme}
+      setChatFocused={setChatFocused}
+      modalVisibleChatinfo={modalVisibleChatinfo}
+      setModalVisibleChatinfo={setModalVisibleChatinfo}
+    />
+  )}
+</Tab.Screen>
+
+         
+
+            <Tab.Screen name="Setting">
+              {() => <SettingsScreen selectedTheme={selectedTheme} />}
             </Tab.Screen>
           </Tab.Navigator>
         </NavigationContainer>
       </Animated.View>
     </SafeAreaView>
   );
-  
 }
 
 const AppWrapper = () => (
@@ -374,6 +331,7 @@ const AppWrapper = () => (
     <MenuProvider>
     <App />
     </MenuProvider>
+
     <NotificationHandler />
     </GlobalStateProvider>
   </LocalStateProvider>

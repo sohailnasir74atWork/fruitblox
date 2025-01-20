@@ -17,18 +17,11 @@ export const LocalStateProvider = ({ children }) => {
 
     return {
       localKey: storage.getString('localKey') || 'defaultValue',
-      reviewCount: storage.getString('reviewCount') || 0,
+      reviewCount: parseInt(storage.getString('reviewCount'), 10) || 0, // Ensure reviewCount is a number
       isHaptic: storage.getBoolean('isHaptic') ?? true,
       theme: initialTheme || 'light', // Default to 'light' if no theme is found
     };
   });
-
-  useEffect(() => {
-    if (!localState.installationDate) {
-      const now = new Date().toISOString();
-      updateLocalState('installationDate', now);
-    }
-  }, [localState.installationDate]);
 
   // Listen to system theme changes when theme is set to 'system'
   useEffect(() => {
@@ -51,7 +44,7 @@ export const LocalStateProvider = ({ children }) => {
     if (typeof value === 'string') {
       storage.set(key, value);
     } else if (typeof value === 'number') {
-      storage.set(key, value);
+      storage.set(key, value.toString()); // Store numbers as strings
     } else if (typeof value === 'boolean') {
       storage.set(key, value);
     } else {

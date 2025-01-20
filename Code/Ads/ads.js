@@ -4,7 +4,7 @@ import { Platform } from 'react-native';
 import {  TestIds } from 'react-native-google-mobile-ads';
 import config from '../Helper/Environment';
 
-const developmentMode =true
+const developmentMode =false
 
 
 const adUnits = {
@@ -24,8 +24,8 @@ const adUnits = {
   ios: {
     banner: config.IOsBanner,      
     interstitial: config.IOsIntestial, 
-    rewarded:config.andriodRewarded,
-    openapp:config.andriodOpenApp,
+    rewarded:config.IOsRewarded,
+    openapp:config.IOsOpenApp,
   },
   
 };

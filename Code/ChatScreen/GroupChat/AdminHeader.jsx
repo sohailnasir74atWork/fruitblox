@@ -14,6 +14,7 @@ import { ScrollView } from 'react-native-gesture-handler';
 import config from '../../Helper/Environment';
 import {  rules } from '../utils';
 import { parseMessageText } from '../ChatHelper';
+import { Menu, MenuOption, MenuOptions, MenuTrigger } from 'react-native-popup-menu';
 
 const AdminHeader = ({
   pinnedMessages = [], // Array of pinned messages
@@ -24,7 +25,7 @@ const AdminHeader = ({
   selectedTheme,
   onlineMembersCount,
   modalVisibleChatinfo, 
-  setModalVisibleChatinfo
+  setModalVisibleChatinfo, navigateToInbox, navigation, unreadMessagesCount, triggerHapticFeedback
 
 }) => {
   const [expanded, setExpanded] = useState(false);
@@ -33,6 +34,7 @@ const AdminHeader = ({
   const [contentHeight, setContentHeight] = useState(0);
   const { theme } = useGlobalState();
   const isDarkMode = theme === 'dark';
+  const {user} = useGlobalState()
 
 
   useEffect(() => {
@@ -77,6 +79,89 @@ const AdminHeader = ({
   );
   const styles = getStyles(isDarkMode)
   return (
+    <View>
+     <View style={{height:50}}>
+        <View style={styles.stackContainer}>
+        <View><Text style={styles.stackHeader}>Community Chat</Text></View>
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+    {user?.id && <View style={styles.iconContainer}>
+      <Icon
+        name="chatbox-outline"
+        size={24}
+        color={selectedTheme.colors.text}
+        style={styles.icon2}
+        onPress={() => {navigateToInbox(navigation);  triggerHapticFeedback('impactLight');}}
+      />
+      {unreadMessagesCount > 0 && (
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>{unreadMessagesCount > 9 ? '9+' : unreadMessagesCount}</Text>
+        </View>
+      )}
+    </View>}
+
+   {user.id &&  <Menu>
+  <MenuTrigger>
+    <Icon
+      name="ellipsis-vertical-outline"
+      size={24}
+      color={config.colors.primary}
+      
+    />
+  </MenuTrigger>
+  <MenuOptions
+    customStyles={{
+      optionsContainer: {
+        marginTop: 8, // Space between menu trigger and options
+        borderRadius: 8,
+        width: 200, // Adjust width as needed
+        padding: 5,
+        // margin:120,
+        backgroundColor: config.colors.background || '#fff', // Adjust for theme
+      },
+    }}
+  >
+    <MenuOption onSelect={() => {setModalVisibleChatinfo((prev) => !prev); triggerHapticFeedback('impactLight');}}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', padding: 10 }}>
+        <Icon
+          name="information-circle-outline"
+          size={20}
+          color={config.colors.primary}
+          style={{ marginRight: 10 }}
+        />
+        <Text style={{ fontSize: 16, color: config.colors.text || '#000' }}>
+          Chat Rules
+        </Text>
+      </View>
+    </MenuOption>
+    <View
+      style={{
+        height: 1,
+        backgroundColor: '#ccc',
+        marginHorizontal: 10,
+      }}
+    />
+    <MenuOption onSelect={() => navigation.navigate('BlockedUsers')}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', padding: 10 }}>
+        <Icon
+          name="ban-outline"
+          size={20}
+          color={config.colors.primary}
+          style={{ marginRight: 10 }}
+        />
+        <Text style={{ fontSize: 16, color: config.colors.text || '#000' }}>
+          Blocked Users
+        </Text>
+      </View>
+    </MenuOption>
+  </MenuOptions>
+</Menu>}
+</View>
+
+  </View>
+
+
+
+      </View>
     <Animated.View
       style={[
         styles.headerContainer,
@@ -93,7 +178,7 @@ const AdminHeader = ({
   >
 </TouchableOpacity>
       <View style={styles.topRow}>
-        <Text style={[styles.onlineText, { color: config.colors.hasBlockGreen }]}>Online {onlineMembersCount + randomBase}</Text>
+        <Text style={[styles.onlineText, { color: config.colors.hasBlockGreen }]}>Online {onlineMembersCount + 5}</Text>
       </View>
 
       {pinnedMessages.length > 0 ? (
@@ -203,7 +288,7 @@ const AdminHeader = ({
   </View>
 </Modal>
 
-    </Animated.View>
+    </Animated.View></View>
   );
 };
 
@@ -320,7 +405,37 @@ StyleSheet.create({
     lineHeight: 16,
     fontSize: 12,
     marginBottom: 10,
-  },  
+  },
+  stackContainer:{
+    justifyContent:'space-between', flex:1, flexDirection:'row',alignItems:'center', paddingHorizontal:10
+  },
+  stackHeader:{
+    fontFamily: 'Lato-Bold', fontSize: 24, lineHeight:24, color: isDarkMode ? 'white' : 'black',
+  },
+  icon: {
+    marginRight: 15,
+  },
+  icon2: {
+    marginRight: 15,
+    marginTop: 3,
+  },
+  badge: {
+    position: 'absolute',
+    top: -4,
+    left: -10,
+    backgroundColor: 'red',
+    borderRadius: 8,
+    minWidth: 16,
+    height: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+  },
+  badgeText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
 });
 
 export default AdminHeader;

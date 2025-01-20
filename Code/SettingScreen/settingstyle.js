@@ -6,12 +6,13 @@ export const getStyles = (isDarkMode) =>
       container: {
         flex: 1,
         backgroundColor: isDarkMode ? '#121212' : '#f2f2f7',
-        padding: 16,
+        padding: 8,
       },
       cardContainer: {
         backgroundColor: isDarkMode ? '#1e1e1e' : '#ffffff',
         borderRadius: 10,
-        padding: 10,
+        paddingVertical: 10,
+        paddingHorizontal:5,
         marginBottom: 10,
       },
       optionuserName: {
@@ -127,7 +128,8 @@ export const getStyles = (isDarkMode) =>
       },
       rewardDescription:{
         color: isDarkMode ? '#fff' : '#000',
-        fontFamily:'Lato-Regular'
+        fontFamily:'Lato-Regular',
+        fontSize:12
 
       },
       optionTextLogout:{

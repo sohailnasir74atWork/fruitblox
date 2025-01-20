@@ -309,7 +309,7 @@ export default function SettingsScreen({ selectedTheme }) {
 }}>
   <View style={{flexDirection:'row', justifyContent:'space-between', width:'100%'}}>
     <TouchableOpacity style={{flexDirection:'row', alignItems:'center'}}>
-          <Icon name="logo-rss" size={24} color={'#B76E79'} />
+          <Icon name="radio-outline" size={24} color={'#B76E79'} />
           <Text style={styles.optionText}>Heptic Feedback</Text></TouchableOpacity>
           <Switch value={localState.isHaptic} onValueChange={handleToggle} />
           </View>
@@ -319,7 +319,7 @@ export default function SettingsScreen({ selectedTheme }) {
   <View style={{flexDirection:'row', justifyContent:'space-between', width:'100%'}}>
     <TouchableOpacity style={{flexDirection:'row', alignItems:'center'}}>
           <Icon name="contrast-outline" size={24} color={'#4A90E2'} />
-          <Text style={styles.optionText}>Dark/LiMode</Text></TouchableOpacity>
+          <Text style={styles.optionText}>Theme</Text></TouchableOpacity>
           <View style={styles.containertheme}>
       {themes.map((theme) => (
         <TouchableOpacity

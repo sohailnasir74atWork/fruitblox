@@ -100,10 +100,11 @@ const InboxScreen = () => {
   
           // Skip if the other user is banned
           if (bannedUserIds.includes(otherUserId)) return null;
-  
           // Fetch the latest message
-          const latestMessage = Object.values(chatData.messages || {}).pop();
-  
+          const latestMessage = Object.values(chatData.messages || {})
+          .sort((a, b) => b.timestamp - a.timestamp) // Sort messages by timestamp in descending order
+          .shift(); // Retrieve the first message (latest one)
+          
           // Calculate unread messages
           const lastReadTimestamp = lastReadData[chatKey] || 0;
           const unreadCount = Object.values(chatData.messages || {}).filter(
@@ -132,7 +133,6 @@ const InboxScreen = () => {
         ...chat,
         isOnline: !!onlineUsers[chat.otherUserId], // Check if the other user is online
       }));
-      console.log(finalChats)
 
       setChats(finalChats);
     } catch (error) {
