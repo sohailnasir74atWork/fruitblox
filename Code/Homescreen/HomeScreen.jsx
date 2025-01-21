@@ -12,12 +12,18 @@ import config from '../Helper/Environment';
 import ConditionalKeyboardWrapper from '../Helper/keyboardAvoidingContainer';
 import Icons from 'react-native-vector-icons/FontAwesome';
 import { useHaptic } from '../Helper/HepticFeedBack';
+  
+import { getDatabase, ref, push } from 'firebase/database';
+import { getAuth } from 'firebase/auth';
+import { useLocalState } from '../LocalGlobelStats';
+
+
 const bannerAdUnitId = getAdUnitId('banner');
 const interstitialAdUnitId = getAdUnitId('interstitial');
 const interstitial = InterstitialAd.createForAdRequest(interstitialAdUnitId);
 
 const HomeScreen = ({ selectedTheme }) => {
-  const { state, theme } = useGlobalState();
+  const { state, theme, user } = useGlobalState();
   const initialItems = [null, null];
   const [hasItems, setHasItems] = useState(initialItems);
   const [fruitRecords, setFruitRecords] = useState([]);
@@ -30,7 +36,9 @@ const HomeScreen = ({ selectedTheme }) => {
   const [isAdLoaded, setIsAdLoaded] = useState(false);
   const [isShowingAd, setIsShowingAd] = useState(false);
   const [isAdVisible, setIsAdVisible] = useState(true);
+  const [message, setMessage] = useState('')
   const { triggerHapticFeedback } = useHaptic();
+  const {localState} = useLocalState()
 
   const isDarkMode = theme === 'dark'
   const viewRef = useRef();
@@ -45,13 +53,54 @@ const HomeScreen = ({ selectedTheme }) => {
     setHasItems([...initialItems]); // Use a new array to avoid mutating the original reference
     setWantsItems([...initialItems]); // Use a new array to avoid mutating the original reference
   };
+
+
+
+  const submitTrade = () => {
+  if (!user.id) {
+    Alert.alert('Error', 'You must be logged in to create a trade.');
+    return;
+  }
   
-
-
-
+    if (hasItems.filter(Boolean).length === 0 || wantsItems.filter(Boolean).length === 0) {
+      Alert.alert('Error', 'Please add at least one item to both "You" and "Them" sections.');
+      return;
+    }
   
+    const db = getDatabase();
+    const tradeRef = ref(db, 'trades/');
+    const newTrade = {
+      userId: user.id,
+      traderName:user.displayname,
+      hasItems: hasItems.filter(Boolean).map((item) => ({
+        name: item.Name
+      })),
+      wantsItems: wantsItems.filter(Boolean).map((item) => ({
+        name: item.Name,
+      })),
+      hasTotal: {
+        price: hasTotal.price,
+        value: hasTotal.value,
+      },
+      wantsTotal: {
+        price: wantsTotal.price,
+        value: wantsTotal.value,
+      },
+      message: message.trim(),
+      timestamp: Date.now(),
+    };
   
-
+    push(tradeRef, newTrade)
+      .then(() => {
+        resetState();
+        Alert.alert('Success', 'Trade Created Successfully!');
+      })
+      .catch((error) => {
+        console.error('Error creating trade:', error.message);
+        Alert.alert('Error', 'Failed to create trade. Please try again.');
+      });
+  };
+  
 
 
   useEffect(() => {
@@ -391,6 +440,7 @@ const HomeScreen = ({ selectedTheme }) => {
                   ))}
                 </View>
               </ViewShot>
+              <TouchableOpacity style={styles.createtrade} onPress={submitTrade}><Text>Create Trade</Text></TouchableOpacity>
             </ScrollView>
           <TouchableOpacity onPress={proceedWithScreenshotShare} style={styles.float}>
 
@@ -693,6 +743,12 @@ const getStyles = (isDarkMode) =>
       color: 'gray',
       fontFamily: 'Lato-Bold',
     },
+    createtrade:{
+      backgroundColor:config.colors.hasBlockGreen,
+     alignSelf:'center',
+     padding:10,
+     width:100
+    }
 
   });
 

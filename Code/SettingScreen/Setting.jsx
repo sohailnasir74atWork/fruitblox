@@ -48,21 +48,10 @@ export default function SettingsScreen({ selectedTheme }) {
   const {updateLocalState, localState} = useLocalState()
   const { triggerHapticFeedback } = useHaptic();
   const themes = ['system', 'light', 'dark'];
-
-
-  const toggleTheme = () => {
-    const currentIndex = themes.indexOf(localState.theme);
-    const nextIndex = (currentIndex + 1) % themes.length;
-    updateLocalState('theme', themes[nextIndex]); // Update global state
-  };
-
-
-
   const handleToggle = (value) => {
     updateLocalState('isHaptic', value); // Update isHaptic state globally
   };
   const isDarkMode = theme === 'dark';
-  // Fetch user data on component mount
   useEffect(() => {
     if (user && user?.id) {
       setNewDisplayName(user?.displayName?.trim() || user?.displayname?.trim() || 'Anonymous');

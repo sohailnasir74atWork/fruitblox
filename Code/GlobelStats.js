@@ -7,7 +7,7 @@ import { createNewUser, firebaseConfig, registerForNotifications } from './Globe
 import database from '@react-native-firebase/database';
 import { useLocalState } from './LocalGlobelStats';
 
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+const app = initializeApp(firebaseConfig);
 
 const appdatabase = getDatabase(app);
 
@@ -19,7 +19,7 @@ export const useGlobalState = () => useContext(GlobalStateContext);
 
 export const GlobalStateProvider = ({ children }) => {
 
-  const {localState} = useLocalState()
+  const {localState, updateLocalState} = useLocalState()
   const [theme, setTheme] = useState(localState.theme || 'light');
 
   const [state, setState] = useState({
@@ -30,7 +30,7 @@ export const GlobalStateProvider = ({ children }) => {
     isAppReady: false,
   });
   const [user, setUser] = useState({
-      id: null,
+      id: localState.userId,
       selectedFruits: [],
       isAdmin: false,
       status: null,
@@ -242,6 +242,7 @@ export const GlobalStateProvider = ({ children }) => {
             ...snapshot.val(),
             id: userId, // Ensure ID persists
           }));
+          updateLocalState('userId', userId);
         } else {
           // console.log('Creating new user...');
           const newUser = createNewUser(userId, loggedInUser);

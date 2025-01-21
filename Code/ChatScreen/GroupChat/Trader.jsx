@@ -264,7 +264,7 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
       // Update the local state by filtering out the removed message
       setPinnedMessages((prev) => {
         const updatedMessages = prev.filter((msg) => msg.firebaseKey !== firebaseKey);
-        console.log('Updated pinned messages after removal:', updatedMessages);
+        // console.log('Updated pinned messages after removal:', updatedMessages);
         return updatedMessages;
       });
     } catch (error) {

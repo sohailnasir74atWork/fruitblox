@@ -35,8 +35,8 @@ const SignInDrawer = ({ visible, onClose, selectedTheme, message }) => {
     const isDarkMode = theme === 'dark';
     useEffect(() => {
         GoogleSignin.configure({
-            webClientId: '409137828081-ig2uul01r95lj9fu6l1jgbgrp1es9060.apps.googleusercontent.com', // Replace with your web client ID
-            offlineAccess: true, // If you need to retrieve refresh tokens
+            webClientId: '409137828081-ig2uul01r95lj9fu6l1jgbgrp1es9060.apps.googleusercontent.com',
+            offlineAccess: true, 
         });
     }, [])
     
