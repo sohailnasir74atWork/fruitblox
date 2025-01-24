@@ -55,10 +55,10 @@ export default function SettingsScreen({ selectedTheme }) {
   useEffect(() => {
     if (user && user?.id) {
       setNewDisplayName(user?.displayName?.trim() || user?.displayname?.trim() || 'Anonymous');
-      setSelectedImage(user?.avatar?.trim() || 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png');
+      setSelectedImage(user?.avatar?.trim() || 'https://bloxfruitscalc.com/wp-content/uploads/2025/placeholder.png');
     } else {
       setNewDisplayName('Guest User');
-      setSelectedImage('https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png');
+      setSelectedImage('https://bloxfruitscalc.com/wp-content/uploads/2025/placeholder.png');
     }
 
   }, [user]);
@@ -277,11 +277,11 @@ export default function SettingsScreen({ selectedTheme }) {
               style={styles.profileImage}
             />
             <TouchableOpacity onPress={user?.id ? () => { } : () => { setOpenSignin(true) }}>
-              <Text style={styles.userName}>
+              <Text style={!user.id ? styles.userNameLogout : styles.userName}>
                 {!user?.id ? 'Login / Register' : displayName}
               </Text>
-
-              <Text style={styles.reward}>My Points: {user?.points}</Text>
+              {!user?.id && <Text style={styles.rewardLogout}>Login to access notification, trading, chat and much more</Text>}
+              {user.id && <Text style={styles.reward}>My Points: {user?.points}</Text>}
             </TouchableOpacity>
           </View>
           <TouchableOpacity onPress={handleProfileUpdate}>

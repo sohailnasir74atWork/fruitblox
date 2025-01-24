@@ -73,7 +73,6 @@ const MessagesList = ({
 
   };
 
-
   const renderMessage = useCallback(({ item, index }) => {
     const previousMessage = messages[index + 1];
     const currentDate = new Date(item.timestamp).toDateString();

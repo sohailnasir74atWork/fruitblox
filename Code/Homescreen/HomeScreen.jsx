@@ -16,6 +16,7 @@ import { useHaptic } from '../Helper/HepticFeedBack';
 import { getDatabase, ref, push } from 'firebase/database';
 import { getAuth } from 'firebase/auth';
 import { useLocalState } from '../LocalGlobelStats';
+import { submitTrade } from './HomeScreenHelper';
 
 
 const bannerAdUnitId = getAdUnitId('banner');
@@ -39,6 +40,8 @@ const HomeScreen = ({ selectedTheme }) => {
   const [message, setMessage] = useState('')
   const { triggerHapticFeedback } = useHaptic();
   const {localState} = useLocalState()
+  const [modalVisible, setModalVisible] = useState(false);
+  const [description, setDescription] = useState('');
 
   const isDarkMode = theme === 'dark'
   const viewRef = useRef();
@@ -54,52 +57,11 @@ const HomeScreen = ({ selectedTheme }) => {
     setWantsItems([...initialItems]); // Use a new array to avoid mutating the original reference
   };
 
-
-
-  const submitTrade = () => {
-  if (!user.id) {
-    Alert.alert('Error', 'You must be logged in to create a trade.');
-    return;
-  }
-  
-    if (hasItems.filter(Boolean).length === 0 || wantsItems.filter(Boolean).length === 0) {
-      Alert.alert('Error', 'Please add at least one item to both "You" and "Them" sections.');
-      return;
-    }
-  
-    const db = getDatabase();
-    const tradeRef = ref(db, 'trades/');
-    const newTrade = {
-      userId: user.id,
-      traderName:user.displayname,
-      hasItems: hasItems.filter(Boolean).map((item) => ({
-        name: item.Name
-      })),
-      wantsItems: wantsItems.filter(Boolean).map((item) => ({
-        name: item.Name,
-      })),
-      hasTotal: {
-        price: hasTotal.price,
-        value: hasTotal.value,
-      },
-      wantsTotal: {
-        price: wantsTotal.price,
-        value: wantsTotal.value,
-      },
-      message: message.trim(),
-      timestamp: Date.now(),
-    };
-  
-    push(tradeRef, newTrade)
-      .then(() => {
-        resetState();
-        Alert.alert('Success', 'Trade Created Successfully!');
-      })
-      .catch((error) => {
-        console.error('Error creating trade:', error.message);
-        Alert.alert('Error', 'Failed to create trade. Please try again.');
-      });
+  const handleCreateTrade = () => {
+    setModalVisible(false); // Close modal
+    submitTrade(user, hasItems, wantsItems, hasTotal, wantsTotal, message, description, resetState); // Call submitTrade with description
   };
+
   
 
 
@@ -440,13 +402,10 @@ const HomeScreen = ({ selectedTheme }) => {
                   ))}
                 </View>
               </ViewShot>
-              <TouchableOpacity style={styles.createtrade} onPress={submitTrade}><Text>Create Trade</Text></TouchableOpacity>
+              <View style={styles.createtrade} >
+              <TouchableOpacity style={styles.createtradeButton} onPress={() => setModalVisible(true)}><Text style={{color:'white'}}>Create Trade</Text></TouchableOpacity>
+              <TouchableOpacity style={styles.shareTradeButton} onPress={proceedWithScreenshotShare}><Text style={{color:'white'}}>Share Trade</Text></TouchableOpacity></View>
             </ScrollView>
-          <TouchableOpacity onPress={proceedWithScreenshotShare} style={styles.float}>
-
-            {/* <Icon name={!config.isNoman ? "chevron-down-circle" : 'share-social'} size={40} color={config.colors.hasBlockGreen} /> */}
-            <Icons name="share-alt-square" size={40} color={config.colors.hasBlockGreen} />
-          </TouchableOpacity>
           <Modal
             visible={isDrawerVisible}
             transparent={true}
@@ -503,6 +462,40 @@ const HomeScreen = ({ selectedTheme }) => {
             </View>
             </ConditionalKeyboardWrapper>
           </Modal>
+          <Modal
+        visible={modalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setModalVisible(false)} // Close modal on request
+      >
+         <Pressable style={styles.modalOverlay} onPress={() => setModalVisible(false)} />
+        <View style={[styles.drawerContainer, { backgroundColor: isDarkMode ? '#3B404C' : 'white' }]}>
+            <Text style={styles.modalMessage}>
+              Do you want to add a description (optional)?
+            </Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter description (optional, max 40 characters)"
+              maxLength={40}
+              value={description}
+              onChangeText={setDescription}
+            />
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={[styles.button, styles.cancelButton]}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={styles.buttonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.button, styles.confirmButton]}
+                onPress={handleCreateTrade}
+              >
+                <Text style={styles.buttonText}>Confirm</Text>
+              </TouchableOpacity>
+            </View>
+        </View>
+      </Modal>
           
 
 
@@ -569,7 +562,7 @@ const getStyles = (isDarkMode) =>
       flexDirection: 'row',
       flexWrap: 'wrap',
       justifyContent: 'space-between',
-      marginBottom: 20,
+      marginBottom: 10,
 
     },
     addItemBlock: {
@@ -625,7 +618,7 @@ const getStyles = (isDarkMode) =>
       borderTopRightRadius: 10,
       paddingHorizontal: 10,
       paddingTop: 20,
-      height: 400,
+      maxHeight: 400,
       overflow: 'hidden',
       position: 'absolute',
       bottom: 0,
@@ -744,11 +737,74 @@ const getStyles = (isDarkMode) =>
       fontFamily: 'Lato-Bold',
     },
     createtrade:{
-      backgroundColor:config.colors.hasBlockGreen,
      alignSelf:'center',
-     padding:10,
-     width:100
-    }
+     justifyContent:'center',
+     flexDirection:'row'
+    },
+    createtradeButton:{
+      backgroundColor:config.colors.hasBlockGreen,
+       alignSelf:'center',
+       padding:10,
+       justifyContent:'center',
+       flexDirection:'row',
+       minWidth:120,
+       borderTopStartRadius:20,
+      borderBottomStartRadius:20,
+      marginRight:1
+      },
+      shareTradeButton:{
+        backgroundColor:config.colors.wantBlockRed,
+         alignSelf:'center',
+         padding:10,
+         flexDirection:'row',
+         justifyContent:'center',
+         minWidth:120,
+         borderTopEndRadius:20,
+         borderBottomEndRadius:20,
+         marginLeft:1
+        },
+
+    modalMessage: {
+      fontSize: 12,
+      marginBottom: 10,
+      color: isDarkMode ? 'white' : 'black',
+      fontFamily:'Lato-Regular'
+    },
+    input: {
+      width: '100%',
+      height: 40,
+      borderColor: 'gray',
+      borderWidth: 1,
+      borderRadius: 5,
+      paddingHorizontal: 10,
+      marginBottom: 20,
+      color: isDarkMode ? 'white' : 'black',
+      fontFamily:'Lato-Ragular'
+    },
+    buttonContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      width: '100%',
+      marginBottom:10,
+      paddingHorizontal:20
+
+    },
+    button: {
+      paddingVertical: 10,
+      paddingHorizontal: 20,
+      borderRadius: 5,
+    },
+    cancelButton: {
+      backgroundColor: config.colors.wantBlockRed,
+    },
+    confirmButton: {
+      backgroundColor:config.colors.hasBlockGreen,
+    },
+    buttonText: {
+      color: 'white',
+      fontSize: 14,
+      fontWeight: 'bold',
+    },
 
   });
 

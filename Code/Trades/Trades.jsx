@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, FlatList, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { View, FlatList, Text, TouchableOpacity, StyleSheet, Image, ActivityIndicator, TextInput } from 'react-native';
 import { getDatabase, ref, onValue } from 'firebase/database';
 import Icon from 'react-native-vector-icons/Ionicons';
 import moment from 'moment'; // Install moment.js for formatting timestamps
@@ -8,8 +8,11 @@ import config from '../Helper/Environment';
 
 const TradeList = ({ navigation }) => {
   const [trades, setTrades] = useState([]);
-const {theme} = useGlobalState()
-const isDarkMode = theme === 'dark'
+  const [filteredTrades, setFilteredTrades] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(true);
+  const {theme} = useGlobalState()
+  const isDarkMode = theme === 'dark'
   const formatName = (name) => {
     let formattedName = name.replace(/^\+/, '');
     formattedName = formattedName.replace(/\s+/g, '-');
@@ -19,6 +22,18 @@ const isDarkMode = theme === 'dark'
   const formatValue = (value) => {
     return value >= 1000000 ? `${(value / 1000000).toFixed(1)}M` : value.toLocaleString();
   };
+  useEffect(() => {
+    if (searchQuery.trim() === '') {
+      setFilteredTrades(trades);
+    } else {
+      const lowerCaseQuery = searchQuery.toLowerCase();
+      const filtered = trades.filter((trade) =>
+        trade.wantsItems?.some((item) => item.name.toLowerCase().includes(lowerCaseQuery))
+      );
+      setFilteredTrades(filtered);
+    }
+  }, [searchQuery, trades]);
+
 
   useEffect(() => {
     const db = getDatabase();
@@ -32,15 +47,39 @@ const isDarkMode = theme === 'dark'
           }))
         : [];
       setTrades(tradeList);
+      setFilteredTrades(tradeList);
+      setLoading(false);
     });
   }, []);
 
   const styles = useMemo(() => getStyles(isDarkMode), [isDarkMode]);
 
-
   const renderTrade = ({ item }) => {
     const formattedTime = moment(item.timestamp).fromNow();
+  
+    // Determine if the trade is fair or not
+    const isFairTrade = (hasTotal, wantsTotal) => {
+      const lowerBound = hasTotal * 0.9;
+      const upperBound = hasTotal * 1.1;
+      return wantsTotal >= lowerBound && wantsTotal <= upperBound;
+    };
+  // console.log(item)
+    const getTradeStatus = (hasTotal, wantsTotal) => {
+      const lowerBound = hasTotal * 0.9;
+      const upperBound = hasTotal * 1.1;
+    
+      if (wantsTotal >= lowerBound && wantsTotal <= upperBound) {
+        return 'Fair';
+      } else if (wantsTotal < upperBound) {
+        return 'Good';
+      } else {
+        return 'Bad';
+      }
+    };
 
+    
+    // In renderTrade
+    const tradeStatus = getTradeStatus(item.hasTotal.price, item.wantsTotal.price);  
     return (
       <View
         style={styles.tradeItem}
@@ -48,10 +87,27 @@ const isDarkMode = theme === 'dark'
       >
         {/* Trader Info */}
         <View style={styles.tradeHeader}>
-          <Text style={styles.traderName}>{item.traderName}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Image
+              source={{
+                uri: item.avatar
+              }}
+              style={styles.itemImageUser}
+            />
+            <Text style={styles.traderName}>{item.traderName}</Text>
+          </View>
           <Text style={styles.tradeTime}>{formattedTime}</Text>
         </View>
 
+        {/* Trade Totals */}
+        <View style={styles.tradeTotals}>
+          <Text style={[styles.priceText, styles.hasBackground]}>Has: {formatValue(item.hasTotal.price)}</Text>
+          <View style={styles.transfer}>
+           
+          </View>
+          <Text style={[styles.priceText, styles.wantBackground]}>Want: {formatValue(item.wantsTotal.price)}</Text>
+        </View>
+  
         {/* Trade Items */}
         <View style={styles.tradeDetails}>
           <View style={styles.itemList}>
@@ -68,11 +124,11 @@ const isDarkMode = theme === 'dark'
             ))}
           </View>
           <View style={styles.transfer}>
-          <Image
-  source={require('../../assets/transfer.png')} // Correct usage of require() for local images
-  style={styles.transferImage}
-/></View>
-
+            <Image
+              source={require('../../assets/transfer.png')}
+              style={styles.transferImage}
+            />
+          </View>
           <View style={styles.itemList}>
             {item.wantsItems?.map((wantsItem, index) => (
               <Image
@@ -87,79 +143,126 @@ const isDarkMode = theme === 'dark'
             ))}
           </View>
         </View>
-
-        {/* Trade Totals */}
-        <View style={styles.tradeTotals}>
-          <Text style={styles.priceText}>{formatValue(item.hasTotal.price)}</Text>
-          <View style={styles.transfer}></View>
-          <Text style={styles.priceText}>{formatValue(item.wantsTotal.price)}</Text>
-        </View>
-
+  
+        {item.description  && <Text style={styles.description}>Note: {item.description}</Text>}
         {/* Action Buttons */}
+        <View style={styles.actionButtons}>
         <TouchableOpacity>
-        <View style={styles.tradeActions}>
-          <Icon name="chatbox-outline" size={20} color="#007BFF" />
-          <Text style={styles.actionText}>Send Message</Text>
-        </View>
+          <View style={styles.tradeActions}>
+            <Icon name="chatbox-outline" size={14} color={config.colors.hasBlockGreen} />
+            <Text style={[styles.actionText]}>Send Message</Text>
+          </View>
         </TouchableOpacity>
+        <Text style={{
+            color:
+              tradeStatus === 'Fair'
+                ? config.colors.white
+                : tradeStatus === 'Good'
+                ? config.colors.hasBlockGreen
+                : config.colors.wantBlockRed
+          }}>{tradeStatus}</Text>
+        </View>
       </View>
     );
   };
+  if (loading) {
+    return <ActivityIndicator style={styles.loader} size="large" color="#007BFF" />;
+  }
 
+  
   return (
+    <View style={styles.container}>
+      <TextInput
+        style={styles.searchInput}
+        placeholder="Search trades by wanted items..."
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+        placeholderTextColor={isDarkMode ? '#666' : '#aaa'}
+      />
+    
     <FlatList
       data={trades}
       renderItem={renderTrade}
       keyExtractor={(item) => item.id}
-      contentContainerStyle={styles.container}
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={{paddingBottom:60}}
     />
+    </View>
   );
 };
 const getStyles = (isDarkMode) =>
 StyleSheet.create({
   container: {
     padding: 8,
-    backgroundColor: isDarkMode ? '#121212' : '#f2f2f7',
+    backgroundColor: isDarkMode ? '#121212' : 'lightgrey',
   },
   tradeItem: {
-    padding: 15,
+    padding: 10,
     marginBottom: 10,
-    backgroundColor: 'white',
+    backgroundColor: isDarkMode ? config.colors.primary: 'white' ,
     borderRadius: 10,
+  },
+  searchInput: {
+    height: 48,
+    borderColor: isDarkMode ? config.colors.primary: 'white' ,
+    backgroundColor: isDarkMode ? config.colors.primary: 'white' ,
+    borderWidth: 1,
+    borderRadius: 5,
+    marginVertical: 8,
+    paddingHorizontal: 10,
+    color: isDarkMode ? 'white' : 'black',
   },
   tradeHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems:'center',
     marginBottom: 10,
     paddingBottom:10,
     borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
+    borderColor: 'lightgrey',
+    color: isDarkMode ? 'white' : "black",
   },
   traderName: {
-    fontWeight: 'bold',
-    fontSize: 16,
+    fontFamily: 'Lato-Bold',
+    fontSize: 12,
+    color: isDarkMode ? 'white' : "black",
+
   },
   tradeTime: {
-    fontSize: 12,
+    fontSize: 10,
     color: '#666',
+    color:'lightgrey'
+
   },
   tradeDetails: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    color: isDarkMode ? 'white' : "black",
+
+
   },
   itemList: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent:'space-evenly',
     width:"40%",
-    marginVertical:10
+    paddingVertical:15,
   },
   itemImage: {
-    width: 30,
-    height: 30,
+    width: 50,
+    height: 50,
     // marginRight: 5,
-    borderRadius: 5,
+    borderRadius: 25,
+    marginVertical:5
+
+  },
+  itemImageUser: {
+    width: 20,
+    height: 20,
+    // marginRight: 5,
+    borderRadius: 10,
+    marginRight:5,
+    backgroundColor:'white'
   },
   transferImage: {
     width: 20,
@@ -170,36 +273,53 @@ StyleSheet.create({
   tradeTotals: {
     flexDirection: 'row',
     justifyContent: 'center',
-    // marginBottom: 10,
+    marginTop: 10,
     width:'100%'
 
   },
   priceText: {
     fontSize: 14,
-    fontWeight: 'bold',
+    fontFamily: 'Lato-Bold',
     color: '#007BFF',
-    width: '40%',
+    // width: '40%',
     textAlign: 'center', // Centers text within its own width
     alignSelf: 'center', // Centers within the parent container
+    color: isDarkMode ? 'white' : "white",
+    marginHorizontal:'auto',
+    paddingHorizontal:10,
+    paddingVertical:5,
+    borderRadius:3
   },
-  
+  hasBackground:{
+    backgroundColor:config.colors.hasBlockGreen,
+  },
+  wantBackground:{
+    backgroundColor:config.colors.wantBlockRed,
+  },
   tradeActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 10,
-    paddingTop:10,
-    borderTopWidth: 1,
-    borderTopColor: '#ccc',
   },
   actionText: {
     marginLeft: 5,
     fontSize: 14,
     color: '#007BFF',
+    color: config.colors.hasBlockGreen
+
   },
   transfer:{
     width:'20%',
     justifyContent:'center',
     alignItems:'center'
+  },
+  actionButtons:{
+    flexDirection: 'row', alignItems: 'flex-end', justifyContent:'space-between',  borderTopWidth: 1,
+    borderColor: 'lightgrey', marginTop:10, paddingTop:10
+  },
+  description:{
+    color: isDarkMode ? 'lightgrey' : "grey",
+    fontFamily:'Lato-Regular',
+    fontSize:10
   }
 });
 

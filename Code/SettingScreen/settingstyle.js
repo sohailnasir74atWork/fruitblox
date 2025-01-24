@@ -40,11 +40,27 @@ export const getStyles = (isDarkMode) =>
         fontSize: 18,
         fontFamily:'Lato-Bold',
         color: isDarkMode ? '#fff' : '#000',
+        lineHeight:24
+
+      },
+      userNameLogout: {
+        fontSize: 18,
+        fontFamily:'Lato-Bold',
+        color: config.colors.secondary,
+        lineHeight:24
       },
       reward: {
         fontSize: 14,
         color: isDarkMode ? '#ccc' : '#666',
         fontFamily:'Lato-Regular'
+      },
+      rewardLogout: {
+        fontSize: 12,
+        color: isDarkMode ? '#ccc' : '#666',
+        fontFamily:'Lato-Regular',
+        overflow:'hidden',
+        width:250,
+        flexWrap:'wrap'
       },
       option: {
         flexDirection: 'row',

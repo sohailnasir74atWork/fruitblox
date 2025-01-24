@@ -10,6 +10,7 @@ import { useLocalState } from './LocalGlobelStats';
 const app = initializeApp(firebaseConfig);
 
 const appdatabase = getDatabase(app);
+appdatabase.persistenceEnabled = true;
 
 // Create Global Context
 const GlobalStateContext = createContext();
@@ -57,99 +58,146 @@ export const GlobalStateProvider = ({ children }) => {
       setTheme(localState.theme); 
 
   }, [localState.theme]);
-  useEffect(() => {
-    if (!user?.id) return;
+
+
+
+  // useEffect(() => {
+  //   if (!user?.id) return;
   
-    const privateChatsRef = database().ref('privateChat');
-    const lastReadRef = database().ref(`lastseen/${user.id}`);
-    const bannedRef = database().ref(`bannedUsers/${user.id}`);
+  //   const privateChatsRef = database().ref('privateChat');
+  //   const lastReadRef = database().ref(`lastseen/${user.id}`);
+  //   const bannedRef = database().ref(`bannedUsers/${user.id}`);
   
-    const fetchUnreadMessages = async (snapshot) => {
-      try {
-        // Use the snapshot from the listener if available, otherwise fetch once
-        const chatsData = snapshot?.val() || 
-          (await privateChatsRef.orderByChild(`participants/${user.id}`).once('value')).val() || {};
+  //   const fetchUnreadMessages = async (snapshot) => {
+  //     try {
+  //       // Use the snapshot from the listener if available, otherwise fetch once
+  //       const chatsData = snapshot?.val() || 
+  //         (await privateChatsRef.orderByChild(`participants/${user.id}`).once('value')).val() || {};
         
-        // Fetch additional data
-        const lastReadSnapshot = await lastReadRef.once('value');
-        const bannedSnapshot = await bannedRef.once('value');
+  //       // Fetch additional data
+  //       const lastReadSnapshot = await lastReadRef.once('value');
+  //       const bannedSnapshot = await bannedRef.once('value');
   
-        const lastReadData = lastReadSnapshot.val() || {};
-        const bannedData = bannedSnapshot.val() || {};
+  //       const lastReadData = lastReadSnapshot.val() || {};
+  //       const bannedData = bannedSnapshot.val() || {};
   
        
   
-        // Extract banned user IDs
-        const bannedUserIds = Object.keys(bannedData || {});
+  //       // Extract banned user IDs
+  //       const bannedUserIds = Object.keys(bannedData || {});
   
-        // Calculate unread messages for the current user
-        let totalUnread = 0;
+  //       // Calculate unread messages for the current user
+  //       let totalUnread = 0;
   
-        Object.entries(chatsData || {}).forEach(([chatKey, chatData]) => {
-          const otherUserId = Object.keys(chatData.participants || {}).find((id) => id !== user.id);
+  //       Object.entries(chatsData || {}).forEach(([chatKey, chatData]) => {
+  //         const otherUserId = Object.keys(chatData.participants || {}).find((id) => id !== user.id);
   
-          if (!otherUserId || bannedUserIds.includes(otherUserId)) return;
+  //         if (!otherUserId || bannedUserIds.includes(otherUserId)) return;
   
-          const unreadCount = Object.entries(chatData.messages || {}).filter(([_, msg]) => {
-            const isReceiver = msg.receiverId === user.id;
-            const isUnread = msg.timestamp > (lastReadData[chatKey] || 0);
-            return isReceiver && isUnread;
-          }).length;
+  //         const unreadCount = Object.entries(chatData.messages || {}).filter(([_, msg]) => {
+  //           const isReceiver = msg.receiverId === user.id;
+  //           const isUnread = msg.timestamp > (lastReadData[chatKey] || 0);
+  //           return isReceiver && isUnread;
+  //         }).length;
   
-          totalUnread += unreadCount;
-        });
+  //         totalUnread += unreadCount;
+  //       });
   
-        setUnreadMessagesCount(totalUnread);
-      } catch (error) {
-        console.error('Error fetching unread messages:', error.message);
-      }
-    };
+  //       setUnreadMessagesCount(totalUnread);
+  //     } catch (error) {
+  //       console.error('Error fetching unread messages:', error.message);
+  //     }
+  //   };
   
-    // Add real-time listeners
-    const chatsListener = privateChatsRef
-      .orderByChild(`participants/${user.id}`)
+  //   // Add real-time listeners
+  //   const chatsListener = privateChatsRef
+  //     .orderByChild(`participants/${user.id}`)
       
-      .on('value', fetchUnreadMessages);
+  //     .on('value', fetchUnreadMessages);
   
-    const lastReadListener = lastReadRef.on('value', fetchUnreadMessages);
-    const bannedListener = bannedRef.on('value', fetchUnreadMessages);
+  //   const lastReadListener = lastReadRef.on('value', fetchUnreadMessages);
+  //   const bannedListener = bannedRef.once('value', fetchUnreadMessages);
   
-    return () => {
-      // Cleanup listeners
-      privateChatsRef.off('value', chatsListener);
-      lastReadRef.off('value', lastReadListener);
-      bannedRef.off('value', bannedListener);
-    };
-  }, [user?.id]);
+  //   return () => {
+  //     // Cleanup listeners
+  //     privateChatsRef.off('value', chatsListener);
+  //     lastReadRef.off('value', lastReadListener);
+  //     bannedRef.off('value', bannedListener);
+  //   };
+  // }, [user?.id]);
   
   
   
 
 ////////////logic for setting online users status////////
+useEffect(() => {
+  if (!user?.id) return;
 
-  useEffect(() => {
-    if (!user?.id) return;
-  
-    const connectedRef = ref(appdatabase, ".info/connected");
-  
-    const handlePresence = onValue(connectedRef, (snapshot) => {
-      if (snapshot.val() === true) {
-        const userRef = ref(appdatabase, `onlineUsers/${user.id}`);
-  
-        // Set user as online
-        set(userRef, {
-          status: true,
-          timestamp: Date.now(),
-        });
-  
-        // Automatically remove user from onlineUser node on disconnect
-        onDisconnect(userRef).remove();
-      }
-    });
-  
-    return () => off(connectedRef, "value", handlePresence);
-  }, [user?.id]);
-  
+  const privateChatsRef = database().ref('privateChat');
+  const lastReadRef = database().ref(`lastseen/${user.id}`);
+  const bannedRef = database().ref(`bannedUsers/${user.id}`);
+
+  const combinedListener = async () => {
+    try {
+      // Fetch data with optimized queries
+      const [chatsSnapshot, lastReadSnapshot, bannedSnapshot] = await Promise.all([
+        privateChatsRef
+          .orderByChild(`participants/${user.id}`)
+          .limitToLast(50) // Fetch only the last 50 messages
+          .once('value'),
+        lastReadRef.once('value'),
+        bannedRef.once('value'), // One-time fetch for banned users
+      ]);
+
+      const chatsData = chatsSnapshot.val() || {};
+      const lastReadData = lastReadSnapshot.val() || {};
+      const bannedData = bannedSnapshot.val() || {};
+
+      const bannedUserIds = Object.keys(bannedData);
+
+      // Calculate unread messages
+      let totalUnread = 0;
+      Object.entries(chatsData).forEach(([chatKey, chatData]) => {
+        const otherUserId = Object.keys(chatData.participants || {}).find((id) => id !== user.id);
+
+        if (!otherUserId || bannedUserIds.includes(otherUserId)) return;
+
+        // Optimize unread count calculation
+        const unreadCount = Object.entries(chatData.messages || {}).filter(([_, msg]) => {
+          return (
+            msg.receiverId === user.id &&
+            msg.timestamp > (lastReadData[chatKey] || 0)
+          );
+        }).length;
+
+        totalUnread += unreadCount;
+      });
+
+      setUnreadMessagesCount(totalUnread);
+    } catch (error) {
+      console.error('Error in combined listener:', error.message);
+    }
+  };
+
+  // Attach listeners for real-time updates
+  const chatsListener = privateChatsRef
+    .orderByChild(`participants/${user.id}`)
+    .limitToLast(50) // Add a limit to reduce downloaded data
+    .on('child_added', combinedListener);
+
+  const lastReadListener = lastReadRef.on('value', combinedListener);
+
+  // Fetch banned users once (no listener needed)
+  combinedListener();
+
+  return () => {
+    // Clean up listeners
+    privateChatsRef.off('child_added', chatsListener);
+    lastReadRef.off('value', lastReadListener);
+  };
+}, [user?.id]);
+
+
   
   useEffect(() => {
     const onlineRef = ref(appdatabase, "onlineUsers");
@@ -234,32 +282,27 @@ export const GlobalStateProvider = ({ children }) => {
         const userId = loggedInUser.uid;
         const userRef = ref(appdatabase, `users/${userId}`);
         const snapshot = await get(userRef);
-
+  
         if (snapshot.exists()) {
-          // console.log('Fetched user data:', snapshot.val());
-          setUser((prev) => ({
-            ...prev,
+          setUser({
             ...snapshot.val(),
             id: userId, // Ensure ID persists
-          }));
-          updateLocalState('userId', userId);
+          });
         } else {
-          // console.log('Creating new user...');
           const newUser = createNewUser(userId, loggedInUser);
           await set(userRef, newUser);
           setUser(newUser);
         }
-
+  
         await registerForNotifications(userId);
       } else {
-        // console.log('User logged out');
-        resetUserState(); // Reset user state on logout
+        resetUserState();
       }
     });
-
-    return () => unsubscribe();
+  
+    return () => unsubscribe(); // Cleanup listener on unmount
   }, []);
-
+  
  const checkInternetConnection = async () => {
   try {
     const response = await fetch('https://www.google.com/favicon.ico', { method: 'HEAD', cache: 'no-store' });
