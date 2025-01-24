@@ -5,12 +5,15 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import moment from 'moment'; // Install moment.js for formatting timestamps
 import { useGlobalState } from '../GlobelStats';
 import config from '../Helper/Environment';
+import { useNavigation } from '@react-navigation/native';
+import { isUserOnline } from '../ChatScreen/utils';
 
-const TradeList = ({ navigation }) => {
+const TradeList = () => {
   const [trades, setTrades] = useState([]);
   const [filteredTrades, setFilteredTrades] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
+  const navigation = useNavigation()
   const {theme} = useGlobalState()
   const isDarkMode = theme === 'dark'
   const formatName = (name) => {
@@ -77,14 +80,31 @@ const TradeList = ({ navigation }) => {
       }
     };
 
-    
+    // console.log(item)
     // In renderTrade
-    const tradeStatus = getTradeStatus(item.hasTotal.price, item.wantsTotal.price);  
+    const tradeStatus = getTradeStatus(item.hasTotal.price, item.wantsTotal.price);
+    
+    
+
+    const handleChatNavigation = async () => {
+      try {
+        const isOnline = await isUserOnline(item.userId); // Resolve the promise
+        navigation.navigate('PrivateChat', {
+          selectedUser: {
+            senderId: item.userId,
+            sender: item.traderName,
+            avatar: item.avatar,
+          },
+          isOnline, // Pass the resolved boolean
+        });
+      } catch (error) {
+        console.error('Error checking online status:', error);
+        Alert.alert('Error', 'Unable to navigate to the chat. Please try again later.');
+      }
+    };
     return (
       <View
-        style={styles.tradeItem}
-        onPress={() => navigation.navigate('TradeChat', { tradeId: item.id })}
-      >
+        style={styles.tradeItem}>
         {/* Trader Info */}
         <View style={styles.tradeHeader}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -147,7 +167,7 @@ const TradeList = ({ navigation }) => {
         {item.description  && <Text style={styles.description}>Note: {item.description}</Text>}
         {/* Action Buttons */}
         <View style={styles.actionButtons}>
-        <TouchableOpacity>
+        <TouchableOpacity  onPress={handleChatNavigation}>
           <View style={styles.tradeActions}>
             <Icon name="chatbox-outline" size={14} color={config.colors.hasBlockGreen} />
             <Text style={[styles.actionText]}>Send Message</Text>
@@ -249,8 +269,8 @@ StyleSheet.create({
     paddingVertical:15,
   },
   itemImage: {
-    width: 50,
-    height: 50,
+    width: 45,
+    height: 45,
     // marginRight: 5,
     borderRadius: 25,
     marginVertical:5
@@ -286,8 +306,8 @@ StyleSheet.create({
     alignSelf: 'center', // Centers within the parent container
     color: isDarkMode ? 'white' : "white",
     marginHorizontal:'auto',
-    paddingHorizontal:10,
-    paddingVertical:5,
+    paddingHorizontal:7,
+    paddingVertical:3,
     borderRadius:3
   },
   hasBackground:{

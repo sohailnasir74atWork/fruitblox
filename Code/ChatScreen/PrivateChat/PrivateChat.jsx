@@ -19,7 +19,7 @@ import getAdUnitId from '../../Ads/ads';
 import { BannerAd, BannerAdSize } from 'react-native-google-mobile-ads';
 import ConditionalKeyboardWrapper from '../../Helper/keyboardAvoidingContainer';
 
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 30;
 const bannerAdUnitId = getAdUnitId('banner');
 
 const PrivateChatScreen = () => {
@@ -52,10 +52,9 @@ const PrivateChatScreen = () => {
     [myUserId, selectedUserId]
   );
 
-  const chatRef = useMemo(() => database().ref(`privateChat/${chatKey}`), [chatKey]);
-  const messagesRef = useMemo(() => database().ref(`privateChat/${chatKey}/messages`), [chatKey]);
-
-
+  const messagesRef = useMemo(() => database().ref(`private_chat/${chatKey}/messages`), [chatKey]);
+// console.log(selecte÷dUser)
+  
   // Load messages with pagination
   const loadMessages = useCallback(
     async (reset = false) => {
@@ -73,6 +72,7 @@ const PrivateChatScreen = () => {
           .sort((a, b) => b.timestamp - a.timestamp);
 
         if (parsedMessages.length > 0) {
+
           setMessages((prev) => (reset ? parsedMessages : [...parsedMessages, ...prev]));
           setLastLoadedKey(Object.keys(data)[0]);
         } else if (reset) {
@@ -87,6 +87,8 @@ const PrivateChatScreen = () => {
     [messagesRef, lastLoadedKey]
   );
 // console.log(selectedUser.sender)
+
+
   // Send message
   const sendMessage = useCallback(
     async (text) => {
@@ -101,51 +103,42 @@ const PrivateChatScreen = () => {
       const newMessage = {
         text: trimmedText,
         senderId: myUserId,
-        senderName: user.displayname || 'Unknown',
-        senderAvatar: user?.avatar || 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png',
-        receiverId: selectedUserId,
-        receiverName: selectedUser?.sender || 'Unknown Receiver',
-        receiverAvatar: selectedUser?.avatar || 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png',
         timestamp,
-        replyTo: replyTo ? { id: replyTo.id, text: replyTo.text } : null,
       };
   
       try {
-        // Push message
+        // Generate deterministic chatId based on participants
+        const chatId = [myUserId, selectedUserId].sort().join('_');
+        const chatRef = database().ref(`private_chat/${chatId}`);
+  
+        // Push the new message to the `messages` node
         await chatRef.child(`messages/${timestamp}`).set(newMessage);
   
-        // Only update participants if needed
-        const participantsRef = chatRef.child('participants');
-        participantsRef.transaction((currentParticipants) => {
-          if (currentParticipants) {
-            return {
-              ...currentParticipants,
-              [myUserId]: {
-                name: user.displayname || 'Unknown',
-                avatar: user?.avatar || 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png',
-                lastSeen: timestamp,
-              },
-              [selectedUserId]: currentParticipants[selectedUserId] || {
-                name: selectedUser?.sender || 'Unknown Receiver',
-                avatar: selectedUser?.avatar || 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png',
-                lastSeen: null,
-              },
-            };
-          }
-          return {
-            [myUserId]: {
-              name: user.displayname || 'Unknown',
-              avatar: user?.avatar || 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png',
-              lastSeen: timestamp,
-            },
-            [selectedUserId]: {
-              name: selectedUser?.sender || 'Unknown Receiver',
-              avatar: selectedUser?.avatar || 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png',
-              lastSeen: null,
-            },
-          };
+        // Update the `participants` node using `true` for IDs
+        const participantsUpdate = {
+          [`participants/${myUserId}`]: true,
+          [`participants/${selectedUserId}`]: true,
+        };
+        await chatRef.update(participantsUpdate);
+        const chatMetadata = {
+          receiverName: selectedUser?.sender || 'Unknown Receiver',
+          receiverAvatar: selectedUser?.avatar || 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png',
+          receiverId: selectedUserId,
+          senderName: user?.displayname || 'Unknown Receiver',
+          senderAvatar: user?.avatar || 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png',
+          senderId: user.id,
+        };
+        await chatRef.child('metadata').update(chatMetadata);
+  
+        // Update the `lastMessage` metadata
+        await chatRef.child('lastMessage').set({
+          text: trimmedText,
+          timestamp,
+          senderId: myUserId,
+          senderName: user.displayname || 'Unknown',
         });
   
+        // Clear input and reply context
         setInput('');
         setReplyTo(null);
       } catch (error) {
@@ -153,7 +146,7 @@ const PrivateChatScreen = () => {
         Alert.alert('Error', 'Could not send your message. Please try again.');
       }
     },
-    [chatRef, myUserId, selectedUser, selectedUserId, user, replyTo]
+    [myUserId, selectedUserId, user]
   );
   
 
@@ -220,6 +213,8 @@ useEffect(() => {
           refreshing={refreshing}
           onRefresh={handleRefresh}
           isBanned={isBanned}
+          selectedUser={selectedUser}
+          user={user}
           onReply={(message) => setReplyTo(message)}
         />
       )}

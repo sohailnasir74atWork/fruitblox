@@ -81,6 +81,8 @@ const MessagesList = ({
       : null;
     const shouldShowDateHeader = currentDate !== previousDate;
 
+
+
     return (
       <View>
         {/* Display the date header if it's a new day */}

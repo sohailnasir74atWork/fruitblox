@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { initializeApp, getApps } from 'firebase/app';
-import { getDatabase, ref, set, onValue, get, update, off, onDisconnect, query, orderByChild, equalTo } from 'firebase/database';
+import { getDatabase, ref, set, onValue, get, update, off, onDisconnect, query, orderByChild, equalTo, remove } from 'firebase/database';
 import auth from '@react-native-firebase/auth';
 import { Appearance } from 'react-native';
 import { createNewUser, firebaseConfig, registerForNotifications } from './Globelhelper';
@@ -127,76 +127,135 @@ export const GlobalStateProvider = ({ children }) => {
   // }, [user?.id]);
   
   
-  
+
 
 ////////////logic for setting online users status////////
 useEffect(() => {
   if (!user?.id) return;
 
-  const privateChatsRef = database().ref('privateChat');
+  const privateChatsRef = database().ref('private_chat');
   const lastReadRef = database().ref(`lastseen/${user.id}`);
   const bannedRef = database().ref(`bannedUsers/${user.id}`);
 
-  const combinedListener = async () => {
+  const fetchChatsAndUnreadMessages = async () => {
     try {
-      // Fetch data with optimized queries
+      // Fetch all relevant data in a single batch
       const [chatsSnapshot, lastReadSnapshot, bannedSnapshot] = await Promise.all([
         privateChatsRef
           .orderByChild(`participants/${user.id}`)
-          .limitToLast(50) // Fetch only the last 50 messages
+          .equalTo(true) // Fetch only chats where the user is a participant
           .once('value'),
         lastReadRef.once('value'),
-        bannedRef.once('value'), // One-time fetch for banned users
+        bannedRef.once('value'),
       ]);
 
       const chatsData = chatsSnapshot.val() || {};
       const lastReadData = lastReadSnapshot.val() || {};
       const bannedData = bannedSnapshot.val() || {};
 
-      const bannedUserIds = Object.keys(bannedData);
-
-      // Calculate unread messages
+      const bannedUserIds = new Set(Object.keys(bannedData)); // Use a Set for faster lookups
       let totalUnread = 0;
+
       Object.entries(chatsData).forEach(([chatKey, chatData]) => {
         const otherUserId = Object.keys(chatData.participants || {}).find((id) => id !== user.id);
 
-        if (!otherUserId || bannedUserIds.includes(otherUserId)) return;
+        if (!otherUserId || bannedUserIds.has(otherUserId)) return;
 
-        // Optimize unread count calculation
-        const unreadCount = Object.entries(chatData.messages || {}).filter(([_, msg]) => {
-          return (
-            msg.receiverId === user.id &&
-            msg.timestamp > (lastReadData[chatKey] || 0)
-          );
-        }).length;
+        const lastReadTimestamp = lastReadData[chatKey] || 0;
+        const lastMessage = chatData.lastMessage;
 
-        totalUnread += unreadCount;
+        if (lastMessage && lastMessage.timestamp > lastReadTimestamp && lastMessage.senderId !== user.id) {
+          totalUnread += 1; // Increment unread count
+        }
       });
 
       setUnreadMessagesCount(totalUnread);
     } catch (error) {
-      console.error('Error in combined listener:', error.message);
+      console.error('Error fetching chats or unread messages:', error.message);
     }
   };
 
-  // Attach listeners for real-time updates
+  // Real-time listener for `lastMessage` updates
   const chatsListener = privateChatsRef
     .orderByChild(`participants/${user.id}`)
-    .limitToLast(50) // Add a limit to reduce downloaded data
-    .on('child_added', combinedListener);
+    .equalTo(true)
+    .on('child_changed', (snapshot) => {
+      const chatKey = snapshot.key;
+      const chatData = snapshot.val();
 
-  const lastReadListener = lastReadRef.on('value', combinedListener);
+      if (chatData && chatData.lastMessage) {
+        const lastMessage = chatData.lastMessage;
 
-  // Fetch banned users once (no listener needed)
-  combinedListener();
+        // Check if the last message is unread
+        database()
+          .ref(`lastseen/${user.id}/${chatKey}`)
+          .once('value')
+          .then((lastReadSnapshot) => {
+            const lastReadTimestamp = lastReadSnapshot.val() || 0;
+
+            if (lastMessage.timestamp > lastReadTimestamp && lastMessage.senderId !== user.id) {
+              setUnreadMessagesCount((prev) => prev + 1);
+            }
+          })
+          .catch((error) => {
+            console.error('Error fetching last seen data:', error.message);
+          });
+      }
+    });
+
+  // Listener for updates to last read timestamps
+  const lastReadListener = lastReadRef.on('value', fetchChatsAndUnreadMessages);
+
+  // Fetch all required data initially
+  fetchChatsAndUnreadMessages();
 
   return () => {
-    // Clean up listeners
-    privateChatsRef.off('child_added', chatsListener);
+    // Cleanup listeners
+    privateChatsRef.off('child_changed', chatsListener);
     lastReadRef.off('value', lastReadListener);
   };
 }, [user?.id]);
 
+
+useEffect(() => {
+  if (!user?.id) return;
+
+  const userOnlineRef = ref(appdatabase, `onlineUsers/${user.id}`);
+  const timestamp = Date.now();
+
+  // Set the user as online with status and timestamp
+  set(userOnlineRef, {
+    status: true,
+    timestamp: timestamp,
+  })
+    .then(() => {
+      console.log('User set as online:', user.id);
+    })
+    .catch((error) => {
+      console.error('Error setting user online:', error);
+    });
+
+  // Handle disconnection to remove the user from onlineUsers
+  onDisconnect(userOnlineRef)
+    .remove()
+    .then(() => {
+      console.log('User will be removed from online users on disconnect:', user.id);
+    })
+    .catch((error) => {
+      console.error('Error setting onDisconnect handler:', error);
+    });
+
+  return () => {
+    // Cleanup: Remove the user from online users when logging out or unmounting
+    remove(userOnlineRef)
+      .then(() => {
+        console.log('User removed from online users:', user.id);
+      })
+      .catch((error) => {
+        console.error('Error removing user from online users:', error);
+      });
+  };
+}, [user?.id]);
 
   
   useEffect(() => {

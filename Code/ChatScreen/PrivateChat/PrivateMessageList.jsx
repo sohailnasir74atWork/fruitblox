@@ -18,6 +18,8 @@ import ReportPopup from '../ReportPopUp';
 const PrivateMessageList = ({
   messages,
   userId,
+  user,
+  selectedUser,
   handleLoadMore,
   refreshing,
   onRefresh,
@@ -50,16 +52,18 @@ const PrivateMessageList = ({
     onReportSubmit(message, reason);
     setShowReportPopup(false);
   };
+  // console.log(selectedUserId === userId)
 
   // Render a single message
   const renderMessage = ({ item }) => {
     const isMyMessage = item.senderId === userId;
+
     // console.log(isMyMessage)
     // console.log(item, isMyMessage);
     // console.log('Selected User Avatar:', selectedUser?.avatar);
-    const avatarUri = selectedUserId === userId
-    ? item.receiverAvatar || (console.warn('Missing senderAvatar, using default'), 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png')
-    : item.senderAvatar || (console.warn('Missing receiverAvatar, using default'), 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png');
+    const avatarUri = item.senderId !== userId
+    ? selectedUser?.avatar || (console.warn('Missing senderAvatar, using default'), 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png')
+    : user?.avatar || (console.warn('Missing receiverAvatar, using default'), 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png');
   
     return (
       <View
