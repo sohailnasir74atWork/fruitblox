@@ -13,7 +13,7 @@ import ConditionalKeyboardWrapper from '../Helper/keyboardAvoidingContainer';
 import Icons from 'react-native-vector-icons/FontAwesome';
 import { useHaptic } from '../Helper/HepticFeedBack';
   
-import { getDatabase, ref, push } from 'firebase/database';
+import { getDatabase, ref, push, get } from 'firebase/database';
 import { getAuth } from 'firebase/auth';
 import { useLocalState } from '../LocalGlobelStats';
 import { submitTrade } from './HomeScreenHelper';
@@ -24,7 +24,7 @@ const interstitialAdUnitId = getAdUnitId('interstitial');
 const interstitial = InterstitialAd.createForAdRequest(interstitialAdUnitId);
 
 const HomeScreen = ({ selectedTheme }) => {
-  const { state, theme, user } = useGlobalState();
+  const { state, theme, user, updateLocalStateAndDatabase } = useGlobalState();
   const initialItems = [null, null];
   const [hasItems, setHasItems] = useState(initialItems);
   const [fruitRecords, setFruitRecords] = useState([]);
@@ -57,11 +57,48 @@ const HomeScreen = ({ selectedTheme }) => {
     setWantsItems([...initialItems]); // Use a new array to avoid mutating the original reference
   };
 
-  const handleCreateTrade = () => {
-    setModalVisible(false); // Close modal
-    submitTrade(user, hasItems, wantsItems, hasTotal, wantsTotal, message, description, resetState); // Call submitTrade with description
+  const handleCreateTrade = async () => {
+    const userPoints = user?.points || 0; // Fetch user points
+    const userId = user?.id; // User ID
+    const database = getDatabase();
+    const freeTradeRef = ref(database, `freeTradeUsed/${userId}`);
+  
+    try {
+      // Check if the user has already used their free trade
+      const snapshot = await get(freeTradeRef);
+      const hasUsedFreeTrade = snapshot.exists() && snapshot.val();
+  
+      if (!hasUsedFreeTrade) {
+        // User can create a free trade
+        await set(freeTradeRef, true); // Mark free trade as used
+        showInterstitialAd(() => {
+          setModalVisible(false); // Close modal
+          submitTrade(user, hasItems, wantsItems, hasTotal, wantsTotal, message, description, resetState);
+        });
+        Alert.alert('Success', 'Your free trade has been posted!');
+      } else {
+        // User needs to spend points
+        if (userPoints >= 300) {
+          const updatedPoints = userPoints - 300;
+          await updateLocalStateAndDatabase('points', updatedPoints); // Deduct points
+          showInterstitialAd(() => {
+            setModalVisible(false); // Close modal
+            submitTrade(user, hasItems, wantsItems, hasTotal, wantsTotal, message, description, resetState);
+          });
+          Alert.alert('Success', 'Trade posted successfully!');
+        } else {
+          Alert.alert(
+            'Insufficient Points',
+            'You need 300 points to create a trade. Earn more points to continue.'
+          );
+        }
+      }
+    } catch (error) {
+      console.error('Error creating trade:', error);
+      Alert.alert('Error', 'Unable to create trade. Please try again later.');
+    }
   };
-
+  
   
 
 

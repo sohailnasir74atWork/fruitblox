@@ -14,6 +14,7 @@ import NotificationHandler from './Code/Firebase/FrontendNotificationHandling';
 import { GlobalStateProvider, useGlobalState } from './Code/GlobelStats';
 import { LocalStateProvider, useLocalState } from './Code/LocalGlobelStats';
 import { MenuProvider } from 'react-native-popup-menu';
+import { AdsConsent, AdsConsentStatus } from 'react-native-google-mobile-ads';
 import MainTabs from './Code/AppHelper/MainTabs';
 import {
   handleUserConsent,
@@ -49,7 +50,23 @@ function App() {
 
     updateLocalState('reviewCount', Number(reviewCount) + 1);
   }, []);
-
+  const handleUserConsent = async (setConsentStatus, setLoading) => {
+    try {
+      const consentInfo = await AdsConsent.requestInfoUpdate();
+      if (consentInfo.isConsentFormAvailable) {
+        if (consentInfo.status === AdsConsentStatus.REQUIRED) {
+          const formResult = await AdsConsent.showForm();
+          setConsentStatus(formResult.status);
+        } else {
+          setConsentStatus(consentInfo.status);
+        }
+      }
+    } catch (error) {
+      console.error('Error handling consent:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
   // Handle Consent
   useEffect(() => {
     handleUserConsent(setLoading);

@@ -9,6 +9,7 @@ import { ChatStack } from '../ChatScreen/ChatNavigator';
 import SettingsScreen from '../SettingScreen/Setting';
 import config from '../Helper/Environment';
 import TradeList from '../Trades/Trades';
+import { TradeStack } from '../Trades/TradeNavigator';
 const Tab = createBottomTabNavigator();
 
 const AnimatedTabIcon = React.memo(({ focused, iconName, color, size }) => {
@@ -120,8 +121,20 @@ const MainTabs = React.memo(({ selectedTheme, chatFocused, setChatFocused, modal
         <Tab.Screen name="Stock">
           {() => <TimerScreen selectedTheme={selectedTheme} />}
         </Tab.Screen>
-        <Tab.Screen name="Trade">
-          {() => <TradeList selectedTheme={selectedTheme} />}
+        <Tab.Screen
+          name="Trade"
+          options={{
+            headerShown: false,
+          }}
+        >
+          {() => (
+            <TradeStack
+              selectedTheme={selectedTheme}
+              setChatFocused={setChatFocused}
+              modalVisibleChatinfo={modalVisibleChatinfo}
+              setModalVisibleChatinfo={setModalVisibleChatinfo}
+            />
+          )}
         </Tab.Screen>
         <Tab.Screen
           name="Chat"

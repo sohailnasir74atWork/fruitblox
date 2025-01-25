@@ -7,29 +7,26 @@ import { useGlobalState } from '../../GlobelStats';
 
 const PrivateChatHeader = ({ selectedUser, isOnline, selectedTheme, bannedUsers }) => {
   const { user } = useGlobalState();
+
   const avatarUri = selectedUser?.avatar || 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png';
-  // console.log(selectedUser)
   const userName = selectedUser?.sender || 'User';
 
-  // Check if the user is currently banned
+  // Determine if the user is banned
   const isBanned = useMemo(
     () => bannedUsers?.some((banned) => banned.id === selectedUser?.senderId),
     [bannedUsers, selectedUser?.senderId]
   );
 
-  const onlineStatusColor = isBanned
-    ? config.colors.wantBlockRed // Banned user color
-    : isOnline
-    ? config.colors.hasBlockGreen // Online user color
-    : config.colors.wantBlockRed; // Offline user color
+  const onlineStatusColor = useMemo(
+    () => (isBanned ? config.colors.wantBlockRed : isOnline ? config.colors.hasBlockGreen : config.colors.wantBlockRed),
+    [isBanned, isOnline]
+  );
 
   const handleBanToggle = async () => {
     try {
-      if (isBanned) {
-        await unbanUserInChat(user.id, selectedUser.senderId); // Unban user
-      } else {
-        await banUserInChat(user.id, selectedUser); // Ban user
-      }
+      isBanned
+        ? await unbanUserInChat(user.id, selectedUser.senderId) // Unban user
+        : await banUserInChat(user.id, selectedUser); // Ban user
     } catch (error) {
       console.error('Error toggling ban status:', error);
     }
@@ -56,12 +53,10 @@ const PrivateChatHeader = ({ selectedUser, isOnline, selectedTheme, bannedUsers 
   );
 };
 
-// Styles
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    // paddingHorizontal: 10,
     paddingVertical: 5,
   },
   avatar: {
@@ -69,7 +64,7 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
     marginRight: 10,
-    backgroundColor:'white'
+    backgroundColor: 'white',
   },
   infoContainer: {
     flex: 1,

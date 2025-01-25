@@ -1,18 +1,35 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { View, FlatList, Text, TouchableOpacity, StyleSheet, Image, ActivityIndicator, TextInput } from 'react-native';
-import { getDatabase, ref, onValue } from 'firebase/database';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { View, FlatList, Text, TouchableOpacity, StyleSheet, Image, ActivityIndicator, TextInput, Alert } from 'react-native';
+import { getDatabase, ref, onValue, remove, set, get } from 'firebase/database';
 import Icon from 'react-native-vector-icons/Ionicons';
 import moment from 'moment'; // Install moment.js for formatting timestamps
 import { useGlobalState } from '../GlobelStats';
 import config from '../Helper/Environment';
 import { useNavigation } from '@react-navigation/native';
 import { isUserOnline } from '../ChatScreen/utils';
+import { BannerAd, BannerAdSize } from 'react-native-google-mobile-ads';
+import getAdUnitId from '../Ads/ads';
+import { query, orderByKey, limitToLast, endAt } from 'firebase/database';
+import { FilterMenu } from './tradeHelpers';
+
+
+const bannerAdUnitId = getAdUnitId('banner');
 
 const TradeList = () => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isAdVisible, setIsAdVisible] = useState(true);
+  const {user} = useGlobalState()
   const [trades, setTrades] = useState([]);
   const [filteredTrades, setFilteredTrades] = useState([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [loading, setLoading] = useState(true);
+const [loading, setLoading] = useState(false);
+const [refreshing, setRefreshing] = useState(false);
+const [lastKey, setLastKey] = useState(null);
+const [hasMore, setHasMore] = useState(true);
+const [filterType, setFilterType] = useState('');
+
+const PAGE_SIZE = 10; // Number of items to load per page
+
+
   const navigation = useNavigation()
   const {theme} = useGlobalState()
   const isDarkMode = theme === 'dark'
@@ -22,22 +39,88 @@ const TradeList = () => {
     return formattedName;
   };
 
+
+  const handleDelete = useCallback(async (item) => {
+    try {
+      const db = getDatabase();
+      const tradeRef = ref(db, `trades/${item.id}`);
+      await set(tradeRef, null);
+      setTrades((prev) => prev.filter((trade) => trade.id !== item.id));
+      setFilteredTrades((prev) => prev.filter((trade) => trade.id !== item.id));
+      Alert.alert('Success', 'Trade deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting trade:', error);
+      Alert.alert('Error', 'Failed to delete the trade. Please try again.');
+    }
+  }, []);
+  
+  
   const formatValue = (value) => {
     return value >= 1000000 ? `${(value / 1000000).toFixed(1)}M` : value.toLocaleString();
   };
   useEffect(() => {
-    if (searchQuery.trim() === '') {
-      setFilteredTrades(trades);
-    } else {
-      const lowerCaseQuery = searchQuery.toLowerCase();
-      const filtered = trades.filter((trade) =>
-        trade.wantsItems?.some((item) => item.name.toLowerCase().includes(lowerCaseQuery))
+    const lowerCaseQuery = searchQuery.trim().toLowerCase();
+  
+    if (filterType === 'hasItems') {
+      setFilteredTrades(
+        trades.filter((trade) =>
+          trade.hasItems?.some((item) => item.name.toLowerCase().includes(lowerCaseQuery))
+        )
       );
-      setFilteredTrades(filtered);
+    } else if (filterType === 'wantsItems') {
+      setFilteredTrades(
+        trades.filter((trade) =>
+          trade.wantsItems?.some((item) => item.name.toLowerCase().includes(lowerCaseQuery))
+        )
+      );
+    } else if (filterType === 'myTrades') {
+      setFilteredTrades(trades.filter((trade) => trade.userId === user.id));
+    } else {
+      setFilteredTrades(trades);
     }
-  }, [searchQuery, trades]);
-
-
+  }, [searchQuery, trades, filterType]);
+  
+  const fetchTrades = useCallback(async (reset = false) => {
+    try {
+      setLoading(true);
+      const db = getDatabase();
+      const tradeRef = ref(db, 'trades/');
+      const queryRef = reset || !lastKey
+        ? query(tradeRef, orderByKey(), limitToLast(PAGE_SIZE))
+        : query(tradeRef, orderByKey(), endAt(lastKey), limitToLast(PAGE_SIZE + 1));
+  
+      const snapshot = await get(queryRef);
+      const data = snapshot.val();
+      if (data) {
+        const tradeList = Object.keys(data).map((key) => ({ id: key, ...data[key] })).reverse();
+        reset ? setTrades(tradeList) : setTrades((prev) => [...tradeList.slice(1), ...prev]);
+        if (tradeList.length > 0) {
+          setLastKey(tradeList[tradeList.length - 1].id);
+          setHasMore(tradeList.length >= PAGE_SIZE);
+        }
+      } else {
+        setHasMore(false);
+      }
+    } catch (error) {
+      console.error('Error fetching trades:', error);
+      Alert.alert('Error', 'Unable to fetch trades.');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [lastKey]);
+  
+  
+  
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchTrades(true); // Fetch the first page
+  };
+  const handleLoadMore = () => {
+    if (loading || !hasMore) return; // Prevent duplicate loads
+    fetchTrades();
+  };
+      
   useEffect(() => {
     const db = getDatabase();
     const tradeRef = ref(db, 'trades/');
@@ -56,16 +139,23 @@ const TradeList = () => {
   }, []);
 
   const styles = useMemo(() => getStyles(isDarkMode), [isDarkMode]);
-
+  const searchText = useMemo(() => {
+    switch (filterType) {
+      case 'wantsItems':
+        return 'Search by Wants Item';
+      case 'hasItems':
+        return 'Search by Has Item';
+      case 'myTrades':
+        return 'My Trades';
+      default:
+        return 'Search by Wants Item';
+    }
+  }, [filterType]);
   const renderTrade = ({ item }) => {
     const formattedTime = moment(item.timestamp).fromNow();
   
     // Determine if the trade is fair or not
-    const isFairTrade = (hasTotal, wantsTotal) => {
-      const lowerBound = hasTotal * 0.9;
-      const upperBound = hasTotal * 1.1;
-      return wantsTotal >= lowerBound && wantsTotal <= upperBound;
-    };
+   
   // console.log(item)
     const getTradeStatus = (hasTotal, wantsTotal) => {
       const lowerBound = hasTotal * 0.9;
@@ -76,32 +166,30 @@ const TradeList = () => {
       } else if (wantsTotal < upperBound) {
         return 'Good';
       } else {
-        return 'Bad';
+        return 'Poor';
       }
     };
-
     // console.log(item)
     // In renderTrade
     const tradeStatus = getTradeStatus(item.hasTotal.price, item.wantsTotal.price);
     
-    
-
     const handleChatNavigation = async () => {
       try {
         const isOnline = await isUserOnline(item.userId); // Resolve the promise
-        navigation.navigate('PrivateChat', {
-          selectedUser: {
-            senderId: item.userId,
-            sender: item.traderName,
-            avatar: item.avatar,
-          },
-          isOnline, // Pass the resolved boolean
+        navigation.navigate('PrivateChatTrade', {
+            selectedUser: {
+              senderId: item.userId,
+              sender: item.traderName,
+              avatar: item.avatar,
+            },
+            isOnline,
         });
       } catch (error) {
-        console.error('Error checking online status:', error);
+        console.error('Error navigating to PrivateChat:', error);
         Alert.alert('Error', 'Unable to navigate to the chat. Please try again later.');
       }
     };
+    
     return (
       <View
         style={styles.tradeItem}>
@@ -123,7 +211,12 @@ const TradeList = () => {
         <View style={styles.tradeTotals}>
           <Text style={[styles.priceText, styles.hasBackground]}>Has: {formatValue(item.hasTotal.price)}</Text>
           <View style={styles.transfer}>
-           
+          {item.userId === user.id && <Icon
+  name="trash-outline"
+  size={18}
+  color={config.colors.wantBlockRed}
+  onPress={() => handleDelete(item)} // Call handleDelete
+/>}
           </View>
           <Text style={[styles.priceText, styles.wantBackground]}>Want: {formatValue(item.wantsTotal.price)}</Text>
         </View>
@@ -189,39 +282,66 @@ const TradeList = () => {
     return <ActivityIndicator style={styles.loader} size="large" color="#007BFF" />;
   }
 
-  
+ 
   return (
     <View style={styles.container}>
+      <View style={{ flexDirection:'row', alignItems:'center'}}>
       <TextInput
         style={styles.searchInput}
-        placeholder="Search trades by wanted items..."
+        placeholder={searchText}
         value={searchQuery}
         onChangeText={setSearchQuery}
-        placeholderTextColor={isDarkMode ? '#666' : '#aaa'}
+        placeholderTextColor={isDarkMode ? 'white' : '#aaa'}
       />
-    
+      <FilterMenu setFilterType={setFilterType} currentFilter={filterType} />
+    </View>
     <FlatList
-      data={trades}
-      renderItem={renderTrade}
-      keyExtractor={(item) => item.id}
-      showsVerticalScrollIndicator={false}
-      contentContainerStyle={{paddingBottom:60}}
+  data={filteredTrades}
+  renderItem={renderTrade}
+  keyExtractor={(item, index) => `${item.id}_${index}`}
+  showsVerticalScrollIndicator={false}
+  contentContainerStyle={{ paddingBottom: 60 }}
+  onEndReached={handleLoadMore}
+  onEndReachedThreshold={0.5}
+  onRefresh={handleRefresh}
+  refreshing={refreshing}
+  ListFooterComponent={loading && hasMore ? <ActivityIndicator size="small" color="#007BFF" /> : null}
+/>
+
+
+
+      <View style={{ alignSelf: 'center' }}>
+  {isAdVisible && (
+    <BannerAd
+      unitId={bannerAdUnitId}
+      size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+      onAdLoaded={() => setIsAdVisible(true)} 
+      onAdFailedToLoad={() => setIsAdVisible(false)} 
     />
+  )}
+</View>
     </View>
   );
 };
 const getStyles = (isDarkMode) =>
 StyleSheet.create({
   container: {
-    padding: 8,
-    backgroundColor: isDarkMode ? '#121212' : 'lightgrey',
+    paddingHorizontal: 8,
+    backgroundColor: isDarkMode ? '#121212' : '#f2f2f7',
+    flex:1
   },
   tradeItem: {
     padding: 10,
     marginBottom: 10,
-    backgroundColor: isDarkMode ? config.colors.primary: 'white' ,
-    borderRadius: 10,
+    backgroundColor: isDarkMode ? config.colors.primary : 'white',
+    borderRadius: 10, // Ensure smooth corners
+    shadowColor: '#000', // Shadow color for iOS
+    shadowOffset: { width: 0, height: 0 }, // Positioning of the shadow
+    shadowOpacity: 0.2, // Opacity for iOS shadow
+    shadowRadius: 2, // Spread of the shadow
+    elevation: 2, // Elevation for Android (4-sided shadow)
   },
+  
   searchInput: {
     height: 48,
     borderColor: isDarkMode ? config.colors.primary: 'white' ,
@@ -231,6 +351,13 @@ StyleSheet.create({
     marginVertical: 8,
     paddingHorizontal: 10,
     color: isDarkMode ? 'white' : 'black',
+    flex:1,
+    borderRadius: 10, // Ensure smooth corners
+    shadowColor: '#000', // Shadow color for iOS
+    shadowOffset: { width: 0, height: 0 }, // Positioning of the shadow
+    shadowOpacity: 0.2, // Opacity for iOS shadow
+    shadowRadius: 2, // Spread of the shadow
+    elevation: 2, // Elevation for Android (4-sided shadow)
   },
   tradeHeader: {
     flexDirection: 'row',
@@ -272,7 +399,7 @@ StyleSheet.create({
     width: 45,
     height: 45,
     // marginRight: 5,
-    borderRadius: 25,
+    // borderRadius: 25,
     marginVertical:5
 
   },

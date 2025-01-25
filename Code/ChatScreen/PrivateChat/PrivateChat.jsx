@@ -39,7 +39,6 @@ const PrivateChatScreen = () => {
     const bannedUserIds = bannedUsers?.map((user) => user.id) || [];
     return bannedUserIds.includes(selectedUserId);
   }, [bannedUsers, selectedUserId]);
-  
     const isDarkMode = theme === 'dark';
   const styles = useMemo(() => getStyles(isDarkMode), [isDarkMode]);
 
