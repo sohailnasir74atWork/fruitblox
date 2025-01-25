@@ -13,10 +13,12 @@ import ConditionalKeyboardWrapper from '../Helper/keyboardAvoidingContainer';
 import Icons from 'react-native-vector-icons/FontAwesome';
 import { useHaptic } from '../Helper/HepticFeedBack';
   
-import { getDatabase, ref, push, get } from 'firebase/database';
+import { getDatabase, ref, push, get, set } from 'firebase/database';
 import { getAuth } from 'firebase/auth';
 import { useLocalState } from '../LocalGlobelStats';
 import { submitTrade } from './HomeScreenHelper';
+import SignInDrawer from '../Firebase/SigninDrawer';
+import { useNavigation } from '@react-navigation/native';
 
 
 const bannerAdUnitId = getAdUnitId('banner');
@@ -42,6 +44,8 @@ const HomeScreen = ({ selectedTheme }) => {
   const {localState} = useLocalState()
   const [modalVisible, setModalVisible] = useState(false);
   const [description, setDescription] = useState('');
+  const [isSigninDrawerVisible, setIsSigninDrawerVisible] = useState(false);
+
 
   const isDarkMode = theme === 'dark'
   const viewRef = useRef();
@@ -56,6 +60,25 @@ const HomeScreen = ({ selectedTheme }) => {
     setHasItems([...initialItems]); // Use a new array to avoid mutating the original reference
     setWantsItems([...initialItems]); // Use a new array to avoid mutating the original reference
   };
+const navigation = useNavigation()
+
+  const handleCreateTradePress = async () => {
+
+
+    if (!user.id) {
+     setIsSigninDrawerVisible(true)
+      return;
+    }
+  
+    if (hasItems.filter(Boolean).length === 0 || wantsItems.filter(Boolean).length === 0) {
+      Alert.alert('Error', 'Please add at least one item to both "You" and "Them" sections.');
+      return;
+    }
+    setModalVisible(true)
+  };
+  
+  
+
 
   const handleCreateTrade = async () => {
     const userPoints = user?.points || 0; // Fetch user points
@@ -68,30 +91,53 @@ const HomeScreen = ({ selectedTheme }) => {
       const snapshot = await get(freeTradeRef);
       const hasUsedFreeTrade = snapshot.exists() && snapshot.val();
   
+      // Define a function to reset trade state
+      const resetTradeState = () => {
+        setHasItems([]);
+        setWantsItems([]);
+        setHasTotal({ price: 0, value: 0 });
+        setWantsTotal({ price: 0, value: 0 });
+      };
+  
       if (!hasUsedFreeTrade) {
         // User can create a free trade
         await set(freeTradeRef, true); // Mark free trade as used
         showInterstitialAd(() => {
+          resetTradeState(); // Clear trade state
           setModalVisible(false); // Close modal
           submitTrade(user, hasItems, wantsItems, hasTotal, wantsTotal, message, description, resetState);
         });
         Alert.alert('Success', 'Your free trade has been posted!');
+      } else if (userPoints >= 300) {
+        // User has enough points for trade
+        const updatedPoints = userPoints - 300;
+        await updateLocalStateAndDatabase('points', updatedPoints); // Deduct points
+        showInterstitialAd(() => {
+          resetTradeState(); // Clear trade state
+          setModalVisible(false); // Close modal
+          submitTrade(user, hasItems, wantsItems, hasTotal, wantsTotal, message, description, resetState);
+        });
+        Alert.alert(
+          'Success',
+          `Trade posted successfully! 300 points deducted. Your remaining points: ${updatedPoints}.`
+        );
       } else {
-        // User needs to spend points
-        if (userPoints >= 300) {
-          const updatedPoints = userPoints - 300;
-          await updateLocalStateAndDatabase('points', updatedPoints); // Deduct points
-          showInterstitialAd(() => {
-            setModalVisible(false); // Close modal
-            submitTrade(user, hasItems, wantsItems, hasTotal, wantsTotal, message, description, resetState);
-          });
-          Alert.alert('Success', 'Trade posted successfully!');
-        } else {
-          Alert.alert(
-            'Insufficient Points',
-            'You need 300 points to create a trade. Earn more points to continue.'
-          );
-        }
+        // User has insufficient points
+        Alert.alert(
+          'Insufficient Points',
+          `You need 300 points to create a trade, but you only have ${userPoints}. Earn or purchase more points to continue.`,
+          [
+            {
+              text: 'Get Points',
+              onPress: () => {
+                resetTradeState(); // Clear trade state
+                setModalVisible(false); // Close modal
+                navigation.navigate('Setting'); // Navigate to settings screen
+              },
+            },
+            { text: 'Cancel', style: 'cancel' }, // Optional cancel button
+          ]
+        );
       }
     } catch (error) {
       console.error('Error creating trade:', error);
@@ -99,8 +145,6 @@ const HomeScreen = ({ selectedTheme }) => {
     }
   };
   
-  
-
 
   useEffect(() => {
     if (state.data && Object.keys(state.data).length > 0) {
@@ -299,6 +343,10 @@ const HomeScreen = ({ selectedTheme }) => {
 
   const proceedWithScreenshotShare = async () => {
     triggerHapticFeedback('impactLight');
+    if (hasItems.filter(Boolean).length === 0 || wantsItems.filter(Boolean).length === 0) {
+      Alert.alert('Error', 'Please add at least one item to both "You" and "Them" sections.');
+      return;
+    }
     try {
       const filePath = await captureAndSave();
 
@@ -440,7 +488,7 @@ const HomeScreen = ({ selectedTheme }) => {
                 </View>
               </ViewShot>
               <View style={styles.createtrade} >
-              <TouchableOpacity style={styles.createtradeButton} onPress={() => setModalVisible(true)}><Text style={{color:'white'}}>Create Trade</Text></TouchableOpacity>
+              <TouchableOpacity style={styles.createtradeButton} onPress={handleCreateTradePress}><Text style={{color:'white'}}>Create Trade</Text></TouchableOpacity>
               <TouchableOpacity style={styles.shareTradeButton} onPress={proceedWithScreenshotShare}><Text style={{color:'white'}}>Share Trade</Text></TouchableOpacity></View>
             </ScrollView>
           <Modal
@@ -506,6 +554,7 @@ const HomeScreen = ({ selectedTheme }) => {
         onRequestClose={() => setModalVisible(false)} // Close modal on request
       >
          <Pressable style={styles.modalOverlay} onPress={() => setModalVisible(false)} />
+          <ConditionalKeyboardWrapper>
         <View style={[styles.drawerContainer, { backgroundColor: isDarkMode ? '#3B404C' : 'white' }]}>
             <Text style={styles.modalMessage}>
               Do you want to add a description (optional)?
@@ -532,9 +581,16 @@ const HomeScreen = ({ selectedTheme }) => {
               </TouchableOpacity>
             </View>
         </View>
+        </ConditionalKeyboardWrapper>
       </Modal>
           
+      <SignInDrawer
+            visible={isSigninDrawerVisible}
+            onClose={() => setIsSigninDrawerVisible(false)}
+            selectedTheme={selectedTheme}
+            message='To create trade, you need to sign in'
 
+          />
 
         </View>
       </GestureHandlerRootView>

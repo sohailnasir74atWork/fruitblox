@@ -17,7 +17,6 @@ import { MenuProvider } from 'react-native-popup-menu';
 import { AdsConsent, AdsConsentStatus } from 'react-native-google-mobile-ads';
 import MainTabs from './Code/AppHelper/MainTabs';
 import {
-  handleUserConsent,
   initializeAds,
   loadAppOpenAd,
   MyDarkTheme,
@@ -50,26 +49,48 @@ function App() {
 
     updateLocalState('reviewCount', Number(reviewCount) + 1);
   }, []);
-  const handleUserConsent = async (setConsentStatus, setLoading) => {
+  useEffect(() => {
+    if (localState.consentStatus === 'UNKNOWN' || localState.consentStatus === AdsConsentStatus.REQUIRED) {
+      handleUserConsent();
+    } else {
+      console.log('Consent status already determined:', localState.consentStatus);
+    }
+  }, [localState.consentStatus]);
+  
+  
+
+  const saveConsentStatus = (status) => {
+    updateLocalState('consentStatus', status);
+  };
+  
+
+
+  const handleUserConsent = async () => {
     try {
       const consentInfo = await AdsConsent.requestInfoUpdate();
+  
       if (consentInfo.isConsentFormAvailable) {
         if (consentInfo.status === AdsConsentStatus.REQUIRED) {
           const formResult = await AdsConsent.showForm();
-          setConsentStatus(formResult.status);
+          saveConsentStatus(formResult.status); // Save consent status
         } else {
-          setConsentStatus(consentInfo.status);
+          saveConsentStatus(consentInfo.status); // Save existing consent status
         }
+      } else {
+        console.log('Consent form is not available.');
       }
     } catch (error) {
       console.error('Error handling consent:', error);
-    } finally {
-      setLoading(false);
     }
   };
+  
+  
+  
+  // Timeout fallback to avoid infinite loader
+
   // Handle Consent
   useEffect(() => {
-    handleUserConsent(setLoading);
+    handleUserConsent();
   }, []);
 
   // Handle App State Changes for Ads
@@ -102,7 +123,7 @@ function App() {
             backgroundColor={selectedTheme.colors.background}
           />
           <Stack.Navigator>
-            <Stack.Screen name="MainTabs" options={{ headerShown: false }}>
+            <Stack.Screen name="Home" options={{ headerShown: false }}>
               {() => <MainTabs selectedTheme={selectedTheme} setChatFocused={setChatFocused} chatFocused={chatFocused} setModalVisibleChatinfo={setModalVisibleChatinfo} modalVisibleChatinfo={modalVisibleChatinfo} />}
             </Stack.Screen>
             <Stack.Screen

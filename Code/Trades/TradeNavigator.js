@@ -52,7 +52,8 @@ export const TradeStack = ({ selectedTheme }) => {
       <Stack.Screen
         name="TradeScreen"
         component={TradeList}
-        initialParams={{ bannedUsers }}
+        initialParams={{ bannedUsers, selectedTheme }}
+
         options={{ title: 'Trades' }}
       />
 

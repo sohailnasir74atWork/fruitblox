@@ -2,11 +2,7 @@ import React, { useState } from 'react';
 import { Modal, View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
 import { getDatabase, ref, push } from 'firebase/database';
 export const submitTrade = (user, hasItems, wantsItems, hasTotal, wantsTotal, message, description, resetState) => {
-    if (!user.id) {
-      Alert.alert('Error', 'You must be logged in to create a trade.');
-      return;
-    }
-  
+   
     if (hasItems.filter(Boolean).length === 0 || wantsItems.filter(Boolean).length === 0) {
       Alert.alert('Error', 'Please add at least one item to both "You" and "Them" sections.');
       return;
@@ -40,7 +36,7 @@ export const submitTrade = (user, hasItems, wantsItems, hasTotal, wantsTotal, me
     push(tradeRef, newTrade)
       .then(() => {
         resetState();
-        Alert.alert('Success', 'Trade Created Successfully!');
+        // Alert.alert('Success', 'Trade Created Successfully!');
       })
       .catch((error) => {
         console.error('Error creating trade:', error.message);

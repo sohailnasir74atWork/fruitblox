@@ -297,7 +297,7 @@ export const getStyles = (isDarkMode) =>
       // justifyContent:'space-evenly',
       maxWidth: 150,
       borderRadius: 10,
-      marginLeft:200
+      marginLeft:50
 
     },
     menuOption: {

@@ -19,8 +19,9 @@ export const LocalStateProvider = ({ children }) => {
       localKey: storage.getString('localKey') || 'defaultValue',
       reviewCount: parseInt(storage.getString('reviewCount'), 10) || 0, // Ensure reviewCount is a number
       isHaptic: storage.getBoolean('isHaptic') ?? true,
-      theme: initialTheme || 'light', // Default to 'light' if no theme is found
+      theme: initialTheme, // Default to 'light' if no theme is found
       userId: storage.getString('userId') || null,// New property for statistics
+      consentStatus: storage.getString('consentStatus') || 'UNKNOWN',
 
     };
   });

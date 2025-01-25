@@ -82,7 +82,6 @@ const MessagesList = ({
     const shouldShowDateHeader = currentDate !== previousDate;
 
 
-
     return (
       <View>
         {/* Display the date header if it's a new day */}
@@ -177,9 +176,9 @@ const MessagesList = ({
               </MenuOptions>
             </Menu>
 
-            {item.reportCount > 0 || item.isReportedByUser && 
-            <Text style={styles.reportIcon}>Reported</Text>
-            }
+            {(item.reportCount > 0 || item.isReportedByUser) && (
+  <Text style={styles.reportIcon}>Reported</Text>
+)}
 
           </View>
 

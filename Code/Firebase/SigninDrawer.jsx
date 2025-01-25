@@ -12,7 +12,6 @@ import {
     Alert,
     Platform,
 } from 'react-native';
-import { createUserWithEmail, loginUserWithEmail } from './UserLogics';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import auth from '@react-native-firebase/auth';
 import Icon from 'react-native-vector-icons/FontAwesome'; // Ensure FontAwesome is installed
@@ -193,7 +192,7 @@ const SignInDrawer = ({ visible, onClose, selectedTheme, message }) => {
         } catch (error) {
             console.error('Authentication Error:', error);
 
-            let errorMessage = 'An unexpected error occurred. Please try again later.';
+            let errorMessage = 'User does not exist or the credentials are invalid. Please try again.';
 
             if (error?.code === 'auth/invalid-email') {
                 errorMessage = 'The email address is not valid.';
