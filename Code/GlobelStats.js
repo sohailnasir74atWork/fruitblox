@@ -334,29 +334,42 @@ useEffect(() => {
     });
   };
 
-  // Listen for authentication state changes
   useEffect(() => {
-    const unsubscribe = auth().onAuthStateChanged(async (loggedInUser) => {
-      if (loggedInUser) {
-        const userId = loggedInUser.uid;
-        const userRef = ref(appdatabase, `users/${userId}`);
-        const snapshot = await get(userRef);
+    const unsubscribe = auth().onAuthStateChanged((loggedInUser) => {
+      const handleAuthChange = async () => {
+        try {
+          if (loggedInUser) {
+            const userId = loggedInUser.uid;
+            const userRef = ref(appdatabase, `users/${userId}`);
+            const snapshot = await get(userRef);
   
-        if (snapshot.exists()) {
-          setUser({
-            ...snapshot.val(),
-            id: userId, // Ensure ID persists
-          });
-        } else {
-          const newUser = createNewUser(userId, loggedInUser);
-          await set(userRef, newUser);
-          setUser(newUser);
+            if (snapshot.exists()) {
+              // Update user state only if necessary to avoid redundant renders
+              setUser((prevUser) => {
+                const currentData = snapshot.val();
+                if (!prevUser || prevUser.id !== userId || JSON.stringify(prevUser) !== JSON.stringify({ ...currentData, id: userId })) {
+                  return { ...currentData, id: userId };
+                }
+                return prevUser;
+              });
+            } else {
+              const newUser = createNewUser(userId, loggedInUser);
+              await set(userRef, newUser);
+              setUser(newUser);
+            }
+  
+            // Register for notifications (ensure this happens only once)
+            await registerForNotifications(userId);
+          } else {
+            // Reset user state if logged out
+            resetUserState();
+          }
+        } catch (error) {
+          console.error("Error handling authentication state change:", error);
         }
+      };
   
-        await registerForNotifications(userId);
-      } else {
-        resetUserState();
-      }
+      handleAuthChange(); // Call the async function
     });
   
     return () => unsubscribe(); // Cleanup listener on unmount

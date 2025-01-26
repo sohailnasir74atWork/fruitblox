@@ -118,12 +118,13 @@ const PrivateChatScreen = () => {
           [`participants/${myUserId}`]: true,
           [`participants/${selectedUserId}`]: true,
         };
+        console.log()
         await chatRef.update(participantsUpdate);
         const chatMetadata = {
-          receiverName: selectedUser?.sender || 'Unknown Receiver',
+          receiverName: selectedUser?.sender || 'Unknown Sender',
           receiverAvatar: selectedUser?.avatar || 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png',
           receiverId: selectedUserId,
-          senderName: user?.displayname || 'Unknown Receiver',
+          senderName: user?.displayname || user?.displayName || 'Unknown Receiver',
           senderAvatar: user?.avatar || 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png',
           senderId: user.id,
         };

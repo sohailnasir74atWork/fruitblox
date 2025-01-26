@@ -93,8 +93,8 @@ const navigation = useNavigation()
   
       // Define a function to reset trade state
       const resetTradeState = () => {
-        setHasItems([]);
-        setWantsItems([]);
+        setHasItems(initialItems);
+        setWantsItems(initialItems);
         setHasTotal({ price: 0, value: 0 });
         setWantsTotal({ price: 0, value: 0 });
       };
@@ -108,9 +108,9 @@ const navigation = useNavigation()
           submitTrade(user, hasItems, wantsItems, hasTotal, wantsTotal, message, description, resetState);
         });
         Alert.alert('Success', 'Your free trade has been posted!');
-      } else if (userPoints >= 300) {
+      } else if (userPoints >= 200) {
         // User has enough points for trade
-        const updatedPoints = userPoints - 300;
+        const updatedPoints = userPoints - 200;
         await updateLocalStateAndDatabase('points', updatedPoints); // Deduct points
         showInterstitialAd(() => {
           resetTradeState(); // Clear trade state
@@ -119,13 +119,13 @@ const navigation = useNavigation()
         });
         Alert.alert(
           'Success',
-          `Trade posted successfully! 300 points deducted. Your remaining points: ${updatedPoints}.`
+          `Trade posted successfully! 200 points deducted. Your remaining points: ${updatedPoints}.`
         );
       } else {
         // User has insufficient points
         Alert.alert(
           'Insufficient Points',
-          `You need 300 points to create a trade, but you only have ${userPoints}. Earn or purchase more points to continue.`,
+          `You need 200 points to create a trade, but you only have ${userPoints}. Earn or purchase more points to continue.`,
           [
             {
               text: 'Get Points',
@@ -555,6 +555,7 @@ const navigation = useNavigation()
       >
          <Pressable style={styles.modalOverlay} onPress={() => setModalVisible(false)} />
           <ConditionalKeyboardWrapper>
+            <View>
         <View style={[styles.drawerContainer, { backgroundColor: isDarkMode ? '#3B404C' : 'white' }]}>
             <Text style={styles.modalMessage}>
               Do you want to add a description (optional)?
@@ -580,6 +581,7 @@ const navigation = useNavigation()
                 <Text style={styles.buttonText}>Confirm</Text>
               </TouchableOpacity>
             </View>
+        </View>
         </View>
         </ConditionalKeyboardWrapper>
       </Modal>
@@ -793,7 +795,7 @@ const getStyles = (isDarkMode) =>
     screenshotView: {
       padding: 10,
       flex: 1,
-      paddingVertical: 20
+      paddingVertical: 10
     },
     float: {
       position: 'absolute',
@@ -898,6 +900,8 @@ const getStyles = (isDarkMode) =>
       fontSize: 14,
       fontWeight: 'bold',
     },
+   
+
 
   });
 

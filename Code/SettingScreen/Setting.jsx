@@ -228,13 +228,13 @@ export default function SettingsScreen({ selectedTheme }) {
     if (!lastRewardTime) return true;
 
     const timeDifference = now - lastRewardTime;
-    return timeDifference >=   2 * 60 * 1000; // 30 seconds as defined
+    return timeDifference >=   1 * 60 * 1000; // 30 seconds as defined
   };
   // console.log(user)
   const showAd = async () => {
     try {
       if (!canClaimReward()) {
-        const remainingTime = 2 - Math.floor((new Date().getTime() - user?.lastRewardtime) / 60000);
+        const remainingTime = 1 - Math.floor((new Date().getTime() - user?.lastRewardtime) / 60000);
         Alert.alert('Not Eligible', `Please wait ${remainingTime} minutes to claim the next reward.`);
         return;
       }

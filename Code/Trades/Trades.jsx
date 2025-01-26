@@ -199,7 +199,7 @@ const [selectedTrade, setSelectedTrade] = useState(null);
   };
   
   useEffect(() => {
-    fetchTrades(true); // Fetch the latest data and reset the list on component mount
+    fetchTrades(true);
   }, []);
   
       
@@ -251,14 +251,10 @@ const [selectedTrade, setSelectedTrade] = useState(null);
         const isOnline = await isUserOnline(item.userId); // Resolve the promise
 
         showInterstitialAd(() => {
-
-
-          if (!user.id) {
+          if (!user?.id) {
             setIsSigninDrawerVisible(true)
              return;
            }
-
-
           navigation.navigate('PrivateChatTrade', {
             selectedUser: {
               senderId: item.userId,
@@ -422,7 +418,7 @@ const [selectedTrade, setSelectedTrade] = useState(null);
   showsVerticalScrollIndicator={false}
   contentContainerStyle={{ paddingBottom: 20 }}
   onEndReached={handleLoadMore}
-  onEndReachedThreshold={0.5}
+  onEndReachedThreshold={0.1}
   onRefresh={handleRefresh}
   refreshing={refreshing}
   ListFooterComponent={

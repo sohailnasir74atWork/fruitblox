@@ -22,6 +22,7 @@ import { get, getDatabase, ref, set } from 'firebase/database';
 import { getApps, initializeApp } from 'firebase/app';
 import { firebaseConfig } from '../Globelhelper';
 import { generateOnePieceUsername } from '../Helper/RendomNamegen';
+import ConditionalKeyboardWrapper from '../Helper/keyboardAvoidingContainer';
 
 
 
@@ -49,7 +50,6 @@ const SignInDrawer = ({ visible, onClose, selectedTheme, message }) => {
     const getDefaultUser = (overrides = {}) => ({
         id: null,
         email: null,
-        displayName: generateOnePieceUsername(),
         avatar: null,
         selectedFruits: [],
         isAdmin: false,
@@ -93,7 +93,6 @@ const SignInDrawer = ({ visible, onClose, selectedTheme, message }) => {
 
                 setUser({
                     ...getDefaultUser(), // Get default user structure
-                    id: uid,
                     ...snapshot.val(), // Merge with existing database fields
                 });
 
@@ -146,10 +145,12 @@ const SignInDrawer = ({ visible, onClose, selectedTheme, message }) => {
                 const { uid, email: userEmail } = userCredential.user;
 
                 const userRef = ref(appdatabase, `users/${uid}`);
+                const genname = generateOnePieceUsername();
                 const newUser = getDefaultUser({
                     id: uid,
                     email: userEmail,
-                    displayName: 'Anonymous', // Use default or user-inputted name if available
+                    displayName: genname, // Use default or user-inputted name if available
+                    displayname: genname,
                 });
 
                 await set(userRef, newUser); // Save new user data to the database
@@ -168,17 +169,18 @@ const SignInDrawer = ({ visible, onClose, selectedTheme, message }) => {
                     // console.log('Existing user found:', snapshot.val());
 
                     setUser({
-                        id: uid,
                         ...snapshot.val(),
                     });
 
                     Alert.alert('Welcome Back!', 'You have logged in successfully!');
                 } else {
                     // Handle case where user exists in auth but not in database
+                    const genname = generateOnePieceUsername();
                     const newUser = getDefaultUser({
                         id: uid,
                         email,
-                        displayName: generateOnePieceUsername(),
+                        displayName: genname,
+                        displayname: genname,
                     });
 
                     await set(userRef, newUser);
@@ -231,7 +233,6 @@ const SignInDrawer = ({ visible, onClose, selectedTheme, message }) => {
             if (snapshot.exists()) {
                 // console.log('Existing user found:', snapshot.val());
                 setUser({
-                    id: uid,
                     ...snapshot.val(),
                 });
 
@@ -269,7 +270,10 @@ const SignInDrawer = ({ visible, onClose, selectedTheme, message }) => {
     return (
         <Modal visible={visible} animationType="slide" transparent>
             <Pressable style={styles.modalOverlay} onPress={onClose} />
+            <ConditionalKeyboardWrapper>
+
             <Pressable onPress={() => { }}>
+                {/* <View> */}
                 <View style={[styles.drawer, { backgroundColor: isDarkMode ? '#3B404C' : 'white' }]}>
                     <Text style={[styles.title, { color: selectedTheme.colors.text }]}>{isRegisterMode ? 'Register' : 'Sign In'}</Text>
                     <View>
@@ -355,6 +359,7 @@ const SignInDrawer = ({ visible, onClose, selectedTheme, message }) => {
                     </TouchableOpacity>
                 </View>
             </Pressable>
+            </ConditionalKeyboardWrapper>
         </Modal>
     );
 };

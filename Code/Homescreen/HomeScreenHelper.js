@@ -7,12 +7,12 @@ export const submitTrade = (user, hasItems, wantsItems, hasTotal, wantsTotal, me
       Alert.alert('Error', 'Please add at least one item to both "You" and "Them" sections.');
       return;
     }
-  
+//   console.log(user)
     const db = getDatabase();
     const tradeRef = ref(db, 'trades/');
     const newTrade = {
       userId: user.id,
-      traderName: user.displayname,
+      traderName: user.displayname || user.displayName,
       avatar: user.avatar,
       hasItems: hasItems.filter(Boolean).map((item) => ({
         name: item.Name,
