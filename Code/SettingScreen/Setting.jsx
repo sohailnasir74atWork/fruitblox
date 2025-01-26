@@ -220,43 +220,43 @@ export default function SettingsScreen({ selectedTheme }) {
 
 
 
-
+  
   const canClaimReward = () => {
     const now = new Date().getTime();
     const lastRewardTime = user?.lastRewardtime;
-  
-    if (!lastRewardTime) return true; // Eligible if no reward has been claimed before
-  
+
+    if (!lastRewardTime) return true;
+
     const timeDifference = now - lastRewardTime;
-    return timeDifference >= 1 * 60 * 1000; // 2 minutes cooldown
+    return timeDifference >=   2 * 60 * 1000; // 30 seconds as defined
   };
-  
   // console.log(user)
   const showAd = async () => {
     try {
       if (!canClaimReward()) {
-        const remainingTime = 1 - Math.floor((new Date().getTime() - user?.lastRewardtime) / 60000);
+        const remainingTime = 2 - Math.floor((new Date().getTime() - user?.lastRewardtime) / 60000);
         Alert.alert('Not Eligible', `Please wait ${remainingTime} minutes to claim the next reward.`);
         return;
       }
-  
+
       if (loaded) {
-        await rewarded.show(); // Show the ad
-        setLoaded(false); // Reset ad availability until it reloads
+        await rewarded.show(); // Attempt to show the ad
+        setLoaded(false); // Reset ad availability
+        // console.log('Ad displayed successfully.');
       } else {
-        Alert.alert('Ad Not Ready', 'The ad is not ready yet. Please try again later.');
+
+        const newPoints = (user?.points || 0) + 100;
+        // console.log(newPoints)
+        updateLocalStateAndDatabase('points', newPoints);
+        const now = new Date().getTime(); // Current time in milliseconds
+        updateLocalStateAndDatabase('lastRewardtime', now);
+
+        Alert.alert('Ad not ready', 'However reward granted');
       }
     } catch (error) {
       console.error('Error displaying ad:', error);
-      Alert.alert('Error', 'Failed to display the ad. Please try again later.');
     }
   };
-  
-
-
-
-
-
 
 
 
