@@ -50,6 +50,7 @@ const SignInDrawer = ({ visible, onClose, selectedTheme, message }) => {
     const getDefaultUser = (overrides = {}) => ({
         id: null,
         email: null,
+        displayName: generateOnePieceUsername(),
         avatar: null,
         selectedFruits: [],
         isAdmin: false,
@@ -93,6 +94,7 @@ const SignInDrawer = ({ visible, onClose, selectedTheme, message }) => {
 
                 setUser({
                     ...getDefaultUser(), // Get default user structure
+                    id: uid,
                     ...snapshot.val(), // Merge with existing database fields
                 });
 
@@ -145,12 +147,10 @@ const SignInDrawer = ({ visible, onClose, selectedTheme, message }) => {
                 const { uid, email: userEmail } = userCredential.user;
 
                 const userRef = ref(appdatabase, `users/${uid}`);
-                const genname = generateOnePieceUsername();
                 const newUser = getDefaultUser({
                     id: uid,
                     email: userEmail,
-                    displayName: genname, // Use default or user-inputted name if available
-                    displayname: genname,
+                    displayName: 'Anonymous', // Use default or user-inputted name if available
                 });
 
                 await set(userRef, newUser); // Save new user data to the database
@@ -169,18 +169,17 @@ const SignInDrawer = ({ visible, onClose, selectedTheme, message }) => {
                     // console.log('Existing user found:', snapshot.val());
 
                     setUser({
+                        id: uid,
                         ...snapshot.val(),
                     });
 
                     Alert.alert('Welcome Back!', 'You have logged in successfully!');
                 } else {
                     // Handle case where user exists in auth but not in database
-                    const genname = generateOnePieceUsername();
                     const newUser = getDefaultUser({
                         id: uid,
                         email,
-                        displayName: genname,
-                        displayname: genname,
+                        displayName: generateOnePieceUsername(),
                     });
 
                     await set(userRef, newUser);
@@ -233,6 +232,7 @@ const SignInDrawer = ({ visible, onClose, selectedTheme, message }) => {
             if (snapshot.exists()) {
                 // console.log('Existing user found:', snapshot.val());
                 setUser({
+                    id: uid,
                     ...snapshot.val(),
                 });
 

@@ -373,7 +373,7 @@ useEffect(() => {
     });
   
     return () => unsubscribe(); // Cleanup listener on unmount
-  }, []);
+  }, [setUser, resetUserState]);
   
  const checkInternetConnection = async () => {
   try {
