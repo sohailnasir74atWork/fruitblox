@@ -79,7 +79,7 @@ const InboxScreen = () => {
       const snapshot = await queryRef.once('value');
   
       if (!snapshot.exists()) {
-        console.log('No chats found for the user.');
+        // console.log('No chats found for the user.');
         setChats([]);
         return;
       }

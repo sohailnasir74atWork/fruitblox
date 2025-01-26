@@ -229,7 +229,7 @@ useEffect(() => {
     timestamp: timestamp,
   })
     .then(() => {
-      console.log('User set as online:', user.id);
+      // console.log('User set as online:', user.id);
     })
     .catch((error) => {
       console.error('Error setting user online:', error);
@@ -239,7 +239,7 @@ useEffect(() => {
   onDisconnect(userOnlineRef)
     .remove()
     .then(() => {
-      console.log('User will be removed from online users on disconnect:', user.id);
+      // console.log('User will be removed from online users on disconnect:', user.id);
     })
     .catch((error) => {
       console.error('Error setting onDisconnect handler:', error);
@@ -249,7 +249,7 @@ useEffect(() => {
     // Cleanup: Remove the user from online users when logging out or unmounting
     remove(userOnlineRef)
       .then(() => {
-        console.log('User removed from online users:', user.id);
+        // console.log('User removed from online users:', user.id);
       })
       .catch((error) => {
         console.error('Error removing user from online users:', error);

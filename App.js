@@ -53,7 +53,7 @@ function App() {
     if (localState.consentStatus === 'UNKNOWN' || localState.consentStatus === AdsConsentStatus.REQUIRED) {
       handleUserConsent();
     } else {
-      console.log('Consent status already determined:', localState.consentStatus);
+      // console.log('Consent status already determined:', localState.consentStatus);
     }
   }, [localState.consentStatus]);
   
@@ -77,10 +77,10 @@ function App() {
           saveConsentStatus(consentInfo.status); // Save existing consent status
         }
       } else {
-        console.log('Consent form is not available.');
+        // console.log('Consent form is not available.');
       }
     } catch (error) {
-      console.error('Error handling consent:', error);
+      // console.error('Error handling consent:', error);
     }
   };
   

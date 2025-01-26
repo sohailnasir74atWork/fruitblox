@@ -360,23 +360,36 @@ const [selectedTrade, setSelectedTrade] = useState(null);
         <View style={styles.actionButtons}>
         <TouchableOpacity  onPress={handleChatNavigation}>
           <View style={styles.tradeActions}>
-            <Icon name="chatbox-outline" size={14} color={config.colors.hasBlockGreen} />
+            <Icon name="chatbox-outline" size={14} color={config.colors.hasBlockGreen}  style={{ textShadowColor: isDarkMode ? '#000000AA' : '#FFFFFFAA', // Dark Mode: Black shadow, Light Mode: White shadow
+  textShadowOffset: { width: 1, height: 1 }, // Offset the shadow slightly
+  textShadowRadius: 3}}/>
             <Text style={[styles.actionText]}>Send Message</Text>
           </View>
         </TouchableOpacity>
         <Text
-  style={{
-    color:
-      tradeStatus === 'Fair'
-        ? isDarkMode ? '#F5F5F5' : '#121212' // Light: Dark Gray, Dark: Light Gray
-        : tradeStatus === 'Good'
-        ? config.colors.hasBlockGreen // Fixed green for "Good"
-        : tradeStatus === 'Poor'
-        ? config.colors.wantBlockRed // Fixed red for "Poor"
-        : tradeStatus === 'Best'
-        ? isDarkMode ? '#FFD700' : '#DAA520' // Light: Goldenrod, Dark: Gold
-        : isDarkMode ? '#B22222' : '#8B0000', // Light: Firebrick, Dark: DarkRed for "Worst"
-  }}
+ style={{
+  fontFamily: 'Lato-Regular',
+  fontSize: 12,
+  lineHeight:14,
+  color:
+    tradeStatus === 'Fair'
+      ? isDarkMode
+        ? '#F5F5F5'
+        : '#121212' // Light: Dark Gray, Dark: Light Gray
+      : tradeStatus === 'Good'
+      ? config.colors.hasBlockGreen // Fixed green for "Good"
+      : tradeStatus === 'Poor'
+      ? config.colors.wantBlockRed // Fixed red for "Poor"
+      : tradeStatus === 'Best'
+      ? isDarkMode
+        ? '#FFD700'
+        : '#DAA520' // Light: Goldenrod, Dark: Gold
+      : isDarkMode
+      ? 'lightpink'
+      : '#8B0000', // Light: Firebrick, Dark: DarkRed for "Worst",
+  
+}}
+
 >
   {tradeStatus} Deal
 </Text>
@@ -578,8 +591,10 @@ StyleSheet.create({
   actionText: {
     marginLeft: 5,
     fontSize: 14,
-    color: '#007BFF',
-    color: config.colors.hasBlockGreen
+    color: config.colors.hasBlockGreen,
+    textShadowColor: isDarkMode ? '#000000AA' : '#FFFFFFAA', // Dark Mode: Black shadow, Light Mode: White shadow
+  textShadowOffset: { width: 1, height: 1 }, // Offset the shadow slightly
+  textShadowRadius: 3, // Blur effect for the shadow
 
   },
   transfer:{

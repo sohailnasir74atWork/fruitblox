@@ -16,7 +16,7 @@ import AdminHeader from './AdminHeader';
 import MessagesList from './MessagesList';
 import MessageInput from './MessageInput';
 import { getStyles } from '../Style';
-import { BannerAd, BannerAdSize } from 'react-native-google-mobile-ads';
+import { AdEventType, BannerAd, BannerAdSize, InterstitialAd } from 'react-native-google-mobile-ads';
 import getAdUnitId from '../../Ads/ads';
 import { banUser, deleteOldest500Messages, isUserOnline, makeAdmin,  removeAdmin, unbanUser } from '../utils';
 import { useNavigation } from '@react-navigation/native';
@@ -28,7 +28,10 @@ leoProfanity.add(['hell', 'shit']);
 leoProfanity.loadDictionary('en');
 
 const bannerAdUnitId = getAdUnitId('banner');
-let lastMessageTimestamp = 0; 
+const interstitialAdUnitId = getAdUnitId('interstitial');
+const interstitial = InterstitialAd.createForAdRequest(interstitialAdUnitId);
+
+
 const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatFocused,
   setModalVisibleChatinfo, navigateToInbox, unreadMessagesCount  }) => {
   const { user, theme, onlineMembersCount } = useGlobalState();
@@ -48,7 +51,8 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
   const [isCooldown, setIsCooldown] = useState(false); 
   const [signinMessage, setSigninMessage] = useState(false); 
   const { triggerHapticFeedback } = useHaptic();
-
+  const [isAdLoaded, setIsAdLoaded] = useState(false);
+  const [isShowingAd, setIsShowingAd] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -79,8 +83,12 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
     setIsDrawerVisible(!isDrawerVisible);
   };
   const startPrivateChat = () => {
-    toggleDrawer();
-    navigation.navigate('PrivateChat', { selectedUser, selectedTheme, isOnline });
+    showInterstitialAd(() => {
+      toggleDrawer();
+      navigation.navigate('PrivateChat', { selectedUser, selectedTheme, isOnline });
+
+       })
+  
   };
 
   const chatRef = useMemo(() => database().ref('chat'), []);
@@ -286,6 +294,47 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
     }
   };
 
+  useEffect(() => {
+    interstitial.load();
+
+    const onAdLoaded = () => setIsAdLoaded(true);
+    const onAdClosed = () => {
+      setIsAdLoaded(false);
+      setIsShowingAd(false);
+      interstitial.load(); // Reload ad for the next use
+    };
+    const onAdError = (error) => {
+      setIsAdLoaded(false);
+      setIsShowingAd(false);
+      console.error('Ad Error:', error);
+    };
+
+    const loadedListener = interstitial.addAdEventListener(AdEventType.LOADED, onAdLoaded);
+    const closedListener = interstitial.addAdEventListener(AdEventType.CLOSED, onAdClosed);
+    const errorListener = interstitial.addAdEventListener(AdEventType.ERROR, onAdError);
+
+    return () => {
+      loadedListener();
+      closedListener();
+      errorListener();
+    };
+  }, []);
+
+  const showInterstitialAd = (callback) => {
+    if (isAdLoaded && !isShowingAd) {
+      setIsShowingAd(true);
+      try {
+        interstitial.show();
+        interstitial.addAdEventListener(AdEventType.CLOSED, callback);
+      } catch (error) {
+        console.error('Error showing interstitial ad:', error);
+        setIsShowingAd(false);
+        callback(); // Proceed with fallback in case of error
+      }
+    } else {
+      callback(); // If ad is not loaded, proceed immediately
+    }
+  };
 
 
 
@@ -447,6 +496,7 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
         selectedUser={selectedUser}
         isOnline={isOnline}
         bannedUsers={bannedUsers}
+        showInterstitialAd={showInterstitialAd}
       />
      </GestureHandlerRootView>
 
