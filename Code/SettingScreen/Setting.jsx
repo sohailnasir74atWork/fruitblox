@@ -259,7 +259,6 @@ export default function SettingsScreen({ selectedTheme }) {
   };
 
 
-
   const handleGetPoints = () => {
     triggerHapticFeedback('impactLight');
     if (!user?.id) {
@@ -289,7 +288,7 @@ export default function SettingsScreen({ selectedTheme }) {
                 {!user?.id ? 'Login / Register' : displayName}
               </Text>
               {!user?.id && <Text style={styles.rewardLogout}>Login to access notification, trading, chat and much more</Text>}
-              {user.id && <Text style={styles.reward}>My Points: {user?.points}</Text>}
+              {user.id && <Text style={styles.reward}>My Points: {user?.points || 0}</Text>}
             </TouchableOpacity>
           </View>
           <TouchableOpacity onPress={handleProfileUpdate}>

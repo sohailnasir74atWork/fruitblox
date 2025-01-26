@@ -362,7 +362,7 @@ useEffect(() => {
             await registerForNotifications(userId);
           } else {
             // Reset user state if logged out
-            resetUserState();
+            // resetUserState();
           }
         } catch (error) {
           console.error("Error handling authentication state change:", error);
@@ -373,7 +373,7 @@ useEffect(() => {
     });
   
     return () => unsubscribe(); // Cleanup listener on unmount
-  }, [setUser, resetUserState]);
+  }, []);
   
  const checkInternetConnection = async () => {
   try {
