@@ -1,4 +1,4 @@
-const isNoman = true; // Toggle this to switch configurations
+const isNoman = false; // Toggle this to switch configurations
 
 // noman app id = ca-app-pub-5740215782746766~2511096424
 //waqas app id = ca-app-pub-3701208411582706~4267174419

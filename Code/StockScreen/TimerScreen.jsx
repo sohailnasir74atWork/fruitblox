@@ -467,8 +467,9 @@ const getStyles = (isDarkMode, user) =>
       marginBottom: !config.isNoman ? 10 : 0,
 
       ...(!config.isNoman && {
-        borderWidth: 5,
+        borderWidth: 1,
         borderColor: config.colors.hasBlockGreen,
+        padding:5
       }),
     },
 
