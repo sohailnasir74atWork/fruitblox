@@ -31,6 +31,7 @@ const NotificationHandler = () => {
 
     // Function to process notifications
     const processNotification = async (remoteMessage) => {
+      // console.log(remoteMessage)
       if (isProcessingNotification) {
         console.warn('Already processing a notification. Skipping...');
         return;

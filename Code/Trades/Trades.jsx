@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, FlatList, Text, TouchableOpacity, StyleSheet, Image, ActivityIndicator, TextInput, Alert } from 'react-native';
-import { getDatabase, ref, onValue, remove, set, get } from 'firebase/database';
+import { getDatabase, ref, onValue, remove, set, get, startAfter, off } from 'firebase/database';
 import Icon from 'react-native-vector-icons/Ionicons';
 import moment from 'moment'; // Install moment.js for formatting timestamps
 import { useGlobalState } from '../GlobelStats';
@@ -29,11 +29,13 @@ const [loading, setLoading] = useState(false);
 const [refreshing, setRefreshing] = useState(false);
 const [lastKey, setLastKey] = useState(null);
 const [hasMore, setHasMore] = useState(true);
-const [filterType, setFilterType] = useState('');
+const [filterType, setFilterType] = useState('hasItems');
 const [isAdLoaded, setIsAdLoaded] = useState(false);
 const [isShowingAd, setIsShowingAd] = useState(false);
 const [isReportPopupVisible, setReportPopupVisible] = useState(false);
-const PAGE_SIZE = 20; // Number of items to load per page
+const PAGE_SIZE_LOGGED_IN = 600; // Number of items to load per page
+const PAGE_SIZE_LOGGED_OUT = 30; // Number of items to load per page
+
 const [isSigninDrawerVisible, setIsSigninDrawerVisible] = useState(false);
 
 const [selectedTrade, setSelectedTrade] = useState(null);
@@ -133,74 +135,74 @@ const [selectedTrade, setSelectedTrade] = useState(null);
     }
   }, [searchQuery, trades, filterType]);
   
-  const fetchTrades = useCallback(async (reset = false) => {
-    try {
-      setLoading(true);
-      const db = getDatabase();
-      const tradeRef = ref(db, 'trades/');
-      const queryRef = reset || !lastKey
-        ? query(tradeRef, orderByKey(), limitToLast(PAGE_SIZE))
-        : query(tradeRef, orderByKey(), endAt(lastKey), limitToLast(PAGE_SIZE + 1));
+  const fetchInitialTrades = useCallback(() => {
+    const db = getDatabase();
+    const tradeRef = ref(db, 'trades/');
+    const limit = user?.id ? PAGE_SIZE_LOGGED_IN : PAGE_SIZE_LOGGED_OUT;
   
-      const snapshot = await get(queryRef);
-      const data = snapshot.val();
-      if (data) {
-        const tradeList = Object.keys(data)
-          .map((key) => ({ id: key, ...data[key] }))
-          .sort((a, b) => b.timestamp - a.timestamp); // Sort by timestamp (newest first)
-  
-        if (reset) {
-          setTrades(tradeList); // Replace trades during reset
+    setLoading(true);
+    const queryRef = query(tradeRef, orderByKey(), limitToLast(limit));
+    get(queryRef)
+      .then((snapshot) => {
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          const tradeList = Object.keys(data).map((key) => ({
+            id: key,
+            ...data[key],
+          }));
+          setTrades(tradeList.reverse()); // Reverse for ascending order
         } else {
-          setTrades((prev) => {
-            const existingIds = new Set(prev.map((trade) => trade.id));
-            const uniqueTrades = tradeList.filter((trade) => !existingIds.has(trade.id));
-            return [...prev, ...uniqueTrades];
-          });
+          console.log('No trades available');
         }
-  
-        setFilteredTrades((prev) => {
-          if (reset) {
-            return tradeList; // Replace filteredTrades during reset
-          } else {
-            const existingIds = new Set(prev.map((trade) => trade.id));
-            const uniqueTrades = tradeList.filter((trade) => !existingIds.has(trade.id));
-            return [...prev, ...uniqueTrades];
-          }
-        });
-  
-        if (tradeList.length > 0) {
-          setLastKey(tradeList[tradeList.length - 1].id);
-          setHasMore(tradeList.length >= PAGE_SIZE);
-        }
-      } else {
-        setHasMore(false);
-      }
-    } catch (error) {
-      console.error('Error fetching trades:', error);
-      Alert.alert('Error', 'Unable to fetch trades.');
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [lastKey]);
+      })
+      .catch((error) => {
+        console.error('Error fetching trades:', error);
+        Alert.alert('Error', 'Unable to fetch trades.');
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [user]);
   
   
   
-  
-  const handleRefresh = () => {
-    setRefreshing(true);
-    fetchTrades(true); // Fetch the latest data and reset the list
-  };
-  
-  const handleLoadMore = () => {
-    if (loading || !hasMore) return; // Prevent duplicate loads
-    fetchTrades(); // Fetch additional trades without resetting
-  };
   
   useEffect(() => {
-    fetchTrades(true);
-  }, []);
+    if (!user?.id) return;
+  
+    const db = getDatabase();
+    const tradeRef = query(ref(db, 'trades/'), orderByKey(), limitToLast(1)); // Only fetch the most recent trade
+  
+    const listener = onValue(tradeRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const newTrade = snapshot.val();
+        setTrades((prevTrades) => {
+          const newTradeKey = Object.keys(newTrade)[0];
+          if (!prevTrades.find((trade) => trade.id === newTradeKey)) {
+            return [{ id: newTradeKey, ...newTrade[newTradeKey] }, ...prevTrades];
+          }
+          return prevTrades;
+        });
+      }
+    });
+  
+    return () => off(tradeRef);
+  }, [user]);
+  
+  
+
+
+  const handleEndReached = ()=>{
+       if (!user?.id) {
+      setIsSigninDrawerVisible(true); // Show sign-in drawer for unauthenticated users
+    }
+  }
+  
+  
+  useEffect(()=>{fetchInitialTrades()},[user.id])
+  
+  
+ 
   
       
   
@@ -217,34 +219,28 @@ const [selectedTrade, setSelectedTrade] = useState(null);
         return 'Search by Wants Item';
     }
   }, [filterType]);
+
+
+
+
+  const getTradeStatus = (hasTotal, wantsTotal) => {
+    const lowerBound = hasTotal * 0.85;
+    const upperBound = hasTotal * 1.15;
+    if (wantsTotal >= lowerBound && wantsTotal <= upperBound) return 'Fair';
+    if (wantsTotal < lowerBound * 0.7) return 'Best';
+    if (wantsTotal < lowerBound) return 'Good';
+    if (wantsTotal > upperBound * 1.3) return 'Worst';
+    return 'Poor';
+  };
+  
   const renderTrade = ({ item }) => {
     const formattedTime = moment(item.timestamp).fromNow();
   
-    // Determine if the trade is fair or not
-   
-  // console.log(item)
-  const getTradeStatus = (hasTotal, wantsTotal) => {
-    const lowerBound = hasTotal * 0.85; // 90% of hasTotal
-    const upperBound = hasTotal * 1.15; // 110% of hasTotal
-    const bestBound = hasTotal * 0.70;  // 80% of hasTotal for "Best"
-    const worstBound = hasTotal * 1.3; // 120% of hasTotal for "Worst"
-  
-    if (wantsTotal >= lowerBound && wantsTotal <= upperBound) {
-      return 'Fair';
-    } else if (wantsTotal < bestBound) {
-      return 'Best'; // Wants total is much lower than has total
-    } else if (wantsTotal < lowerBound) {
-      return 'Good'; // Wants total is slightly lower than has total
-    } else if (wantsTotal > worstBound) {
-      return 'Worst'; // Wants total is far higher than has total
-    } else {
-      return 'Poor'; // Wants total is slightly higher than has total
-    }
-  };
+    const tradeStatus = getTradeStatus(item.hasTotal.price, item.wantsTotal.price);
+
   
     // console.log(item)
     // In renderTrade
-    const tradeStatus = getTradeStatus(item.hasTotal.price, item.wantsTotal.price);
     
     const handleChatNavigation = async () => {
       try {
@@ -417,20 +413,10 @@ const [selectedTrade, setSelectedTrade] = useState(null);
   keyExtractor={(item) => item.id}
   showsVerticalScrollIndicator={false}
   contentContainerStyle={{ paddingBottom: 20 }}
-  onEndReached={handleLoadMore}
-  onEndReachedThreshold={0.1}
-  onRefresh={handleRefresh}
-  refreshing={refreshing}
-  ListFooterComponent={
-    hasMore && !loading ? (
-      <TouchableOpacity style={styles.loadMoreButton} onPress={handleLoadMore}>
-        <Text style={styles.loadMoreText}>Load More</Text>
-      </TouchableOpacity>
-    ) : loading && hasMore ? (
-      <ActivityIndicator size="small" color="#007BFF" />
-    ) : null
-  }
+  onEndReached={handleEndReached} // Detect when the user reaches the end
+      onEndReachedThreshold={0.5} // Trigger when 50% away from the end
 />
+
 
 
 <ReportTradePopup
@@ -443,7 +429,7 @@ const [selectedTrade, setSelectedTrade] = useState(null);
             visible={isSigninDrawerVisible}
             onClose={() => setIsSigninDrawerVisible(false)}
             selectedTheme={selectedTheme}
-            message='To create trade, you need to sign in'
+            message='To load all trades/ send messages, you need to sign in'
 
           />
 

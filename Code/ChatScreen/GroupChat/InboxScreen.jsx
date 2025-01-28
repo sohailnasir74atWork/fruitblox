@@ -53,7 +53,6 @@ const InboxScreen = () => {
     );
   };
 
-  
   const fetchChats = useCallback(async () => {
     if (!user?.id) return;
   
@@ -62,64 +61,63 @@ const InboxScreen = () => {
     try {
       const privateChatsRef = database().ref('private_chat');
       const bannedRef = database().ref(`bannedUsers/${user.id}`);
-      const lastSeenRef = database().ref(`lastseen/${user.id}`);
   
-      // Step 1: Fetch banned users and lastSeen data
-      const [bannedSnapshot, lastSeenSnapshot] = await Promise.all([
-        bannedRef.once('value'),
-        lastSeenRef.once('value'),
-      ]);
-  
+      // Step 1: Fetch banned users
+      const bannedSnapshot = await bannedRef.once('value');
       const bannedUsers = bannedSnapshot.val() || {};
       const bannedUserIds = Object.keys(bannedUsers);
-      const lastSeenData = lastSeenSnapshot.val() || {};
   
       // Step 2: Query chats where the current user is a participant
       const queryRef = privateChatsRef.orderByChild(`participants/${user.id}`).equalTo(true);
       const snapshot = await queryRef.once('value');
   
       if (!snapshot.exists()) {
-        // console.log('No chats found for the user.');
         setChats([]);
         return;
       }
   
-      // Step 3: Map over the chat data, exclude banned users, and calculate unread messages
-      const userChats = await Promise.all(
-        Object.entries(snapshot.val()).map(async ([chatId, chatData]) => {
+      // Step 3: Process only `lastMessage`, `metadata`, and `unread`
+      const userChats = Object.entries(snapshot.val())
+        .filter(([chatId, chatData]) => {
           const otherUserId = Object.keys(chatData.participants).find((id) => id !== user.id);
-  
-          // Exclude chats with banned users
-          if (bannedUserIds.includes(otherUserId)) {
-            return null;
-          }
-  
+          return otherUserId && !bannedUserIds.includes(otherUserId); // Exclude banned users
+        })
+        .map(([chatId, chatData]) => {
+          const otherUserId = Object.keys(chatData.participants).find((id) => id !== user.id);
           const lastMessage = chatData.lastMessage || null;
-          const lastSeenTimestamp = lastSeenData[chatId] || 0;
+          const metadata = chatData.metadata || {};
+          const unreadCount = chatData.unread?.[user.id] || 0;
   
-          // Calculate unread messages
-          const unreadCount = Object.values(chatData.messages || {}).filter(
-            (msg) => msg.senderId !== user.id && msg.timestamp > lastSeenTimestamp
-          ).length;
-  
-          // Check online status of the other user
-          const isOnline = await isUserOnline(otherUserId); // Call your utility function here
-          // console.log()
           return {
             chatId,
             otherUserId,
-            isOnline,
-            lastMessage: lastMessage ? lastMessage.text : 'No messages yet',
-            lastMessageTimestamp: lastMessage ? lastMessage.timestamp : null,
+            isOnline: false, // Optional: defer `isOnline` for batch checking
+            lastMessage: lastMessage?.text || 'No messages yet',
+            lastMessageTimestamp: lastMessage?.timestamp || null,
             unreadCount,
-            otherUserAvatar: otherUserId === chatData.metadata.senderId ?  chatData.metadata.senderAvatar : chatData.metadata.receiverAvatar,
-            otherUserName: otherUserId === chatData.metadata.senderId ?  chatData.metadata.senderName : chatData.metadata.receiverName,
+            otherUserAvatar:
+              otherUserId === metadata.senderId
+                ? metadata.senderAvatar
+                : metadata.receiverAvatar,
+            otherUserName:
+              otherUserId === metadata.senderId
+                ? metadata.senderName
+                : metadata.receiverName,
           };
-        })
+        });
+  
+      // Step 4: Batch check for online status
+      const onlineStatuses = await Promise.all(
+        userChats.map((chat) => isUserOnline(chat.otherUserId))
       );
   
-      // Step 4: Sort chats by the timestamp of the last message (most recent first)
-      const sortedChats = userChats.filter(Boolean).sort((a, b) => b.lastMessageTimestamp - a.lastMessageTimestamp);
+      const updatedChats = userChats.map((chat, index) => ({
+        ...chat,
+        isOnline: onlineStatuses[index],
+      }));
+  
+      // Step 5: Sort chats by the timestamp of the last message (most recent first)
+      const sortedChats = updatedChats.sort((a, b) => b.lastMessageTimestamp - a.lastMessageTimestamp);
   
       // Update state with the fetched chats
       setChats(sortedChats);
@@ -131,18 +129,17 @@ const InboxScreen = () => {
     }
   }, [user]);
   
-
+  
   // console.log(chats)
 
 
 
 
- 
   useEffect(() => {
     fetchChats();
   }, [fetchChats]);
-  // console.log(chats)
-  // Render Chat Item
+
+
   const renderChatItem = ({ item }) => (
     <View style={styles.itemContainer}>
       <TouchableOpacity

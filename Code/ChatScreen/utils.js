@@ -1,4 +1,4 @@
-import { getDatabase, ref, update, get, query, orderByChild, remove, set, orderByKey } from 'firebase/database';
+import { getDatabase, ref, update, get, query, orderByChild, remove, set, orderByKey, onDisconnect } from 'firebase/database';
 import { Alert, Linking, Text } from 'react-native';
 
 // Initialize the database reference
@@ -254,5 +254,48 @@ export const isUserOnline = async (userId) => {
   } catch (error) {
     console.error('Error checking user status:', error);
     return false; // Return false in case of an error
+  }
+};
+
+
+export const setActiveChat = async (userId, chatId) => {
+  const database = getDatabase();
+  const activeChatRef = ref(database, `/activeChats/${userId}`);
+  const unreadRef = ref(database, `/private_chat/${chatId}/unread/${userId}`);
+
+  try {
+    // Set the active chat for the user
+    await set(activeChatRef, chatId);
+    // console.log(`Active chat set for user ${userId}: ${chatId}`);
+
+    // Reset unread count for this user in the active chat
+    await set(unreadRef, 0);
+    console.log(`Unread count reset to 0 for user ${userId} in chat ${chatId}`);
+
+    // Ensure active chat is cleared on disconnect
+    onDisconnect(activeChatRef)
+      .remove()
+      .then(() => {
+        // console.log(`Active chat for user ${userId} will be removed on disconnect.`);
+      })
+      .catch((error) => {
+        console.error(`Failed to set onDisconnect handler for user ${userId}:`, error);
+      });
+  } catch (error) {
+    console.error(`Failed to set active chat for user ${userId}:`, error);
+  }
+};
+
+
+
+export const clearActiveChat = async (userId) => {
+  const database = getDatabase();
+  const activeChatRef = ref(database, `/activeChats/${userId}`);
+
+  try {
+    await set(activeChatRef, null); // Setting the value to null removes the entry
+    // console.log(`Active chat cleared for user ${userId}`);
+  } catch (error) {
+    console.error(`Failed to clear active chat for user ${userId}:`, error);
   }
 };

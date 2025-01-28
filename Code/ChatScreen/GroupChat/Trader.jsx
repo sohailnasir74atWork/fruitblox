@@ -267,7 +267,7 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
       const messageRef = pinnedMessagesRef.child(firebaseKey);
       // console.log(`Firebase reference for removal: ${messageRef.toString()}`);
       await messageRef.remove();
-      console.log(`Message with Firebase key: ${firebaseKey} successfully removed from Firebase.`);
+      // console.log(`Message with Firebase key: ${firebaseKey} successfully removed from Firebase.`);
   
       // Update the local state by filtering out the removed message
       setPinnedMessages((prev) => {

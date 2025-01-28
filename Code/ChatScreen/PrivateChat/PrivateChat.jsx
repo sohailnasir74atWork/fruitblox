@@ -7,7 +7,7 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
 } from 'react-native';
-import { useRoute } from '@react-navigation/native';
+import { useFocusEffect, useRoute } from '@react-navigation/native';
 import database from '@react-native-firebase/database';
 import { getStyles } from '../Style';
 import PrivateMessageInput from './PrivateMessageInput';
@@ -18,6 +18,8 @@ import KeyboardAvoidingWrapper from '../../Helper/keyboardAvoidingContainer';
 import getAdUnitId from '../../Ads/ads';
 import { BannerAd, BannerAdSize } from 'react-native-google-mobile-ads';
 import ConditionalKeyboardWrapper from '../../Helper/keyboardAvoidingContainer';
+import { clearActiveChat, setActiveChat } from '../utils';
+import { useNavigation } from '@react-navigation/native';
 
 const PAGE_SIZE = 30;
 const bannerAdUnitId = getAdUnitId('banner');
@@ -49,6 +51,23 @@ const PrivateChatScreen = () => {
         ? `${myUserId}_${selectedUserId}`
         : `${selectedUserId}_${myUserId}`,
     [myUserId, selectedUserId]
+  );
+
+
+  // const navigation = useNavigation();
+  useFocusEffect(
+    useCallback(() => {
+      // Screen is focused
+      // console.log('Screen is focused');
+  
+      return () => {
+        // Screen is unfocused
+        if (user?.id) {
+          clearActiveChat(user.id);
+          // console.log('Triggered clearActiveChat for user:', user.id);
+        }
+      };
+    }, [user?.id])
   );
 
   const messagesRef = useMemo(() => database().ref(`private_chat/${chatKey}/messages`), [chatKey]);
@@ -118,7 +137,7 @@ const PrivateChatScreen = () => {
           [`participants/${myUserId}`]: true,
           [`participants/${selectedUserId}`]: true,
         };
-        console.log()
+        // console.log()
         await chatRef.update(participantsUpdate);
         const chatMetadata = {
           receiverName: selectedUser?.sender || 'Unknown Sender',
@@ -159,21 +178,21 @@ const PrivateChatScreen = () => {
 
 
 
- const updateLastRead = useCallback(() => {
-  const lastReadRef = database().ref(`lastseen/${myUserId}/${chatKey}`);
-  lastReadRef
-    .set(Date.now())
-    .then(() => {
-      // console.log('Last read updated successfully for:', chatKey);
-    })
-    .catch((error) => {
-      // console.error('Error updating last read:', error);
-    });
-}, [chatKey, myUserId]);
+//  const updateLastRead = useCallback(() => {
+//   const lastReadRef = database().ref(`lastseen/${myUserId}/${chatKey}`);
+//   lastReadRef
+//     .set(Date.now())
+//     .then(() => {
+//       // console.log('Last read updated successfully for:', chatKey);
+//     })
+//     .catch((error) => {
+//       // console.error('Error updating last read:', error);
+//     });
+// }, [chatKey, myUserId]);
 
 useEffect(() => {
-  updateLastRead(); // Update last seen timestamp when the chat is opened
-}, [updateLastRead]);
+  setActiveChat(user.id, chatKey)
+}, [user.id,chatKey]);
 
 useEffect(() => {
   const listener = messagesRef.on('child_added', (snapshot) => {
@@ -183,19 +202,19 @@ useEffect(() => {
         ? prevMessages
         : [newMessage, ...prevMessages]
     );
-    updateLastRead(); // Update the last seen timestamp for new messages
+    // updateLastRead(); // Update the last seen timestamp for new messages
   });
 
   return () => messagesRef.off('child_added', listener); // Cleanup on unmount
-}, [messagesRef, updateLastRead]);
+}, [messagesRef]);
 
-  
   
  
   return (
     <>
 
     <GestureHandlerRootView>
+      
             
     <View style={styles.container}>
     <ConditionalKeyboardWrapper style={{flex:1}} chatscreen={true}>

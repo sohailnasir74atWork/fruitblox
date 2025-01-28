@@ -35,7 +35,6 @@ export const firebaseConfig = {
         // console.log('Token already up-to-date. No action needed.');
         return;
       }
-  
       // Save token and reset invalid flag
       await Promise.all([
         set(tokenRef, token),
