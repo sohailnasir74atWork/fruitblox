@@ -270,7 +270,7 @@ export const setActiveChat = async (userId, chatId) => {
 
     // Reset unread count for this user in the active chat
     await set(unreadRef, 0);
-    console.log(`Unread count reset to 0 for user ${userId} in chat ${chatId}`);
+    // console.log(`Unread count reset to 0 for user ${userId} in chat ${chatId}`);
 
     // Ensure active chat is cleared on disconnect
     onDisconnect(activeChatRef)

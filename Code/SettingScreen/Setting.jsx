@@ -12,6 +12,7 @@ import {
   KeyboardAvoidingView,
   ScrollView,
   Switch,
+  Linking,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useGlobalState } from '../GlobelStats';
@@ -29,6 +30,8 @@ import { resetUserState } from '../Globelhelper';
 import ConditionalKeyboardWrapper from '../Helper/keyboardAvoidingContainer';
 import { useHaptic } from '../Helper/HepticFeedBack';
 import { useLocalState } from '../LocalGlobelStats';
+import config from '../Helper/Environment';
+import notifee, { AuthorizationStatus } from '@notifee/react-native';
 
 const adUnitId = getAdUnitId('rewarded')
 
@@ -46,6 +49,8 @@ export default function SettingsScreen({ selectedTheme }) {
   const [openSingnin, setOpenSignin] = useState(false);
   const { user, theme, updateLocalStateAndDatabase, setUser } = useGlobalState()
   const {updateLocalState, localState} = useLocalState()
+  const [isPermissionGranted, setIsPermissionGranted] = useState(false);
+
   const { triggerHapticFeedback } = useHaptic();
   const themes = ['system', 'light', 'dark'];
   const handleToggle = (value) => {
@@ -63,7 +68,56 @@ export default function SettingsScreen({ selectedTheme }) {
 
   }, [user]);
 
+  useEffect(() => {
+    const checkPermission = async () => {
+      const settings = await notifee.getNotificationSettings();
+      setIsPermissionGranted(settings.authorizationStatus === 1); // 1 means granted
+    };
 
+    checkPermission();
+  }, []);
+
+  // Request permission
+  const requestPermission = async () => {
+    try {
+      const settings = await notifee.requestPermission();
+      if (settings.authorizationStatus === 0) {
+        Alert.alert(
+          'Permission Required',
+          'Notification permissions are disabled. Please enable them in the app settings.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Go to Settings',
+              onPress: () => Linking.openSettings(), // Redirect to app settings
+            },
+          ]
+        );
+        return false; // Permission not granted
+      }
+
+      if (settings.authorizationStatus === 1) {
+        setIsPermissionGranted(true); // Update state if permission granted
+        return true;
+      }
+    } catch (error) {
+      console.error('Error requesting notification permission:', error);
+      Alert.alert('Error', 'An error occurred while requesting notification permissions.');
+      return false;
+    }
+  };
+
+  // Handle toggle
+  const handleToggleNotification = async (value) => {
+    if (value) {
+      // If enabling notifications, request permission
+      const granted = await requestPermission();
+      setIsPermissionGranted(granted);
+    } else {
+      // If disabling, update the state
+      setIsPermissionGranted(false);
+    }
+  };
 
   const handleSaveChanges = async () => {
     triggerHapticFeedback('impactLight');
@@ -309,7 +363,22 @@ export default function SettingsScreen({ selectedTheme }) {
           <Text style={styles.optionText}>Heptic Feedback</Text></TouchableOpacity>
           <Switch value={localState.isHaptic} onValueChange={handleToggle} />
           </View>
+          
         </View>
+        <View style={styles.option} onPress={()=>{handleShareApp(); triggerHapticFeedback('impactLight');
+}}>
+  <View style={{flexDirection:'row', justifyContent:'space-between', width:'100%'}}>
+    <TouchableOpacity style={{flexDirection:'row', alignItems:'center'}}>
+          <Icon name="notifications" size={24} color={config.colors.hasBlockGreen} />
+          <Text style={styles.optionText}>Chat Notifications</Text></TouchableOpacity>
+          <Switch
+        value={isPermissionGranted}
+        onValueChange={handleToggleNotification}
+      />
+          </View>
+          
+        </View>
+        
         <View style={styles.optionLast} onPress={()=>{handleShareApp(); triggerHapticFeedback('impactLight');
 }}>
   <View style={{flexDirection:'row', justifyContent:'space-between', width:'100%'}}>

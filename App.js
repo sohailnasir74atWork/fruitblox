@@ -24,6 +24,7 @@ import {
   requestReview,
 } from './Code/AppHelper/AppHelperFunction';
 import getAdUnitId from './Code/Ads/ads';
+import requestPermission from './Code/Helper/PermissionCheck';
 
 const Stack = createNativeStackNavigator();
 const adCooldown = 120000;
@@ -48,6 +49,7 @@ function App() {
     }
 
     updateLocalState('reviewCount', Number(reviewCount) + 1);
+    requestPermission()
   }, []);
   useEffect(() => {
     if (localState.consentStatus === 'UNKNOWN' || localState.consentStatus === AdsConsentStatus.REQUIRED) {
