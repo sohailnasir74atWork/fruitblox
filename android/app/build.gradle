@@ -84,8 +84,8 @@ android {
         applicationId "com.bloxfruitevalues"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 16
-        versionName "1.8.2"
+        versionCode 17
+        versionName "1.8.3"
     }
     signingConfigs {
         release {
