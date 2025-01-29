@@ -6,6 +6,8 @@ import { Appearance } from 'react-native';
 import { createNewUser, firebaseConfig, registerForNotifications } from './Globelhelper';
 import database from '@react-native-firebase/database';
 import { useLocalState } from './LocalGlobelStats';
+import config from './Helper/Environment';
+import Purchases from 'react-native-purchases';
 
 const app = initializeApp(firebaseConfig);
 
@@ -191,6 +193,8 @@ export const GlobalStateProvider = ({ children }) => {
 
 // console.log(user)
 
+
+
   // Reset user state
   const resetUserState = () => {
     setUser({
@@ -241,7 +245,7 @@ export const GlobalStateProvider = ({ children }) => {
             await registerForNotifications(userId);
           } else {
             // Reset user state if logged out
-            // resetUserState();
+            resetUserState();
           }
         } catch (error) {
           console.error("Error handling authentication state change:", error);
@@ -276,7 +280,6 @@ const handleError = (error) => {
 const fetchStockData = async () => {
   try {
     setLoading(true);
-
     // Improved connectivity check
     await checkInternetConnection();
 
