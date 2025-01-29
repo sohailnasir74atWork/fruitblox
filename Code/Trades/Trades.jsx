@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, FlatList, Text, TouchableOpacity, StyleSheet, Image, ActivityIndicator, TextInput, Alert } from 'react-native';
-import { getDatabase, ref, onValue, remove, set, get, startAfter, off } from 'firebase/database';
+import { getDatabase, ref, onValue, remove, set, get, startAfter, off, orderByChild } from 'firebase/database';
 import Icon from 'react-native-vector-icons/Ionicons';
 import moment from 'moment'; // Install moment.js for formatting timestamps
 import { useGlobalState } from '../GlobelStats';
@@ -33,9 +33,7 @@ const [filterType, setFilterType] = useState('hasItems');
 const [isAdLoaded, setIsAdLoaded] = useState(false);
 const [isShowingAd, setIsShowingAd] = useState(false);
 const [isReportPopupVisible, setReportPopupVisible] = useState(false);
-const PAGE_SIZE_LOGGED_IN = 600; // Number of items to load per page
-const PAGE_SIZE_LOGGED_OUT = 30; // Number of items to load per page
-
+const PAGE_SIZE = 20;
 const [isSigninDrawerVisible, setIsSigninDrawerVisible] = useState(false);
 
 const [selectedTrade, setSelectedTrade] = useState(null);
@@ -51,6 +49,8 @@ const [selectedTrade, setSelectedTrade] = useState(null);
     setSelectedTrade(trade);
     setReportPopupVisible(true);
   };
+
+  
   
   useEffect(() => {
     interstitial.load();
@@ -134,75 +134,136 @@ const [selectedTrade, setSelectedTrade] = useState(null);
       setFilteredTrades(trades);
     }
   }, [searchQuery, trades, filterType]);
+  const fetchMoreTrades = useCallback(async () => {
+    if (!hasMore || !lastKey) {
+      return;
+    }
   
-  const fetchInitialTrades = useCallback(() => {
+  
     const db = getDatabase();
     const tradeRef = ref(db, 'trades/');
-    const limit = user?.id ? PAGE_SIZE_LOGGED_IN : PAGE_SIZE_LOGGED_OUT;
   
-    setLoading(true);
-    const queryRef = query(tradeRef, orderByKey(), limitToLast(limit));
-    get(queryRef)
-      .then((snapshot) => {
-        if (snapshot.exists()) {
-          const data = snapshot.val();
-          const tradeList = Object.keys(data).map((key) => ({
-            id: key,
-            ...data[key],
-          }));
-          setTrades(tradeList.reverse()); // Reverse for ascending order
-        } else {
-          console.log('No trades available');
-        }
-      })
-      .catch((error) => {
-        console.error('Error fetching trades:', error);
-        Alert.alert('Error', 'Unable to fetch trades.');
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, [user]);
+    try {
+      const queryRef = query(
+        tradeRef,
+        orderByChild('timestamp'),
+        endAt(lastKey),  // Correctly fetching older trades
+        limitToLast(PAGE_SIZE + 1)  // Fetch PAGE_SIZE + 1 to detect the true last trade
+      );
   
+      const snapshot = await get(queryRef);
   
-  
-  
-  useEffect(() => {
-    if (!user?.id) return;
-  
-    const db = getDatabase();
-    const tradeRef = query(ref(db, 'trades/'), orderByKey(), limitToLast(1)); // Only fetch the most recent trade
-  
-    const listener = onValue(tradeRef, (snapshot) => {
       if (snapshot.exists()) {
-        const newTrade = snapshot.val();
+        const data = snapshot.val();
+        let tradeList = Object.keys(data).map((key) => ({
+          id: key,
+          ...data[key],
+        }));
+  
+        // 🔥 FIX: Ensure we batch load PAGE_SIZE trades at once
+        if (tradeList.length <= 1) {
+          // console.log("🚫 No more trades left to fetch. Stopping.");
+          setHasMore(false);
+          return;
+        }
+  
+        tradeList.pop(); // Remove duplicate lastKey trade
+  
         setTrades((prevTrades) => {
-          const newTradeKey = Object.keys(newTrade)[0];
-          if (!prevTrades.find((trade) => trade.id === newTradeKey)) {
-            return [{ id: newTradeKey, ...newTrade[newTradeKey] }, ...prevTrades];
-          }
-          return prevTrades;
+          const newTrades = [...prevTrades, ...tradeList];
+  
+          // 🔹 Remove duplicates using Map()
+          const uniqueTrades = Array.from(new Map(newTrades.map(trade => [trade.id, trade])).values());
+  
+          return uniqueTrades;
         });
+  
+        // 🔑 Update lastKey correctly to the **oldest** trade from batch
+        const newLastKey = tradeList.length > 0 ? tradeList[0]?.timestamp : null;
+        setLastKey(newLastKey);
+  
+       
+  
+        // 🚨 Check if fewer than PAGE_SIZE trades received → No more trades left
+        if (tradeList.length < PAGE_SIZE) {
+         
+          setHasMore(false);
+        }
+      } else {
+      
+        setHasMore(false);
       }
-    });
-  
-    return () => off(tradeRef);
-  }, [user]);
-  
-  
-
-
-  const handleEndReached = ()=>{
-       if (!user?.id) {
-      setIsSigninDrawerVisible(true); // Show sign-in drawer for unauthenticated users
+    } catch (error) {
+      console.error("❌ Error fetching more trades:", error);
     }
-  }
+  }, [lastKey, hasMore]);
   
   
-  useEffect(()=>{fetchInitialTrades()},[user.id])
   
-  
+  const handleEndReached = () => {
  
+  
+    if (!hasMore) {
+   
+      return;
+    }
+  
+    if (!user?.id) {
+    
+      setIsSigninDrawerVisible(true);
+      return;
+    }
+  
+    fetchMoreTrades();
+  };
+  
+  
+  
+  const fetchInitialTrades = useCallback(async () => {
+    const db = getDatabase();
+    const tradeRef = ref(db, 'trades/');
+    setLoading(true);
+  
+    try {
+      const queryRef = query(tradeRef, orderByChild('timestamp'), limitToLast(PAGE_SIZE));
+      const snapshot = await get(queryRef);
+  
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        const tradeList = Object.keys(data).map((key) => ({
+          id: key,
+          ...data[key],
+        }));
+  
+        // Remove duplicates using a Set()
+        const uniqueTrades = Array.from(new Map(tradeList.map(trade => [trade.id, trade])).values());
+  
+        setTrades(uniqueTrades.reverse()); // Reverse to show latest trades first
+        setLastKey(uniqueTrades[uniqueTrades.length - 1]?.timestamp || null);
+        setHasMore(uniqueTrades.length === PAGE_SIZE);
+      } else {
+        setHasMore(false);
+      }
+    } catch (error) {
+      console.error("Error fetching initial trades:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+  
+  
+  
+  
+
+  useEffect(() => {
+    fetchInitialTrades();
+  
+    if (!user?.id) {
+      setTrades((prev) => prev.slice(0, PAGE_SIZE)); // Keep only 20 trades for logged-out users
+    }
+  }, [user?.id]);
+  
+  
   
       
   
@@ -223,20 +284,11 @@ const [selectedTrade, setSelectedTrade] = useState(null);
 
 
 
-  const getTradeStatus = (hasTotal, wantsTotal) => {
-    const lowerBound = hasTotal * 0.85;
-    const upperBound = hasTotal * 1.15;
-    if (wantsTotal >= lowerBound && wantsTotal <= upperBound) return 'Fair';
-    if (wantsTotal < lowerBound * 0.7) return 'Best';
-    if (wantsTotal < lowerBound) return 'Good';
-    if (wantsTotal > upperBound * 1.3) return 'Worst';
-    return 'Poor';
-  };
+  
   
   const renderTrade = ({ item }) => {
     const formattedTime = moment(item.timestamp).fromNow();
   
-    const tradeStatus = getTradeStatus(item.hasTotal.price, item.wantsTotal.price);
 
   
     // console.log(item)
@@ -358,34 +410,7 @@ const [selectedTrade, setSelectedTrade] = useState(null);
             <Text style={[styles.actionText]}>Send Message</Text>
           </View>
         </TouchableOpacity>
-        <Text
- style={{
-  fontFamily: 'Lato-Regular',
-  fontSize: 12,
-  lineHeight:14,
-  color:
-    tradeStatus === 'Fair'
-      ? isDarkMode
-        ? '#F5F5F5'
-        : '#121212' // Light: Dark Gray, Dark: Light Gray
-      : tradeStatus === 'Good'
-      ? config.colors.hasBlockGreen // Fixed green for "Good"
-      : tradeStatus === 'Poor'
-      ? config.colors.wantBlockRed // Fixed red for "Poor"
-      : tradeStatus === 'Best'
-      ? isDarkMode
-        ? '#FFD700'
-        : '#DAA520' // Light: Goldenrod, Dark: Gold
-      : isDarkMode
-      ? 'lightpink'
-      : '#8B0000', // Light: Firebrick, Dark: DarkRed for "Worst",
-  
-}}
-
->
-  {tradeStatus} Deal
-</Text>
-
+      
         </View>
       </View>
     );
@@ -410,12 +435,20 @@ const [selectedTrade, setSelectedTrade] = useState(null);
     <FlatList
   data={filteredTrades}
   renderItem={renderTrade}
-  keyExtractor={(item) => item.id}
+  keyExtractor={(item) => item.id.toString()} 
   showsVerticalScrollIndicator={false}
   contentContainerStyle={{ paddingBottom: 20 }}
-  onEndReached={handleEndReached} // Detect when the user reaches the end
-      onEndReachedThreshold={0.5} // Trigger when 50% away from the end
+  onEndReached={handleEndReached}
+  onEndReachedThreshold={0.2} 
+  removeClippedSubviews={true} // 🚀 Reduce memory usage
+  initialNumToRender={10} // 🔹 Render fewer items at start
+  maxToRenderPerBatch={10} // 🔹 Load smaller batches
+  updateCellsBatchingPeriod={50} // 🔹 Reduce updates per frame
+  windowSize={5} // 🔹 Keep only 5 screens worth in memory
+  
 />
+
+
 
 
 
