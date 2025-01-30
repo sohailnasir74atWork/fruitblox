@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   StatusBar,
@@ -33,7 +33,13 @@ const adUnitId = getAdUnitId('openapp');
 
 function App() {
   const { theme } = useGlobalState();
-  const selectedTheme = theme === 'dark' ? MyDarkTheme : MyLightTheme;
+  const selectedTheme = useMemo(() => {
+    if (!theme) {
+      console.warn("⚠️ Theme not found! Falling back to Light Theme.");
+    }
+    return theme === 'dark' ? MyDarkTheme : MyLightTheme;
+  }, [theme]);
+  
   const [loading, setLoading] = useState(false);
   const [lastAdShownTime, setLastAdShownTime] = useState(0);
   const [isAdLoaded, setIsAdLoaded] = useState(false);
@@ -63,6 +69,7 @@ function App() {
 
   const saveConsentStatus = (status) => {
     updateLocalState('consentStatus', status);
+    // updateLocalState('isOwner', true);
   };
   
 

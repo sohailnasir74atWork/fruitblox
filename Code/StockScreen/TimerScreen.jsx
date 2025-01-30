@@ -163,6 +163,7 @@ const TimerScreen = ({ selectedTheme }) => {
   
         // Optimistically update the UI
         updateLocalStateAndDatabase('isReminderEnabled', !currentValue);
+
       }
     } catch (error) {
       console.error('Error handling notification permission or sign-in:', error);

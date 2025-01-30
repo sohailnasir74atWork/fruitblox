@@ -32,6 +32,7 @@ import { useHaptic } from '../Helper/HepticFeedBack';
 import { useLocalState } from '../LocalGlobelStats';
 import config from '../Helper/Environment';
 import notifee, { AuthorizationStatus } from '@notifee/react-native';
+import SubscriptionScreen from './OfferWall';
 
 const adUnitId = getAdUnitId('rewarded')
 
@@ -50,11 +51,14 @@ export default function SettingsScreen({ selectedTheme }) {
   const { user, theme, updateLocalStateAndDatabase, setUser } = useGlobalState()
   const {updateLocalState, localState} = useLocalState()
   const [isPermissionGranted, setIsPermissionGranted] = useState(false);
+  const [showOfferWall, setShowofferWall] = useState(false);
+
 
   const { triggerHapticFeedback } = useHaptic();
   const themes = ['system', 'light', 'dark'];
   const handleToggle = (value) => {
     updateLocalState('isHaptic', value); // Update isHaptic state globally
+    // updateLocalState('isOwner', true); // Update isHaptic state globally
   };
   const isDarkMode = theme === 'dark';
   useEffect(() => {
@@ -418,6 +422,14 @@ export default function SettingsScreen({ selectedTheme }) {
           <Text style={styles.optionText}>Get Points</Text>
         </TouchableOpacity>
       </View>
+      <Text style={styles.subtitle}>Pro Subscription</Text>
+      <View style={styles.cardContainer}>
+        
+        <TouchableOpacity style={styles.optionLast} onPress={()=>{setShowofferWall(true)}}>
+          <Icon name="prism-outline" size={24} color={config.colors.hasBlockGreen} />
+          <Text style={styles.optionText}>Current Plan : Free</Text>
+        </TouchableOpacity>
+      </View>
       <Text style={styles.subtitle}>OTHER SETTINGS</Text>
 
       <View style={styles.cardContainer}>
@@ -544,6 +556,7 @@ export default function SettingsScreen({ selectedTheme }) {
           </View>
         </View>
       </Modal>
+      <SubscriptionScreen visible={showOfferWall} onClose={() => setShowofferWall(false)} />
       <SignInDrawer
         visible={openSingnin}
         onClose={() => setOpenSignin(false)}

@@ -2,12 +2,8 @@ import React, { createContext, useContext, useState, useEffect, useMemo } from '
 import { initializeApp, getApps } from 'firebase/app';
 import { getDatabase, ref, set, onValue, get, update, off, onDisconnect, query, orderByChild, equalTo, remove, increment } from 'firebase/database';
 import auth from '@react-native-firebase/auth';
-import { Appearance } from 'react-native';
 import { createNewUser, firebaseConfig, registerForNotifications } from './Globelhelper';
-import database from '@react-native-firebase/database';
 import { useLocalState } from './LocalGlobelStats';
-import config from './Helper/Environment';
-import Purchases from 'react-native-purchases';
 
 const app = initializeApp(firebaseConfig);
 

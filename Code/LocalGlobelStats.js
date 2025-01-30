@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { Appearance } from 'react-native'; // For system theme detection
 import { MMKV } from 'react-native-mmkv';
-import Purchases from 'react-native-purchases'; // Ensure you have react-native-purchases installed
+import Purchases from 'react-native-purchases'; // Ensure react-native-purchases is installed
 import config from './Helper/Environment';
 
 const storage = new MMKV();
@@ -12,7 +12,6 @@ export const useLocalState = () => useContext(LocalStateContext);
 export const LocalStateProvider = ({ children }) => {
   // Initial local state
   const [localState, setLocalState] = useState(() => {
-    // Determine initial theme: system theme or stored override
     const systemTheme = Appearance.getColorScheme(); // 'light' or 'dark'
     const storedTheme = storage.getString('theme');
     const initialTheme = storedTheme === 'system' || !storedTheme ? systemTheme : storedTheme;
@@ -21,119 +20,127 @@ export const LocalStateProvider = ({ children }) => {
       localKey: storage.getString('localKey') || 'defaultValue',
       reviewCount: parseInt(storage.getString('reviewCount'), 10) || 0, // Ensure reviewCount is a number
       isHaptic: storage.getBoolean('isHaptic') ?? true,
-      theme: initialTheme, // Default to 'light' if no theme is found
-      userId: storage.getString('userId') || null, // User ID for statistics
+      theme: initialTheme, // Default to system theme if not set
+      userId: storage.getString('userId') || null, // Store User ID
       consentStatus: storage.getString('consentStatus') || 'UNKNOWN',
-      isPro: storage.getBoolean('isPro') ?? false, // Fix missing isPro state
+      isPro: storage.getBoolean('isPro') ?? false, // Ensure isPro state is stored
     };
   });
 
-  // State for RevenueCat
+  // RevenueCat states
   const [customerId, setCustomerId] = useState(null);
-  const [isPro, setIsPro] = useState(false);
+  const [isPro, setIsPro] = useState(localState.isPro); // Sync with MMKV storage
   const [packages, setPackages] = useState([]);
   const [mySubscriptions, setMySubscriptions] = useState([]);
 
-  // Listen to system theme changes when theme is set to 'system'
+  // Listen for system theme changes
   useEffect(() => {
     if (localState.theme === 'system') {
       const listener = Appearance.addChangeListener(({ colorScheme }) => {
-        updateLocalState('theme', colorScheme); // Update to current system theme
+        updateLocalState('theme', colorScheme);
       });
       return () => listener.remove();
     }
   }, [localState.theme]);
 
-  // Update local state and MMKV
+  // Update local state and MMKV storage
   const updateLocalState = (key, value) => {
     setLocalState((prevState) => ({
       ...prevState,
       [key]: value,
     }));
 
-    // Save to MMKV
+    // Save to MMKV storage
     if (typeof value === 'string') {
       storage.set(key, value);
     } else if (typeof value === 'number') {
-      storage.set(key, value.toString()); // Store numbers as strings
+      storage.set(key, value.toString()); // Convert numbers to strings for storage
     } else if (typeof value === 'boolean') {
       storage.set(key, value);
     } else {
-      console.error('MMKV supports only string, number, or boolean values');
+      console.error('🚨 MMKV supports only string, number, or boolean values');
     }
   };
 
+  // Initialize RevenueCat
   useEffect(() => {
     const initRevenueCat = async () => {
       try {
-        Purchases.configure({ apiKey: config.apiKey });
+        await Purchases.configure({ apiKey: config.apiKey });
 
+        // Fetch customer ID
         const userID = await Purchases.getAppUserID();
         setCustomerId(userID);
 
-        await loadOfferings();
-        await checkEntitlement();
+        // Load offerings & check entitlements
+        await fetchOfferings();
+        await checkEntitlements();
       } catch (error) {
-        console.error('Error initializing RevenueCat:', error);
+        console.error('❌ Error initializing RevenueCat:', error.message);
       }
     };
 
     initRevenueCat();
   }, []);
 
-  const loadOfferings = async () => {
+  // Fetch available subscriptions
+  const fetchOfferings = async () => {
     try {
       const offerings = await Purchases.getOfferings();
-      const currentOfferings = offerings.current;
-
-      if (currentOfferings) {
-        setPackages(currentOfferings.availablePackages);
+      if (offerings.current?.availablePackages.length > 0) {
+        // console.log('✅ Offerings loaded:', offerings.current.availablePackages);
+        setPackages(offerings.current.availablePackages);
       } else {
-        console.log('No offerings found.');
+        console.warn('⚠️ No offerings found. Check RevenueCat settings.');
       }
     } catch (error) {
-      console.error('Error fetching offerings:', error);
+      console.error('❌ Error fetching offerings:', error.message);
     }
   };
 
-  const checkEntitlement = async () => {
+  // Check if the user has an active subscription
+  const checkEntitlements = async () => {
     try {
       const customerInfo = await Purchases.getCustomerInfo();
-      if (customerInfo.entitlements.active['Pro']) {
-        setIsPro(true); // Grant access to Pro features
+      const proStatus = !!customerInfo.entitlements.active['Pro'];
 
+      setIsPro(proStatus);
+      updateLocalState('isPro', proStatus); // Persist Pro status in MMKV
+
+      if (proStatus) {
         const activePlansWithExpiry = customerInfo.activeSubscriptions.map((subscription) => ({
           plan: subscription,
           expiry: customerInfo.allExpirationDates[subscription],
         }));
-
         setMySubscriptions(activePlansWithExpiry);
-      } else {
-        setIsPro(false);
       }
     } catch (error) {
-      console.error('Error checking entitlements:', error);
+      console.error('❌ Error checking entitlements:', error);
     }
   };
-
+console.log(packages)
+  // Handle in-app purchase
   const purchaseProduct = async (packageToPurchase) => {
     try {
       if (!packageToPurchase || !packageToPurchase.product) {
-        console.error('Invalid package passed to purchaseProduct:', packageToPurchase);
+        console.error('🚨 Invalid package passed to purchaseProduct:', packageToPurchase);
         return;
       }
+
       const { customerInfo } = await Purchases.purchasePackage(packageToPurchase);
+
       if (customerInfo.entitlements.active['Pro']) {
+        console.log('✅ Purchase successful! Pro features unlocked.');
         setIsPro(true);
         updateLocalState('isPro', true);
       } else {
-        console.warn('Purchase completed, but Pro entitlement not active.');
+        console.warn('⚠️ Purchase completed, but Pro entitlement not active.');
       }
     } catch (error) {
       if (error.userCancelled) {
-        console.log('User cancelled the purchase');
+        console.log('🚫 User cancelled the purchase.');
       } else {
-        console.error('Error during purchase:', error);
+        console.error('❌ Error during purchase:', error);
       }
     }
   };
@@ -149,7 +156,7 @@ export const LocalStateProvider = ({ children }) => {
     storage.delete(key);
   };
 
-  // Clear all local states
+  // Clear all local state and MMKV storage
   const clearAll = () => {
     setLocalState({});
     storage.clearAll();
