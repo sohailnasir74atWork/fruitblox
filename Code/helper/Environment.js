@@ -16,7 +16,7 @@ const config = {
   IOsRewarded: isNoman ? 'ca-app-pub-5740215782746766/9755679519' : '',
   IOsOpenApp: isNoman ? 'ca-app-pub-5740215782746766/1499878996' : '',
 
-  apiKey: isNoman ? 'goog_hNbzYuzixIbRtuJzgHltVeZzYos' : 'goog_hNbzYuzixIbRtuJzgHltVeZzYos',
+  apiKey: isNoman ? 'goog_vbOdGmvwsPRXPVNHgrVHiCRtnez' : 'goog_hNbzYuzixIbRtuJzgHltVeZzYos',
 
   supportEmail: isNoman ? 'thesolanalabs@gmail.com' : 'mindfusionio.help@gmail.com',
   andriodShareLink: isNoman ? 'https://play.google.com/store/apps/details?id=com.bloxfruitevalues' : 'https://play.google.com/store/apps/details?id=com.bloxfruitstock',

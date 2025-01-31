@@ -81,7 +81,7 @@ export const LocalStateProvider = ({ children }) => {
     };
 
     initRevenueCat();
-  }, []);
+  }, [mySubscriptions]);
 
   // Fetch available subscriptions
   const fetchOfferings = async () => {
@@ -98,6 +98,30 @@ export const LocalStateProvider = ({ children }) => {
     }
   };
 
+
+
+  const restorePurchases = async () => {
+    try {
+      const customerInfo = await Purchases.restorePurchases();
+  
+      if (customerInfo.entitlements.active['Pro']) {
+        console.log('✅ Purchases restored! Pro features unlocked.');
+        setIsPro(true);
+        updateLocalState('isPro', true);
+  
+        const activePlansWithExpiry = customerInfo.activeSubscriptions.map((subscription) => ({
+          plan: subscription,
+          expiry: customerInfo.allExpirationDates[subscription],
+        }));
+        setMySubscriptions(activePlansWithExpiry);
+      } else {
+        console.warn('⚠️ No active subscriptions found.');
+      }
+    } catch (error) {
+      console.error('❌ Error restoring purchases:', error);
+    }
+  };
+  
   // Check if the user has an active subscription
   const checkEntitlements = async () => {
     try {
@@ -118,7 +142,6 @@ export const LocalStateProvider = ({ children }) => {
       console.error('❌ Error checking entitlements:', error);
     }
   };
-console.log(packages)
   // Handle in-app purchase
   const purchaseProduct = async (packageToPurchase) => {
     try {
@@ -144,7 +167,6 @@ console.log(packages)
       }
     }
   };
-
   // Clear a specific key
   const clearKey = (key) => {
     setLocalState((prevState) => {
@@ -173,6 +195,7 @@ console.log(packages)
       packages,
       mySubscriptions,
       purchaseProduct,
+      restorePurchases
     }),
     [localState, customerId, isPro, packages, mySubscriptions]
   );

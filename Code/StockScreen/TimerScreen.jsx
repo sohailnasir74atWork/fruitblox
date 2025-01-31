@@ -10,6 +10,7 @@ import getAdUnitId from '../Ads/ads';
 import config from '../Helper/Environment';
 import notifee, { AuthorizationStatus } from '@notifee/react-native';
 import { useHaptic } from '../Helper/HepticFeedBack';
+import { useLocalState } from '../LocalGlobelStats';
 const bannerAdUnitId = getAdUnitId('banner');
 const interstitialAdUnitId = getAdUnitId('interstitial');
 const interstitial = InterstitialAd.createForAdRequest(interstitialAdUnitId);
@@ -27,6 +28,7 @@ const TimerScreen = ({ selectedTheme }) => {
   const [isSigninDrawerVisible, setisSigninDrawerVisible] = useState(false);
   const [isAdVisible, setIsAdVisible] = useState(true);
   const { triggerHapticFeedback } = useHaptic();
+  const {isPro} = useLocalState()
 
   const isDarkMode = theme === 'dark';
   useEffect(() => {
@@ -64,8 +66,13 @@ const TimerScreen = ({ selectedTheme }) => {
       Alert.alert('Notice', `${fruit.Name} is already selected.`);
       return; // Exit if the fruit is already selected
     }
-  
-    if (selectedFruits.length === 0) {
+    if (isPro) {
+      // First selection is free
+      const updatedFruits = [...selectedFruits, fruit];
+      updateLocalStateAndDatabase('selectedFruits', updatedFruits); // Update selected fruits locally and remotely
+      Alert.alert('Success', `${fruit.Name} selected successfully!`);
+    }
+    else if (selectedFruits.length === 0) {
       // First selection is free
       const updatedFruits = [...selectedFruits, fruit];
       updateLocalStateAndDatabase('selectedFruits', updatedFruits); // Update selected fruits locally and remotely
@@ -299,7 +306,7 @@ const TimerScreen = ({ selectedTheme }) => {
   }, []);
 
   const showInterstitialAd = (callback) => {
-    if (isAdLoaded && !isShowingAd) {
+    if (isAdLoaded && !isShowingAd && !isPro) {
       setIsShowingAd(true);
       try {
         interstitial.show();
@@ -434,7 +441,7 @@ const TimerScreen = ({ selectedTheme }) => {
 
       </GestureHandlerRootView>
 
-<View style={{ alignSelf: 'center' }}>
+      {!isPro && <View style={{ alignSelf: 'center' }}>
 {isAdVisible && (
 <BannerAd
 unitId={bannerAdUnitId}
@@ -443,7 +450,7 @@ onAdLoaded={() => setIsAdVisible(true)}
 onAdFailedToLoad={() => setIsAdVisible(false)} 
 />
 )}
-</View>
+</View>}
     </>
 
 

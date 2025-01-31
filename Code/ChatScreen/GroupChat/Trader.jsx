@@ -24,6 +24,7 @@ import ProfileBottomDrawer from './BottomDrawer';
 import leoProfanity from 'leo-profanity';
 import ConditionalKeyboardWrapper from '../../Helper/keyboardAvoidingContainer';
 import { useHaptic } from '../../Helper/HepticFeedBack';
+import { useLocalState } from '../../LocalGlobelStats';
 leoProfanity.add(['hell', 'shit']);
 leoProfanity.loadDictionary('en');
 
@@ -53,6 +54,7 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
   const { triggerHapticFeedback } = useHaptic();
   const [isAdLoaded, setIsAdLoaded] = useState(false);
   const [isShowingAd, setIsShowingAd] = useState(false);
+    const {isPro} = useLocalState()
 
   useEffect(() => {
     let isMounted = true;
@@ -101,12 +103,18 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
 
 
 
-  const validateMessage = useCallback((message) => ({
-    ...message,
-    sender: message.sender?.trim() || 'Anonymous',
-    text: message.text?.trim() || '[No content]',
-    timestamp: message.timestamp || Date.now(),
-  }), []);
+  const validateMessage = useCallback((message) => {
+    if (!message.text || message.text.trim() === '') {
+      return null; // Ignore messages without content
+    }
+    return {
+      ...message,
+      sender: message.sender?.trim() || 'Anonymous',
+      text: message.text.trim(),
+      timestamp: message.timestamp || Date.now(),
+    };
+  }, []);
+  
   const loadMessages = useCallback(
     async (reset = false) => {
       try {
@@ -321,7 +329,7 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
   }, []);
 
   const showInterstitialAd = (callback) => {
-    if (isAdLoaded && !isShowingAd) {
+    if (isAdLoaded && !isShowingAd && !isPro) {
       setIsShowingAd(true);
       try {
         interstitial.show();
@@ -500,16 +508,16 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
       />
      </GestureHandlerRootView>
 
-<View style={{ alignSelf: 'center' }}>
-{isAdVisible && (
-<BannerAd
-unitId={bannerAdUnitId}
-size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
-onAdLoaded={() => setIsAdVisible(true)} 
-onAdFailedToLoad={() => setIsAdVisible(false)} 
-/>
-)}
-</View>
+     {!isPro && <View style={{ alignSelf: 'center' }}>
+  {isAdVisible && (
+    <BannerAd
+      unitId={bannerAdUnitId}
+      size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+      onAdLoaded={() => setIsAdVisible(true)} 
+      onAdFailedToLoad={() => setIsAdVisible(false)} 
+    />
+  )}
+</View>}
      </>
   );
 };

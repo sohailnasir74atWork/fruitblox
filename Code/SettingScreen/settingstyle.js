@@ -202,6 +202,33 @@ export const getStyles = (isDarkMode) =>
         color:'white',
         fontFamily:'Lato-Regular',
         fontSize:10,
-      }
+      },
+      subscriptionContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderWidth: 1,
+        borderColor: config.colors.hasBlockGreen,
+        borderRadius: 8,
+        marginVertical: 10,
+      },
+      subscriptionText: {
+        color: config.colors.hasBlockGreen,
+        fontSize: 16,
+        fontFamily: 'Lato-Bold',
+      },
+      manageButton: {
+        backgroundColor: config.colors.hasBlockGreen,
+        paddingVertical: 6,
+        paddingHorizontal: 12,
+        borderRadius: 6,
+      },
+      manageButtonText: {
+        color: 'white',
+        fontSize: 14,
+        fontFamily: 'Lato-Bold',
+      },
     });
   

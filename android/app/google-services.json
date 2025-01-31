@@ -48,10 +48,10 @@
               "client_type": 3
             },
             {
-              "client_id": "409137828081-2p83ft7aje95p2njo5m5h6vdd4l86s17.apps.googleusercontent.com",
+              "client_id": "409137828081-5hsdhsorirt9c2k9s3umlknjj15tvk6v.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "bloxfruitevalues",
+                "bundle_id": "com.bloxfruitevalues",
                 "app_store_id": "6737775801"
               }
             }
@@ -63,7 +63,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:409137828081:android:f8e6ca95c7fc8b39f39950",
         "android_client_info": {
-          "package_name": "com.bloxfruitstock"
+          "package_name": "com.bloxfruitevalues"
         }
       },
       "oauth_client": [
@@ -71,7 +71,7 @@
           "client_id": "409137828081-ee3vareg6in206fbgpplt2pg1r6vhh02.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.bloxfruitstock",
+            "package_name": "com.bloxfruitevalues",
             "certificate_hash": "724ade3150c7715988564d76e71675a6ea19d558"
           }
         },
@@ -79,7 +79,7 @@
           "client_id": "409137828081-p27gabnckvpgh7o743fcbg2g3tep1193.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.bloxfruitstock",
+            "package_name": "com.bloxfruitevalues",
             "certificate_hash": "cea83f7ab4ec070d2930ec28cfb9513728cc5630"
           }
         },
@@ -87,7 +87,7 @@
           "client_id": "409137828081-qdq5652rhja4crfnuhq0f9chhjukkbfn.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.bloxfruitstock",
+            "package_name": "com.bloxfruitevalues",
             "certificate_hash": "d195a122f91d23f1b1ad2221fccbf09993087af1"
           }
         },
@@ -109,10 +109,10 @@
               "client_type": 3
             },
             {
-              "client_id": "409137828081-2p83ft7aje95p2njo5m5h6vdd4l86s17.apps.googleusercontent.com",
+              "client_id": "409137828081-5hsdhsorirt9c2k9s3umlknjj15tvk6v.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "bloxfruitevalues",
+                "bundle_id": "com.bloxfruitevalues",
                 "app_store_id": "6737775801"
               }
             }
@@ -146,10 +146,10 @@
               "client_type": 3
             },
             {
-              "client_id": "409137828081-2p83ft7aje95p2njo5m5h6vdd4l86s17.apps.googleusercontent.com",
+              "client_id": "409137828081-5hsdhsorirt9c2k9s3umlknjj15tvk6v.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "bloxfruitevalues",
+                "bundle_id": "com.bloxfruitevalues",
                 "app_store_id": "6737775801"
               }
             }
@@ -183,10 +183,10 @@
               "client_type": 3
             },
             {
-              "client_id": "409137828081-2p83ft7aje95p2njo5m5h6vdd4l86s17.apps.googleusercontent.com",
+              "client_id": "409137828081-5hsdhsorirt9c2k9s3umlknjj15tvk6v.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "bloxfruitevalues",
+                "bundle_id": "com.bloxfruitevalues",
                 "app_store_id": "6737775801"
               }
             }

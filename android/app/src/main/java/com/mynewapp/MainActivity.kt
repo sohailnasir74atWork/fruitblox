@@ -1,4 +1,4 @@
-package com.bloxfruitstock
+package com.bloxfruitevalues
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate

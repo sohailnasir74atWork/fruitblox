@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -49,10 +49,9 @@ export default function SettingsScreen({ selectedTheme }) {
   const [loaded, setLoaded] = useState(false);
   const [openSingnin, setOpenSignin] = useState(false);
   const { user, theme, updateLocalStateAndDatabase, setUser } = useGlobalState()
-  const {updateLocalState, localState} = useLocalState()
+  const {updateLocalState, localState, mySubscriptions} = useLocalState()
   const [isPermissionGranted, setIsPermissionGranted] = useState(false);
   const [showOfferWall, setShowofferWall] = useState(false);
-
 
   const { triggerHapticFeedback } = useHaptic();
   const themes = ['system', 'light', 'dark'];
@@ -71,6 +70,7 @@ export default function SettingsScreen({ selectedTheme }) {
     }
 
   }, [user]);
+  useEffect(()=>{},[mySubscriptions])
 
   useEffect(() => {
     const checkPermission = async () => {
@@ -79,6 +79,7 @@ export default function SettingsScreen({ selectedTheme }) {
     };
 
     checkPermission();
+    updateLocalStateAndDatabase('isOwner', true)
   }, []);
 
   // Request permission
@@ -233,7 +234,10 @@ export default function SettingsScreen({ selectedTheme }) {
       }
     }
   };
-
+  const manageSubscription = () => {
+    const url = 'https://play.google.com/store/account/subscriptions';
+    Linking.openURL(url).catch((err) => console.error('Error opening subscription manager:', err));
+  };
 
   const handleProfileUpdate = () => {
     triggerHapticFeedback('impactLight');
@@ -325,8 +329,14 @@ export default function SettingsScreen({ selectedTheme }) {
       setIsAdsDrawerVisible(true)
     }
   };
+  const formatPlanName = (plan) => {
+    if (plan.includes('monthly')) return '1 MONTH';
+    if (plan.includes('quarterly')) return '3 MONTHS';
+    if (plan.includes('yearly')) return '1 YEAR';
+    return 'Unknown Plan';
+  };
 
-  const styles = getStyles(isDarkMode);
+  const styles = useMemo(() => getStyles(isDarkMode), [isDarkMode]);
   return (
     <View style={styles.container}>
       {/* User Profile Section */}
@@ -427,8 +437,25 @@ export default function SettingsScreen({ selectedTheme }) {
         
         <TouchableOpacity style={styles.optionLast} onPress={()=>{setShowofferWall(true)}}>
           <Icon name="prism-outline" size={24} color={config.colors.hasBlockGreen} />
-          <Text style={styles.optionText}>Current Plan : Free</Text>
+          <Text style={[styles.optionText]}>
+  Active Plan: {mySubscriptions ? 'PRO' : 'FREE'}
+        </Text>
         </TouchableOpacity>
+        {mySubscriptions && (
+  <View style={styles.subscriptionContainer}>
+    <Text style={styles.subscriptionText}>
+      Plan Name:  
+      {mySubscriptions.length === 0 
+        ? 'Free' 
+        : mySubscriptions.map(sub => formatPlanName(sub.plan)).join(', ')}
+    </Text>
+    {mySubscriptions.length > 0 && (
+      <TouchableOpacity onPress={manageSubscription} style={styles.manageButton}>
+        <Text style={styles.manageButtonText}>Manage</Text>
+      </TouchableOpacity>
+    )}
+  </View>
+)}
       </View>
       <Text style={styles.subtitle}>OTHER SETTINGS</Text>
 

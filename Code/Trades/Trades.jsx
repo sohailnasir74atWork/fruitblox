@@ -13,6 +13,7 @@ import { query, orderByKey, limitToLast, endAt } from 'firebase/database';
 import { FilterMenu } from './tradeHelpers';
 import ReportTradePopup from './ReportTradePopUp';
 import SignInDrawer from '../Firebase/SigninDrawer';
+import { useLocalState } from '../LocalGlobelStats';
 
 
 const bannerAdUnitId = getAdUnitId('banner');
@@ -35,7 +36,7 @@ const [isShowingAd, setIsShowingAd] = useState(false);
 const [isReportPopupVisible, setReportPopupVisible] = useState(false);
 const PAGE_SIZE = 20;
 const [isSigninDrawerVisible, setIsSigninDrawerVisible] = useState(false);
-
+const {isPro} = useLocalState()
 const [selectedTrade, setSelectedTrade] = useState(null);
   const navigation = useNavigation()
   const {theme} = useGlobalState()
@@ -79,7 +80,7 @@ const [selectedTrade, setSelectedTrade] = useState(null);
   }, []);
 
   const showInterstitialAd = (callback) => {
-    if (isAdLoaded && !isShowingAd) {
+    if (isAdLoaded && !isShowingAd && !isPro) {
       setIsShowingAd(true);
       try {
         interstitial.show();
@@ -283,7 +284,12 @@ const [selectedTrade, setSelectedTrade] = useState(null);
 
 
 
-
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchInitialTrades();
+    setRefreshing(false);
+  };
+  
   
   
   const renderTrade = ({ item }) => {
@@ -445,7 +451,8 @@ const [selectedTrade, setSelectedTrade] = useState(null);
   maxToRenderPerBatch={10} // 🔹 Load smaller batches
   updateCellsBatchingPeriod={50} // 🔹 Reduce updates per frame
   windowSize={5} // 🔹 Keep only 5 screens worth in memory
-  
+  refreshing={refreshing} // Add Pull-to-Refresh
+  onRefresh={handleRefresh} // Attach Refresh Handler
 />
 
 
@@ -466,7 +473,7 @@ const [selectedTrade, setSelectedTrade] = useState(null);
 
           />
 
-      <View style={{ alignSelf: 'center' }}>
+      {!isPro && <View style={{ alignSelf: 'center' }}>
   {isAdVisible && (
     <BannerAd
       unitId={bannerAdUnitId}
@@ -475,7 +482,7 @@ const [selectedTrade, setSelectedTrade] = useState(null);
       onAdFailedToLoad={() => setIsAdVisible(false)} 
     />
   )}
-</View>
+</View>}
     </View>
   );
 };

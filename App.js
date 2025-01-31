@@ -43,7 +43,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [lastAdShownTime, setLastAdShownTime] = useState(0);
   const [isAdLoaded, setIsAdLoaded] = useState(false);
-  const { localState, updateLocalState } = useLocalState();
+  const { localState, updateLocalState, isPro } = useLocalState();
   const [chatFocused,setChatFocused] = useState(true);
   const [modalVisibleChatinfo, setModalVisibleChatinfo ] = useState(false)
   useEffect(() => {
@@ -104,9 +104,10 @@ function App() {
 
   // Handle App State Changes for Ads
   useEffect(() => {
+    
     const handleAppStateChange = (state) => {
       if (state === 'active') {
-        loadAppOpenAd(adUnitId, lastAdShownTime, adCooldown, setLastAdShownTime, setIsAdLoaded);
+        loadAppOpenAd(adUnitId, lastAdShownTime, adCooldown, setLastAdShownTime, setIsAdLoaded, isPro);
       }
     };
 

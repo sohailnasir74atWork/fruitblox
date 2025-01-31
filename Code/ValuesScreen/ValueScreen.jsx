@@ -18,6 +18,7 @@ import config from '../Helper/Environment';
 import { useGlobalState } from '../GlobelStats';
 import CodesDrawer from './Code';
 import { useHaptic } from '../Helper/HepticFeedBack';
+import { useLocalState } from '../LocalGlobelStats';
 
 const bannerAdUnitId = getAdUnitId('banner');
 const interstitialAdUnitId = getAdUnitId('interstitial');
@@ -41,7 +42,7 @@ const ValueScreen = ({ selectedTheme }) => {
   const [isAdLoaded, setIsAdLoaded] = useState(false);
   const [isShowingAd, setIsShowingAd] = useState(false);
   const { triggerHapticFeedback } = useHaptic();
-
+const {isPro} = useLocalState()
   // const toggleDrawer = () => {
   //   setIsDrawerVisible(!isDrawerVisible);
   // };
@@ -238,7 +239,7 @@ const ValueScreen = ({ selectedTheme }) => {
 <CodesDrawer isVisible={isDrawerVisible} toggleModal={toggleDrawer} codes={codesData}/>
       </GestureHandlerRootView>
 
-      <View style={{ alignSelf: 'center' }}>
+      {!isPro && <View style={{ alignSelf: 'center' }}>
   {isAdVisible && (
     <BannerAd
       unitId={bannerAdUnitId}
@@ -247,7 +248,7 @@ const ValueScreen = ({ selectedTheme }) => {
       onAdFailedToLoad={() => setIsAdVisible(false)} 
     />
   )}
-</View>
+</View>}
     </>
   );
 };

@@ -14,7 +14,7 @@ import { ScrollView } from 'react-native-gesture-handler';
 import config from '../../Helper/Environment';
 import {  rules } from '../utils';
 import { parseMessageText } from '../ChatHelper';
-import { Menu, MenuOption, MenuOptions, MenuTrigger } from 'react-native-popup-menu';
+import { Menu, MenuOption, MenuOptions, MenuTrigger, renderers } from 'react-native-popup-menu';
 
 const AdminHeader = ({
   pinnedMessages = [], // Array of pinned messages
@@ -38,8 +38,8 @@ const AdminHeader = ({
 
 
   useEffect(() => {
-    const base = Math.floor(Math.random() * 6) + 5; // Random value between 5 and 10
-    setRandomBase(base);
+    const randomNumber = Math.floor(Math.random() * (40 - 25 + 1)) + 25;
+    setRandomBase(randomNumber);
   }, []);
 
   const panResponder = PanResponder.create({

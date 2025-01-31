@@ -32,7 +32,9 @@ export const initializeAds = async () => {
   await mobileAds().initialize();
 };
 
-export const loadAppOpenAd = async (adUnitId, lastAdShownTime, adCooldown, setLastAdShownTime, setIsAdLoaded) => {
+export const loadAppOpenAd = async (adUnitId, lastAdShownTime, adCooldown, setLastAdShownTime, setIsAdLoaded, isPro) => {
+  isPro 
+  return
   const now = Date.now();
   if (now - lastAdShownTime < adCooldown) return;
 

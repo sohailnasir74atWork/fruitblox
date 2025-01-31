@@ -20,6 +20,7 @@ import { BannerAd, BannerAdSize } from 'react-native-google-mobile-ads';
 import ConditionalKeyboardWrapper from '../../Helper/keyboardAvoidingContainer';
 import { clearActiveChat, setActiveChat } from '../utils';
 import { useNavigation } from '@react-navigation/native';
+import { useLocalState } from '../../LocalGlobelStats';
 
 const PAGE_SIZE = 30;
 const bannerAdUnitId = getAdUnitId('banner');
@@ -35,6 +36,7 @@ const PrivateChatScreen = () => {
   const [replyTo, setReplyTo] = useState(null);
   const [input, setInput] = useState('');
   const [isAdVisible, setIsAdVisible] = useState(true);
+  const {isPro} = useLocalState()
   const selectedUserId = selectedUser?.senderId;
   const myUserId = user?.id;
   const isBanned = useMemo(() => {
@@ -252,16 +254,16 @@ useEffect(() => {
     </View>
     </GestureHandlerRootView>
 
-<View style={{ alignSelf: 'center' }}>
-{isAdVisible && (
-<BannerAd
-unitId={bannerAdUnitId}
-size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
-onAdLoaded={() => setIsAdVisible(true)} 
-onAdFailedToLoad={() => setIsAdVisible(false)} 
-/>
-)}
-</View>
+    {!isPro && <View style={{ alignSelf: 'center' }}>
+  {isAdVisible && (
+    <BannerAd
+      unitId={bannerAdUnitId}
+      size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+      onAdLoaded={() => setIsAdVisible(true)} 
+      onAdFailedToLoad={() => setIsAdVisible(false)} 
+    />
+  )}
+</View>}
     </>
   );
 };

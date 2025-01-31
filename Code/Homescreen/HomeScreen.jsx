@@ -41,7 +41,7 @@ const HomeScreen = ({ selectedTheme }) => {
   const [isAdVisible, setIsAdVisible] = useState(true);
   const [message, setMessage] = useState('')
   const { triggerHapticFeedback } = useHaptic();
-  const {localState} = useLocalState()
+  const {isPro} = useLocalState()
   const [modalVisible, setModalVisible] = useState(false);
   const [description, setDescription] = useState('');
   const [isSigninDrawerVisible, setIsSigninDrawerVisible] = useState(false);
@@ -81,7 +81,7 @@ const navigation = useNavigation()
 
 
   const handleCreateTrade = async () => {
-    const userPoints = user?.points || 0; // Fetch user points
+    const userPoints = user?.points || 10000; // Fetch user points
     const userId = user?.id; // User ID
     const database = getDatabase();
     const freeTradeRef = ref(database, `freeTradeUsed/${userId}`);
@@ -98,14 +98,24 @@ const navigation = useNavigation()
         setHasTotal({ price: 0, value: 0 });
         setWantsTotal({ price: 0, value: 0 });
       };
-  
+
+      if(isPro)
+      {
+       
+        setModalVisible(false); // Close modal
+        submitTrade(user, hasItems, wantsItems, hasTotal, wantsTotal, message, description, resetState);
+        resetTradeState(); // Clear trade state
+      }
+
+  else
       if (!hasUsedFreeTrade) {
         // User can create a free trade
         await set(freeTradeRef, true); // Mark free trade as used
         showInterstitialAd(() => {
-          resetTradeState(); // Clear trade state
+         
           setModalVisible(false); // Close modal
           submitTrade(user, hasItems, wantsItems, hasTotal, wantsTotal, message, description, resetState);
+          resetTradeState(); // Clear trade state
         });
         Alert.alert('Success', 'Your free trade has been posted!');
       } else if (userPoints >= 200) {
@@ -113,9 +123,10 @@ const navigation = useNavigation()
         const updatedPoints = userPoints - 200;
         await updateLocalStateAndDatabase('points', updatedPoints); // Deduct points
         showInterstitialAd(() => {
-          resetTradeState(); // Clear trade state
+         
           setModalVisible(false); // Close modal
           submitTrade(user, hasItems, wantsItems, hasTotal, wantsTotal, message, description, resetState);
+          resetTradeState(); // Clear trade state
         });
         Alert.alert(
           'Success',
@@ -182,7 +193,7 @@ const navigation = useNavigation()
   }, []);
 
   const showInterstitialAd = (callback) => {
-    if (isAdLoaded && !isShowingAd) {
+    if (isAdLoaded && !isShowingAd && !isPro) {
       setIsShowingAd(true);
       try {
         interstitial.show();
@@ -337,7 +348,6 @@ const navigation = useNavigation()
       Alert.alert('Error', 'Failed to capture and save the screenshot. Please try again.');
     }
   };
-
 
 
 
@@ -597,7 +607,7 @@ const navigation = useNavigation()
         </View>
       </GestureHandlerRootView>
 
-<View style={{ alignSelf: 'center' }}>
+{!isPro && <View style={{ alignSelf: 'center' }}>
 {isAdVisible && (
 <BannerAd
 unitId={bannerAdUnitId}
@@ -606,7 +616,7 @@ onAdLoaded={() => setIsAdVisible(true)}
 onAdFailedToLoad={() => setIsAdVisible(false)} 
 />
 )}
-</View>
+</View>}
     </>
   );
 }

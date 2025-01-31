@@ -45,7 +45,6 @@ export const submitTrade = async (user, hasItems, wantsItems, hasTotal, wantsTot
     description: description, // Include the optional description
     timestamp: currentTime,
   };
-
   push(tradeRef, newTrade)
     .then(() => {
       lastTradeTimestamp = currentTime; // Update the last trade creation time
