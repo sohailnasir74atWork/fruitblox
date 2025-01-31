@@ -49,7 +49,7 @@ export default function SettingsScreen({ selectedTheme }) {
   const [loaded, setLoaded] = useState(false);
   const [openSingnin, setOpenSignin] = useState(false);
   const { user, theme, updateLocalStateAndDatabase, setUser } = useGlobalState()
-  const {updateLocalState, localState, mySubscriptions} = useLocalState()
+  const {updateLocalState, localState, mySubscriptions, isPro} = useLocalState()
   const [isPermissionGranted, setIsPermissionGranted] = useState(false);
   const [showOfferWall, setShowofferWall] = useState(false);
 
@@ -438,15 +438,15 @@ export default function SettingsScreen({ selectedTheme }) {
         <TouchableOpacity style={styles.optionLast} onPress={()=>{setShowofferWall(true)}}>
           <Icon name="prism-outline" size={24} color={config.colors.hasBlockGreen} />
           <Text style={[styles.optionText]}>
-  Active Plan: {mySubscriptions ? 'PRO' : 'FREE'}
+  Active Plan: {isPro ? 'PRO' : 'FREE'}
         </Text>
         </TouchableOpacity>
-        {mySubscriptions && (
+        {isPro && (
   <View style={styles.subscriptionContainer}>
     <Text style={styles.subscriptionText}>
       Plan Name:  
       {mySubscriptions.length === 0 
-        ? 'Free' 
+        ? 'Reload app to check status' 
         : mySubscriptions.map(sub => formatPlanName(sub.plan)).join(', ')}
     </Text>
     {mySubscriptions.length > 0 && (

@@ -61,7 +61,7 @@ export const LocalStateProvider = ({ children }) => {
       console.error('🚨 MMKV supports only string, number, or boolean values');
     }
   };
-
+// console.log(isPro)
   // Initialize RevenueCat
   useEffect(() => {
     const initRevenueCat = async () => {
@@ -105,7 +105,7 @@ export const LocalStateProvider = ({ children }) => {
       const customerInfo = await Purchases.restorePurchases();
   
       if (customerInfo.entitlements.active['Pro']) {
-        console.log('✅ Purchases restored! Pro features unlocked.');
+        // console.log('✅ Purchases restored! Pro features unlocked.');
         setIsPro(true);
         updateLocalState('isPro', true);
   
@@ -153,7 +153,7 @@ export const LocalStateProvider = ({ children }) => {
       const { customerInfo } = await Purchases.purchasePackage(packageToPurchase);
 
       if (customerInfo.entitlements.active['Pro']) {
-        console.log('✅ Purchase successful! Pro features unlocked.');
+        // console.log('✅ Purchase successful! Pro features unlocked.');
         setIsPro(true);
         updateLocalState('isPro', true);
       } else {
@@ -161,7 +161,7 @@ export const LocalStateProvider = ({ children }) => {
       }
     } catch (error) {
       if (error.userCancelled) {
-        console.log('🚫 User cancelled the purchase.');
+        // console.log('🚫 User cancelled the purchase.');
       } else {
         console.error('❌ Error during purchase:', error);
       }
