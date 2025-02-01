@@ -1,15 +1,38 @@
 import notifee from '@notifee/react-native';
+import { Alert, Linking } from 'react-native';
 
-const requestPermission = async () => {
+
+
+
+export const requestPermission = async () => {
   try {
-    const { authorizationStatus } = await notifee.requestPermission();
-    if (authorizationStatus === 0) {
-    //   console.log('Permission denied. Updating state.');
-      return authorizationStatus
-    } else {
+    const settings = await notifee.requestPermission();
+    if (
+      settings.authorizationStatus == 0
+    ) {
+      Alert.alert(
+        'Permission Required',
+        'Notification permissions are disabled. Please enable them in the app settings.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Go to Settings',
+            onPress: () => Linking.openSettings(), // Redirect to app settings
+          },
+        ]
+      );
+      return false; // Permission not granted
+    }
+
+    if (
+      settings.authorizationStatus === 1
+    ) {
+      // console.log('Notification permissions granted:', settings);
+      return true; // Permission granted
     }
   } catch (error) {
+    console.error('Error requesting notification permission:', error);
+    Alert.alert('Error', 'An error occurred while requesting notification permissions.');
+    return false;
   }
 };
-
-export default requestPermission;

@@ -4,6 +4,7 @@ import { getDatabase, ref, set, onValue, get, update, off, onDisconnect, query, 
 import auth from '@react-native-firebase/auth';
 import { createNewUser, firebaseConfig, registerForNotifications } from './Globelhelper';
 import { useLocalState } from './LocalGlobelStats';
+import { requestPermission } from './Helper/PermissionCheck';
 
 const app = initializeApp(firebaseConfig);
 
@@ -217,19 +218,22 @@ export const GlobalStateProvider = ({ children }) => {
     const unsubscribe = auth().onAuthStateChanged((loggedInUser) => {
       const handleAuthChange = async () => {
         try {
-          if (loggedInUser) {
-            const userId = loggedInUser.uid;
-            const userRef = ref(appdatabase, `users/${userId}`);
-            const snapshot = await get(userRef);
+          if (!loggedInUser) {
+            resetUserState(); // Reset on logout
+            return;
+          }
   
+          const userId = loggedInUser.uid;
+          const userRef = ref(appdatabase, `users/${userId}`);
+  
+          // Fetch user data efficiently
+          get(userRef).then(async (snapshot) => {
             if (snapshot.exists()) {
-              // Update user state only if necessary to avoid redundant renders
               setUser((prevUser) => {
                 const currentData = snapshot.val();
-                if (!prevUser || prevUser.id !== userId || JSON.stringify(prevUser) !== JSON.stringify({ ...currentData, id: userId })) {
-                  return { ...currentData, id: userId };
-                }
-                return prevUser;
+                return (!prevUser || prevUser.id !== userId || JSON.stringify(prevUser) !== JSON.stringify({ ...currentData, id: userId }))
+                  ? { ...currentData, id: userId }
+                  : prevUser;
               });
             } else {
               const newUser = createNewUser(userId, loggedInUser);
@@ -237,22 +241,30 @@ export const GlobalStateProvider = ({ children }) => {
               setUser(newUser);
             }
   
-            // Register for notifications (ensure this happens only once)
+            // Register notifications only when necessary
             await registerForNotifications(userId);
-          } else {
-            // Reset user state if logged out
-            resetUserState();
-          }
+  
+            // 🔹 Request permission after login
+            const permissionGranted = await requestPermission();
+            if (!permissionGranted) {
+              // console.warn("User denied permissions.");
+            }
+          }).catch((error) => {
+            console.error("Firebase fetch error:", error);
+          });
         } catch (error) {
-          console.error("Error handling authentication state change:", error);
+          console.error("Auth state change error:", error);
         }
       };
   
-      handleAuthChange(); // Call the async function
+      handleAuthChange(); // Execute async logic
     });
   
     return () => unsubscribe(); // Cleanup listener on unmount
   }, []);
+  
+
+
   
  const checkInternetConnection = async () => {
   try {
@@ -266,11 +278,6 @@ export const GlobalStateProvider = ({ children }) => {
 };
 
 
-// Utility: Centralized Error Handler
-const handleError = (error) => {
-  console.error('Error:', error.message);
-  alert(error.message || 'An unexpected error occurred. Please try again.');
-};
 
 // Main Function to Fetch Data
 const fetchStockData = async () => {

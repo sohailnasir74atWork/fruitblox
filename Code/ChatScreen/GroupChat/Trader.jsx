@@ -104,17 +104,15 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
 
 
   const validateMessage = useCallback((message) => {
-    if (!message.text || message.text.trim() === '') {
-      return null; // Ignore messages without content
-    }
+    const hasText = message?.text?.trim();
     return {
-      ...message,
-      sender: message.sender?.trim() || 'Anonymous',
-      text: message.text.trim(),
-      timestamp: message.timestamp || Date.now(),
+        ...message,
+        sender: message.sender?.trim() || 'Anonymous',
+        text: hasText || '[No content]',
+        timestamp: hasText ? message.timestamp || Date.now() : Date.now() - 1 * 24 * 60 * 60 * 1000,
     };
-  }, []);
-  
+}, []);
+
   const loadMessages = useCallback(
     async (reset = false) => {
       try {

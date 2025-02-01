@@ -31,6 +31,7 @@ const [refreshing, setRefreshing] = useState(false);
 const [lastKey, setLastKey] = useState(null);
 const [hasMore, setHasMore] = useState(true);
 const [filterType, setFilterType] = useState('hasItems');
+const [tradeOffset, setTradeOffset] = useState(0);
 const [isAdLoaded, setIsAdLoaded] = useState(false);
 const [isShowingAd, setIsShowingAd] = useState(false);
 const [isReportPopupVisible, setReportPopupVisible] = useState(false);
@@ -136,10 +137,7 @@ const [selectedTrade, setSelectedTrade] = useState(null);
     }
   }, [searchQuery, trades, filterType]);
   const fetchMoreTrades = useCallback(async () => {
-    if (!hasMore || !lastKey) {
-      return;
-    }
-  
+    if (!hasMore) return;
   
     const db = getDatabase();
     const tradeRef = ref(db, 'trades/');
@@ -148,8 +146,7 @@ const [selectedTrade, setSelectedTrade] = useState(null);
       const queryRef = query(
         tradeRef,
         orderByChild('timestamp'),
-        endAt(lastKey),  // Correctly fetching older trades
-        limitToLast(PAGE_SIZE + 1)  // Fetch PAGE_SIZE + 1 to detect the true last trade
+        limitToLast(tradeOffset + PAGE_SIZE) // Fetch next 50 trades each time
       );
   
       const snapshot = await get(queryRef);
@@ -161,54 +158,36 @@ const [selectedTrade, setSelectedTrade] = useState(null);
           ...data[key],
         }));
   
-        // 🔥 FIX: Ensure we batch load PAGE_SIZE trades at once
-        if (tradeList.length <= 1) {
-          // console.log("🚫 No more trades left to fetch. Stopping.");
-          setHasMore(false);
-          return;
-        }
-  
-        tradeList.pop(); // Remove duplicate lastKey trade
+        // 🔹 Sort by timestamp (newest first)
+        tradeList.sort((a, b) => b.timestamp - a.timestamp);
   
         setTrades((prevTrades) => {
           const newTrades = [...prevTrades, ...tradeList];
-  
-          // 🔹 Remove duplicates using Map()
-          const uniqueTrades = Array.from(new Map(newTrades.map(trade => [trade.id, trade])).values());
-  
-          return uniqueTrades;
+          // Remove duplicates using Map()
+          return Array.from(new Map(newTrades.map(trade => [trade.id, trade])).values());
         });
   
-        // 🔑 Update lastKey correctly to the **oldest** trade from batch
-        const newLastKey = tradeList.length > 0 ? tradeList[0]?.timestamp : null;
-        setLastKey(newLastKey);
+        // 🔄 Increase offset for next fetch
+        setTradeOffset((prevOffset) => prevOffset + PAGE_SIZE);
   
-       
-  
-        // 🚨 Check if fewer than PAGE_SIZE trades received → No more trades left
+        // 🚨 If fewer than PAGE_SIZE trades are received, stop fetching
         if (tradeList.length < PAGE_SIZE) {
-         
           setHasMore(false);
         }
       } else {
-      
         setHasMore(false);
       }
     } catch (error) {
-      console.error("❌ Error fetching more trades:", error);
+      console.error("❌ Error fetching trades:", error);
     }
-  }, [lastKey, hasMore]);
+  }, [hasMore, tradeOffset]);
   
   
   
   const handleEndReached = () => {
- 
-  
     if (!hasMore) {
-   
       return;
     }
-  
     if (!user?.id) {
     
       setIsSigninDrawerVisible(true);
@@ -217,8 +196,6 @@ const [selectedTrade, setSelectedTrade] = useState(null);
   
     fetchMoreTrades();
   };
-  
-  
   
   const fetchInitialTrades = useCallback(async () => {
     const db = getDatabase();
@@ -239,8 +216,13 @@ const [selectedTrade, setSelectedTrade] = useState(null);
         // Remove duplicates using a Set()
         const uniqueTrades = Array.from(new Map(tradeList.map(trade => [trade.id, trade])).values());
   
+        // 🔹 Set fetched trades
         setTrades(uniqueTrades.reverse()); // Reverse to show latest trades first
-        setLastKey(uniqueTrades[uniqueTrades.length - 1]?.timestamp || null);
+  
+        // 🔄 Align `tradeOffset` with the initial batch size
+        setTradeOffset(uniqueTrades.length);
+  
+        // 🚨 Set hasMore only if PAGE_SIZE trades were loaded
         setHasMore(uniqueTrades.length === PAGE_SIZE);
       } else {
         setHasMore(false);
@@ -251,8 +233,6 @@ const [selectedTrade, setSelectedTrade] = useState(null);
       setLoading(false);
     }
   }, []);
-  
-  
   
   
 

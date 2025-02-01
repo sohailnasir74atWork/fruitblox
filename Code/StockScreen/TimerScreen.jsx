@@ -11,6 +11,7 @@ import config from '../Helper/Environment';
 import notifee, { AuthorizationStatus } from '@notifee/react-native';
 import { useHaptic } from '../Helper/HepticFeedBack';
 import { useLocalState } from '../LocalGlobelStats';
+import { requestPermission } from '../Helper/PermissionCheck';
 const bannerAdUnitId = getAdUnitId('banner');
 const interstitialAdUnitId = getAdUnitId('interstitial');
 const interstitial = InterstitialAd.createForAdRequest(interstitialAdUnitId);
@@ -123,40 +124,6 @@ const TimerScreen = ({ selectedTheme }) => {
   
   
 
-
-
-  const requestPermission = async () => {
-    try {
-      const settings = await notifee.requestPermission();
-      if (
-        settings.authorizationStatus == 0
-      ) {
-        Alert.alert(
-          'Permission Required',
-          'Notification permissions are disabled. Please enable them in the app settings.',
-          [
-            { text: 'Cancel', style: 'cancel' },
-            {
-              text: 'Go to Settings',
-              onPress: () => Linking.openSettings(), // Redirect to app settings
-            },
-          ]
-        );
-        return false; // Permission not granted
-      }
-
-      if (
-        settings.authorizationStatus === 1
-      ) {
-        // console.log('Notification permissions granted:', settings);
-        return true; // Permission granted
-      }
-    } catch (error) {
-      console.error('Error requesting notification permission:', error);
-      Alert.alert('Error', 'An error occurred while requesting notification permissions.');
-      return false;
-    }
-  };
 
   const toggleSwitch = async () => {
     try {
