@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, FlatList, Image, Switch, TouchableOpacity, Alert, Linking, useColorScheme, Platform, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, Image, Switch, TouchableOpacity, Alert, RefreshControl } from 'react-native';
 import { useGlobalState } from '../GlobelStats';
 import Icon from 'react-native-vector-icons/Ionicons';
 import FruitSelectionDrawer from './FruitSelectionDrawer';
@@ -8,7 +8,6 @@ import { GestureHandlerRootView, ScrollView } from 'react-native-gesture-handler
 import { AdEventType, BannerAd, BannerAdSize, InterstitialAd } from 'react-native-google-mobile-ads';
 import getAdUnitId from '../Ads/ads';
 import config from '../Helper/Environment';
-import notifee, { AuthorizationStatus } from '@notifee/react-native';
 import { useHaptic } from '../Helper/HepticFeedBack';
 import { useLocalState } from '../LocalGlobelStats';
 import { requestPermission } from '../Helper/PermissionCheck';
@@ -29,7 +28,7 @@ const TimerScreen = ({ selectedTheme }) => {
   const [isSigninDrawerVisible, setisSigninDrawerVisible] = useState(false);
   const [isAdVisible, setIsAdVisible] = useState(true);
   const { triggerHapticFeedback } = useHaptic();
-  const {isPro} = useLocalState()
+  const { isPro } = useLocalState()
 
   const isDarkMode = theme === 'dark';
   useEffect(() => {
@@ -62,7 +61,7 @@ const TimerScreen = ({ selectedTheme }) => {
     const userPoints = user.points || 0; // Ensure `points` exists and default to 0 if undefined
     const selectedFruits = user.selectedFruits || []; // Ensure `selectedFruits` is always an array
     const isAlreadySelected = selectedFruits.some((item) => item.Name === fruit.Name);
-  
+
     if (isAlreadySelected) {
       Alert.alert('Notice', `${fruit.Name} is already selected.`);
       return; // Exit if the fruit is already selected
@@ -82,7 +81,7 @@ const TimerScreen = ({ selectedTheme }) => {
       // Deduct 50 points for additional selections
       const updatedPoints = userPoints - 50;
       updateLocalStateAndDatabase('points', updatedPoints); // Update points locally and remotely
-  
+
       const updatedFruits = [...selectedFruits, fruit];
       updateLocalStateAndDatabase('selectedFruits', updatedFruits); // Update selected fruits locally and remotely
       Alert.alert('Success', `${fruit.Name} selected successfully for 50 points!`);
@@ -91,15 +90,15 @@ const TimerScreen = ({ selectedTheme }) => {
         'Insufficient Points',
         'You need at least 50 points to select more fruits. To earn points, go to\nSettings >> Get Points >> Earn Reward\nWatch ads or participate in activities to accumulate points.',
         [
-          { text: 'OK', onPress: () => {} },
+          { text: 'OK', onPress: () => { } },
         ]
       );
-      
+
     }
-  
+
     closeDrawer(); // Close the drawer after selection
   };
-  
+
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
@@ -110,31 +109,31 @@ const TimerScreen = ({ selectedTheme }) => {
       setRefreshing(false);
     }
   };
-  
+
   const handleRemoveFruit = (fruit) => {
     triggerHapticFeedback('impactLight');
     const selectedFruits = user.selectedFruits || []; // Ensure `selectedFruits` is always an array
-  
+
     // Remove the selected fruit and update state/database
     const updatedFruits = selectedFruits.filter((item) => item.Name !== fruit.Name);
     updateLocalStateAndDatabase('selectedFruits', updatedFruits);
   };
-  
-  
-  
-  
+
+
+
+
 
 
   const toggleSwitch = async () => {
     try {
       const permissionGranted = await requestPermission();
       if (!permissionGranted) return;
-  
+
       if (user.id == null) {
         setisSigninDrawerVisible(true);
       } else {
         const currentValue = user.isReminderEnabled;
-  
+
         // Optimistically update the UI
         updateLocalStateAndDatabase('isReminderEnabled', !currentValue);
 
@@ -144,17 +143,17 @@ const TimerScreen = ({ selectedTheme }) => {
       Alert.alert('Error', 'Something went wrong while processing your request.');
     }
   };
-  
+
   const toggleSwitch2 = async () => {
     try {
       const permissionGranted = await requestPermission();
       if (!permissionGranted) return;
-  
+
       if (user?.id == null) {
         setisSigninDrawerVisible(true);
       } else {
         const currentValue = user.isSelectedReminderEnabled;
-  
+
         // Optimistically update the UI
         updateLocalStateAndDatabase('isSelectedReminderEnabled', !currentValue);
       }
@@ -163,8 +162,8 @@ const TimerScreen = ({ selectedTheme }) => {
       Alert.alert('Error', 'Something went wrong while processing your request.');
     }
   };
-  
 
+  // console.log(state.mirageStock)
 
 
   // Format time utility
@@ -203,17 +202,6 @@ const TimerScreen = ({ selectedTheme }) => {
     const timerId = setInterval(updateTimers, 1000);
     return () => clearInterval(timerId);
   }, [state.normalStock, state.mirageStock]);
-
-
-  // Memoized List Data
-  // const listData = useMemo(() => {
-  //   return [
-  //     { id: 'header-normal', header: 'Normal', timer: normalTimer },
-  //     ...normalStock?.map((item, index) => ({ ...item, id: `normal-${index}` })),
-  //     { id: 'header-mirage', header: 'Mirage', timer: mirageTimer },
-  //     ...mirageStock?.map((item, index) => ({ ...item, id: `mirage-${index}` })),
-  //   ];
-  // }, [normalStock, mirageStock, normalTimer, mirageTimer]);
 
   // Render FlatList Item
   const renderItem = ({ item, index, isLastItem }) => {
@@ -293,13 +281,13 @@ const TimerScreen = ({ selectedTheme }) => {
     <>
       <GestureHandlerRootView>
         <View style={styles.container}>
-        <ScrollView
-        contentContainerStyle={styles.scrollViewContent}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-        }
-      >
+          <ScrollView
+            contentContainerStyle={styles.scrollViewContent}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+            }
+          >
             <Text style={[styles.description, { color: selectedTheme.colors.text }]}>
               Stay updated on the latest fruits stock
             </Text>
@@ -378,7 +366,7 @@ const TimerScreen = ({ selectedTheme }) => {
                   Reset in: <Text style={styles.time}>{mirageTimer}</Text>
                 </Text>
               </View>
-          <View style={styles.stockContainer}>
+              <View style={styles.stockContainer}>
                 {state.mirageStock?.map((item, index) => {
                   const isLastItem = index === state.mirageStock.length - 1;
                   return (
@@ -389,6 +377,51 @@ const TimerScreen = ({ selectedTheme }) => {
                 })}
               </View>
             </View>
+            <View style={styles.preCont}>
+              <Text style={styles.pre}>PREVIOUS STOCK</Text>
+            </View>
+
+
+            {/* <View> */}
+            {/* Normal Stock Section */}
+            <View>
+              <View style={styles.headerContainerpre}>
+                <Text style={[styles.title, { color: selectedTheme.colors.text }]}>Normal Stock</Text>
+                <Text style={[styles.timer, { color: selectedTheme.colors.text }]}>
+                  <Text style={styles.time}>00:00</Text>
+                </Text>
+              </View>
+
+              <View style={styles.stockContainerpre}>
+                {state.prenormalStock?.map((item, index) => {
+                  const isLastItem = index === state.normalStock.length - 1;
+                  return (
+                    <View key={item.id || index}>
+                      {renderItem({ item, index, isLastItem })}
+                    </View>
+                  );
+                })}
+              </View>
+
+              {/* Mirage Stock Section */}
+              <View style={styles.headerContainerpre}>
+                <Text style={[styles.title, { color: selectedTheme.colors.text }]}>Mirage Stock</Text>
+                <Text style={[styles.timer, { color: selectedTheme.colors.text }]}>
+                  <Text style={styles.time}>00:00</Text>
+                </Text>
+              </View>
+              <View style={styles.stockContainerpre}>
+                {state.premirageStock?.map((item, index) => {
+                  const isLastItem = index === state.mirageStock.length - 1;
+                  return (
+                    <View key={item.id || index}>
+                      {renderItem({ item, index, isLastItem })}
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+
             <FruitSelectionDrawer
               visible={isDrawerVisible}
               onClose={closeDrawer}
@@ -409,15 +442,15 @@ const TimerScreen = ({ selectedTheme }) => {
       </GestureHandlerRootView>
 
       {!isPro && <View style={{ alignSelf: 'center' }}>
-{isAdVisible && (
-<BannerAd
-unitId={bannerAdUnitId}
-size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
-onAdLoaded={() => setIsAdVisible(true)} 
-onAdFailedToLoad={() => setIsAdVisible(false)} 
-/>
-)}
-</View>}
+        {isAdVisible && (
+          <BannerAd
+            unitId={bannerAdUnitId}
+            size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+            onAdLoaded={() => setIsAdVisible(true)}
+            onAdFailedToLoad={() => setIsAdVisible(false)}
+          />
+        )}
+      </View>}
     </>
 
 
@@ -431,6 +464,7 @@ const getStyles = (isDarkMode, user) =>
     },
     description: { fontSize: 14, marginVertical: 10, fontFamily: 'Lato-Regular' },
     headerContainer: { flexDirection: 'row', justifyContent: 'space-between', marginVertical: 10, paddingHorizontal: 10 },
+    headerContainerpre: { flexDirection: 'row', justifyContent: 'space-between', marginVertical: 10, paddingHorizontal: 10, opacity: .3 },
 
     timer: { fontSize: 16, fontFamily: 'Lato-Bold' },
     time: { fontSize: 16, fontFamily: 'Lato-Bold' },
@@ -444,7 +478,7 @@ const getStyles = (isDarkMode, user) =>
       ...(!config.isNoman && {
         borderWidth: 1,
         borderColor: config.colors.hasBlockGreen,
-        padding:5
+        padding: 5
       }),
     },
 
@@ -457,6 +491,15 @@ const getStyles = (isDarkMode, user) =>
       padding: 10,
       borderRadius: 10,
       backgroundColor: isDarkMode ? '#1e1e1e' : '#ffffff',
+
+
+    },
+    stockContainerpre: {
+      backgroundColor: config.colors.primary,
+      padding: 10,
+      borderRadius: 10,
+      backgroundColor: isDarkMode ? '#1e1e1e' : '#ffffff',
+      opacity: .3
 
 
     },
@@ -528,6 +571,20 @@ const getStyles = (isDarkMode, user) =>
       flexDirection: 'column',
       backgroundColor: isDarkMode ? '#1e1e1e' : '#ffffff',
       padding: 10
+    },
+    preCont: {
+      justifyContent: 'center',
+      flex: 1,
+      padding: 20,
+      backgroundColor: config.colors.secondary,
+      borderRadius: 10,
+      margin: 10,
+      opacity: .3
+    },
+    pre: {
+      color: 'white',
+      alignSelf: 'center',
+      fontFamily: 'Lato-Bold'
     }
   });
 

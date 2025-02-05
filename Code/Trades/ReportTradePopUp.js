@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { useGlobalState } from "../GlobelStats";
 import config from "../Helper/Environment";
-import { getDatabase, ref, push } from "firebase/database";
+import { getDatabase, ref, push } from "@react-native-firebase/database";
 
 const ReportTradePopup = ({ visible, trade, onClose }) => {
   const [selectedReason, setSelectedReason] = useState("Inappropriate");
@@ -32,7 +32,7 @@ const ReportTradePopup = ({ visible, trade, onClose }) => {
       return;
     }
 
-    setLoading(true); 
+    setLoading(true);
 
     const db = getDatabase();
     const reportsRef = ref(db, "tradeReports"); // New node for trade reports
@@ -48,8 +48,7 @@ const ReportTradePopup = ({ visible, trade, onClose }) => {
         setLoading(false); // Stop loader
         Alert.alert(
           "Report Submitted",
-          `Trade ID: ${trade.id}\nReason: ${
-            showCustomInput ? customReason : selectedReason
+          `Trade ID: ${trade.id}\nReason: ${showCustomInput ? customReason : selectedReason
           }\nThank you for reporting this trade.`
         );
         onClose(true); // Indicate success

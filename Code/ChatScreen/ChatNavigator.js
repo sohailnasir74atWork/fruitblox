@@ -6,7 +6,7 @@ import ChatScreen from './GroupChat/Trader';
 import PrivateChatScreen from './PrivateChat/PrivateChat';
 import InboxScreen from './GroupChat/InboxScreen';
 import config from '../Helper/Environment';
-import { getDatabase, onValue, ref } from 'firebase/database';
+import { getDatabase, onValue, ref } from '@react-native-firebase/database';
 import { useGlobalState } from '../GlobelStats';
 import PrivateChatHeader from './PrivateChat/PrivateChatHeader';
 import { Menu, MenuOptions, MenuOption, MenuTrigger } from 'react-native-popup-menu';

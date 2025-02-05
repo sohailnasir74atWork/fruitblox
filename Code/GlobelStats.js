@@ -1,16 +1,19 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
-import { initializeApp, getApps } from 'firebase/app';
-import { getDatabase, ref, set, onValue, get, update, off, onDisconnect, query, orderByChild, equalTo, remove, increment } from 'firebase/database';
+import { firebase } from '@react-native-firebase/app';
 import auth from '@react-native-firebase/auth';
+import database, { ref, set, update, get, onDisconnect, remove, increment } from '@react-native-firebase/database';
+import firestore from '@react-native-firebase/firestore';
 import { createNewUser, firebaseConfig, registerForNotifications } from './Globelhelper';
 import { useLocalState } from './LocalGlobelStats';
 import { requestPermission } from './Helper/PermissionCheck';
 
-const app = initializeApp(firebaseConfig);
+// Ensure Firebase is initialized only once
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
 
-const appdatabase = getDatabase(app);
-appdatabase.persistenceEnabled = true;
-
+const appdatabase = database();
+let firestoreDB = firestore();
 // Create Global Context
 const GlobalStateContext = createContext();
 
@@ -18,7 +21,7 @@ const GlobalStateContext = createContext();
 export const useGlobalState = () => useContext(GlobalStateContext);
 
 export const GlobalStateProvider = ({ children }) => {
-
+// console.log(user)
   const {localState, updateLocalState} = useLocalState()
   const [theme, setTheme] = useState(localState.theme || 'light');
 
@@ -27,6 +30,8 @@ export const GlobalStateProvider = ({ children }) => {
     codes:{},
     normalStock: [],
     mirageStock: [],
+    prenormalStock: [],
+    premirageStock: [],
     isAppReady: false,
   });
   const [user, setUser] = useState({
@@ -64,7 +69,14 @@ export const GlobalStateProvider = ({ children }) => {
       console.error("Error updating online count:", error);
     });
   };
-  
+  useEffect(() => {
+    try {
+      firestoreDB = firestore();
+      // console.log("🔥 Firestore initialized:", firestoreDB);
+    } catch (error) {
+      // console.error("🚨 Firestore initialization error:", error);
+    }
+  }, []);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -134,16 +146,7 @@ export const GlobalStateProvider = ({ children }) => {
     };
   }, [user?.id]);
   
-  // useEffect(() => {
-  //   const onlineRef = ref(appdatabase, "onlineUsers");
-  
-  //   const unsubscribe = onValue(onlineRef, (snapshot) => {
-  //     setOnlineMembersCount(snapshot.size || 0); // Count keys directly
-  //   });
-  
-  //   return () => unsubscribe();
-  // }, []);
-// console.log(onlineMembersCount)
+
 
 
 // console.log(onlineMembersCount)
@@ -286,17 +289,19 @@ const fetchStockData = async () => {
     // Improved connectivity check
     await checkInternetConnection();
 
-    const [xlsSnapshot, calcSnapshot, codeSnapShot] = await Promise.all([
-      get(ref(appdatabase, 'xlsData')),
+    const [xlsSnapshot, calcSnapshot, preSnapshot, codeSnapShot ] = await Promise.all([
+      get(ref(appdatabase, 'testing')),
       get(ref(appdatabase, 'calcData')),
+      get(ref(appdatabase, 'previousStock')),
       get(ref(appdatabase, 'codes')),
     ]);
-
     setState({
       codes: codeSnapShot.val() || {},
       data: xlsSnapshot.val() || {},
       normalStock: calcSnapshot.val()?.test || {},
       mirageStock: calcSnapshot.val()?.mirage || {},
+      prenormalStock: preSnapshot.val()?.mirageStock || {},
+      premirageStock: preSnapshot.val()?.normalStock || {},
       isAppReady: true,
     });
   } catch (error) {
@@ -319,10 +324,12 @@ useEffect(() => {
       setState,
       user,
       onlineMembersCount,
+      firestoreDB,
+    appdatabase,
       theme,
       setUser,
       setOnlineMembersCount,
-      updateLocalStateAndDatabase, fetchStockData, loading
+      updateLocalStateAndDatabase, fetchStockData, loading,
       
     }),
     [state, user, onlineMembersCount, theme, fetchStockData, loading]

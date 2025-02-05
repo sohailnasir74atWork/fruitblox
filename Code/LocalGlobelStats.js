@@ -19,6 +19,8 @@ export const LocalStateProvider = ({ children }) => {
     return {
       localKey: storage.getString('localKey') || 'defaultValue',
       reviewCount: parseInt(storage.getString('reviewCount'), 10) || 0, // Ensure reviewCount is a number
+      lastVersion: storage.getString('lastVersion') || 'UNKNOWN',
+      updateCount: parseInt(storage.getString('updateCount'), 0),
       isHaptic: storage.getBoolean('isHaptic') ?? true,
       theme: initialTheme, // Default to system theme if not set
       userId: storage.getString('userId') || null, // Store User ID

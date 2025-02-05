@@ -1,58 +1,79 @@
-import { getDatabase, ref, push } from 'firebase/database';
-import { Alert } from 'react-native';
+import { Alert } from "react-native";
+import firestore from '@react-native-firebase/firestore';
+const tradesCollection = firestore().collection('trades');
 
-let lastTradeTimestamp = 0; // Global variable to track the last trade creation time
+// Debug Mode (Enable verbose logging if true)
+const debugMode = false;
 
 export const submitTrade = async (user, hasItems, wantsItems, hasTotal, wantsTotal, message, description, resetState) => {
-  const MIN_DELAY = 30000; // 30 seconds
+  if (debugMode) console.log("🔥 submitTrade() called");
 
-  if (hasItems.filter(Boolean).length === 0 || wantsItems.filter(Boolean).length === 0) {
-    Alert.alert('Error', 'Please add at least one item to both "You" and "Them" sections.');
+  // 🔍 Filter out null/undefined values from items
+  const filteredHasItems = hasItems.filter(item => item && item.Name);
+  const filteredWantsItems = wantsItems.filter(item => item && item.Name);
+
+  if (debugMode) {
+    console.log("✅ Cleaned hasItems:", JSON.stringify(filteredHasItems, null, 2));
+    console.log("✅ Cleaned wantsItems:", JSON.stringify(filteredWantsItems, null, 2));
+  }
+
+  // 🔴 Ensure both item lists contain valid items
+  if (filteredHasItems.length === 0 || filteredWantsItems.length === 0) {
+    console.error("🚨 Error: No valid items added for trade");
+    Alert.alert("Error", "Please add at least one valid item to both 'You' and 'Them' sections.");
     return;
   }
 
-  const currentTime = Date.now();
+// const hasNames = filteredHasItems.map(item => item.name.toLowerCase()).sort();
+// const wantsNames = filteredWantsItems.map(item => item.name.toLowerCase()).sort();
 
-  // Check if the delay condition is met
-  if (currentTime - lastTradeTimestamp < MIN_DELAY) {
-    const remainingTime = Math.ceil((MIN_DELAY - (currentTime - lastTradeTimestamp)) / 1000);
-    Alert.alert('Wait', `Please wait ${remainingTime} seconds before creating another trade.`);
-    return;
-  }
+console.log(filteredHasItems)
 
-  const db = getDatabase();
-  const tradeRef = ref(db, 'trades/');
 
+// if (JSON.stringify(hasNames) === JSON.stringify(wantsNames)) {
+//   Alert.alert("Invalid Trade", "You cannot trade identical items.");
+//   return;
+// }
+  // ✅ Prepare trade object for Firestore
   const newTrade = {
-    userId: user.id,
-    traderName: user.displayname || user.displayName,
-    avatar: user.avatar,
-    hasItems: hasItems.filter(Boolean).map((item) => ({
-      name: item.Name,
-    })),
-    wantsItems: wantsItems.filter(Boolean).map((item) => ({
-      name: item.Name,
-    })),
-    hasTotal: {
-      price: hasTotal.price,
-      value: hasTotal.value,
-    },
-    wantsTotal: {
-      price: wantsTotal.price,
-      value: wantsTotal.value,
-    },
-    message: message.trim(),
-    description: description, // Include the optional description
-    timestamp: currentTime,
+    userId: user?.id || "Unknown",
+    traderName: user?.displayname || user?.displayName || "Unknown",
+    avatar: user?.avatar || null,
+    hasItems: filteredHasItems.map((item) => ({ name: item.Name, type: item.Type })), 
+    wantsItems: filteredWantsItems.map((item) => ({ name: item.Name, type: item.Type })),
+    hasTotal: { price: hasTotal?.price || 0, value: hasTotal?.value || 0 },
+    wantsTotal: { price: wantsTotal?.price || 0, value: wantsTotal?.value || 0 },
+    message: message?.trim() || "",
+    description: description || "",
+    timestamp: firestore.FieldValue.serverTimestamp(),
   };
-  push(tradeRef, newTrade)
-    .then(() => {
-      lastTradeTimestamp = currentTime; // Update the last trade creation time
-      resetState();
-      Alert.alert('Success', 'Trade Created Successfully!');
-    })
-    .catch((error) => {
-      console.error('Error creating trade:', error.message);
-      Alert.alert('Error', 'Failed to create trade. Please try again.');
-    });
+
+  if (debugMode) console.log("📌 Trade Data Prepared:", JSON.stringify(newTrade, null, 2));
+
+  // 🔍 Step 1: Test Firestore Write Access
+  try {
+    await firestore().collection("trades").doc("test_doc").set({ test: "Hello, Firestore!" });
+    if (debugMode) console.log("✅ Firestore write test succeeded!");
+  } catch (error) {
+    console.error("🔥 Firestore write test failed:", error);
+    Alert.alert("Error", `Firestore write test failed: ${error.message}`);
+    return;
+  }
+
+  // 🔍 Step 2: Attempt to Add Trade to Firestore
+  try {
+    await tradesCollection.add(newTrade);
+    // console.log(`✅ Trade successfully added! ID: ${docRef.id}`);
+    // Alert.alert("Success", `Trade Created Successfully! Trade ID: ${docRef.id}`);
+    resetState();
+  } catch (error) {
+    console.error("🔥 Firestore Write Error:", error);
+    if (error.code === 'permission-denied') {
+      Alert.alert("Permission Denied", "You do not have permission to write to Firestore.");
+    } else {
+      Alert.alert("Error", `Failed to create trade: ${error.message}`);
+    }
+  }
+
+  if (debugMode) console.log("🔚 submitTrade() completed.");
 };

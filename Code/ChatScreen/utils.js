@@ -1,4 +1,4 @@
-import { getDatabase, ref, update, get, query, orderByChild, remove, set, orderByKey, onDisconnect } from 'firebase/database';
+import { getDatabase, ref, update, get, query, orderByChild, remove, set, orderByKey, onDisconnect } from '@react-native-firebase/database';
 import { Alert, Linking, Text } from 'react-native';
 
 // Initialize the database reference

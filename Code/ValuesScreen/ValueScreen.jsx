@@ -7,7 +7,6 @@ import {
   TextInput,
   Image,
   FlatList,
-  ActivityIndicator,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import debounce from 'lodash.debounce';
@@ -42,7 +41,7 @@ const ValueScreen = ({ selectedTheme }) => {
   const [isAdLoaded, setIsAdLoaded] = useState(false);
   const [isShowingAd, setIsShowingAd] = useState(false);
   const { triggerHapticFeedback } = useHaptic();
-const {isPro} = useLocalState()
+  const { isPro } = useLocalState()
   // const toggleDrawer = () => {
   //   setIsDrawerVisible(!isDrawerVisible);
   // };
@@ -53,7 +52,7 @@ const {isPro} = useLocalState()
     if (!hasAdBeenShown) {
       showInterstitialAd(() => {
         setHasAdBeenShown(true); // Mark the ad as shown
-         setIsDrawerVisible(!isDrawerVisible);
+        setIsDrawerVisible(!isDrawerVisible);
       });
     }
     else {
@@ -176,19 +175,20 @@ const {isPro} = useLocalState()
               placeholder="Search"
               placeholderTextColor="#888"
               onChangeText={handleSearchChange}
+
             />
             <TouchableOpacity
-              style={[styles.filterDropdown, {backgroundColor:config.colors.hasBlockGreen}]}
+              style={[styles.filterDropdown, { backgroundColor: config.colors.hasBlockGreen }]}
               onPress={() => setFilterDropdownVisible(!filterDropdownVisible)}
             >
-              <Text style={[styles.filterText, {color:selectedTheme.colors.text}]}>{displayedFilter}</Text>
+              <Text style={[styles.filterText, { color: selectedTheme.colors.text }]}>{displayedFilter}</Text>
               <Icon name="chevron-down-outline" size={18} color="#333" />
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.filterDropdown, {backgroundColor:config.colors.hasBlockGreen}]}
+              style={[styles.filterDropdown, { backgroundColor: config.colors.hasBlockGreen }]}
               onPress={toggleDrawer}
             >
-              <Text style={[styles.filterText, {color:selectedTheme.colors.text}]}>Codes</Text>
+              <Text style={[styles.filterText, { color: selectedTheme.colors.text }]}>Codes</Text>
             </TouchableOpacity>
           </View>
 
@@ -236,19 +236,19 @@ const {isPro} = useLocalState()
           }
 
         </View>
-<CodesDrawer isVisible={isDrawerVisible} toggleModal={toggleDrawer} codes={codesData}/>
+        <CodesDrawer isVisible={isDrawerVisible} toggleModal={toggleDrawer} codes={codesData} />
       </GestureHandlerRootView>
 
       {!isPro && <View style={{ alignSelf: 'center' }}>
-  {isAdVisible && (
-    <BannerAd
-      unitId={bannerAdUnitId}
-      size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
-      onAdLoaded={() => setIsAdVisible(true)} 
-      onAdFailedToLoad={() => setIsAdVisible(false)} 
-    />
-  )}
-</View>}
+        {isAdVisible && (
+          <BannerAd
+            unitId={bannerAdUnitId}
+            size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+            onAdLoaded={() => setIsAdVisible(true)}
+            onAdFailedToLoad={() => setIsAdVisible(false)}
+          />
+        )}
+      </View>}
     </>
   );
 };
@@ -257,7 +257,7 @@ const styles = StyleSheet.create({
   container: { paddingHorizontal: 8, marginHorizontal: 2, flex: 1 },
   searchFilterContainer: { flexDirection: 'row', marginBottom: 10, alignItems: 'center' },
   searchInput: { flex: 1, backgroundColor: '#E0E0E0', padding: 10, borderRadius: 10, marginRight: 10, height: 48 },
-  filterDropdown: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#E0E0E0', padding: 10, borderRadius: 10, height: 48, marginLeft:10 },
+  filterDropdown: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#E0E0E0', padding: 10, borderRadius: 10, height: 48, marginLeft: 10 },
   filterDropdownContainer: {
     position: 'absolute', top: 80, right: 10, width: 120, backgroundColor: '#FFF', borderRadius: 8,
     zIndex: 1
@@ -283,9 +283,9 @@ const styles = StyleSheet.create({
   robuxPrice: {
     fontSize: 12, fontFamily: 'Lato-Regular', color: 'white'
   },
-  statusContainer: { alignItems: 'left', alignSelf: 'flex-end', position:'absolute', bottom:0 },
+  statusContainer: { alignItems: 'left', alignSelf: 'flex-end', position: 'absolute', bottom: 0 },
   status: {
-    paddingHorizontal: 8, paddingVertical: 4, borderTopLeftRadius: 10, borderBottomRightRadius:10, color: '#FFF', fontSize: 12, fontFamily: 'Lato-Bold'
+    paddingHorizontal: 8, paddingVertical: 4, borderTopLeftRadius: 10, borderBottomRightRadius: 10, color: '#FFF', fontSize: 12, fontFamily: 'Lato-Bold'
   },
   filterText: { fontSize: 16, fontFamily: 'Lato-Regular', marginRight: 5 },
   description: {

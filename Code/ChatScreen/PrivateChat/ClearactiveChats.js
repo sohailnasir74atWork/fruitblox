@@ -1,14 +1,11 @@
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { BackHandler } from 'react-native';
-import { getDatabase, ref, remove } from 'firebase/database';
+import database from '@react-native-firebase/database';
 
 const clearActiveChat = async (userId) => {
-  const database = getDatabase();
-  const activeChatRef = ref(database, `/activeChats/${userId}`);
   try {
-    await remove(activeChatRef);
-    // console.log(`Active chat cleared for user ${userId}`);
+    await database().ref(`/activeChats/${userId}`).remove();
   } catch (error) {
     console.error(`Failed to clear active chat for user ${userId}:`, error);
   }
@@ -17,36 +14,32 @@ const clearActiveChat = async (userId) => {
 export const useActiveChatHandler = (userId, chatId) => {
   const navigation = useNavigation();
 
-  useFocusEffect(() => {
-    const database = getDatabase();
-    const activeChatRef = ref(database, `/activeChats/${userId}`);
+  // Memoized function to set active chat
+  const setActiveChat = useCallback(async () => {
+    try {
+      await database().ref(`/activeChats/${userId}`).update({ chatId });
+    } catch (error) {
+      console.error(`Failed to set active chat for user ${userId}:`, error);
+    }
+  }, [userId, chatId]);
 
-    // Set the active chat when the screen is focused
-    const setActiveChat = async () => {
-      try {
-        await activeChatRef.set(chatId);
-        // console.log(`Active chat set for user ${userId}: ${chatId}`);
-      } catch (error) {
-        console.error(`Failed to set active chat for user ${userId}:`, error);
-      }
-    };
+  // Memoized back handler
+  const onBackPress = useCallback(() => {
+    clearActiveChat(userId);
+    navigation.goBack();
+    return true; // Prevent default back press behavior
+  }, [userId, navigation]);
 
-    setActiveChat();
+  useFocusEffect(
+    useCallback(() => {
+      setActiveChat();
 
-    // Handle back press to clear active chat
-    const onBackPress = () => {
-      clearActiveChat(userId);
-      navigation.goBack(); // Navigate back to the previous screen
-      return true; // Prevent default back press behavior
-    };
+      BackHandler.addEventListener('hardwareBackPress', onBackPress);
 
-    // Add event listener for back press
-    BackHandler.addEventListener('hardwareBackPress', onBackPress);
-
-    // Cleanup when navigating away or unmounting the component
-    return () => {
-      clearActiveChat(userId);
-      BackHandler.removeEventListener('hardwareBackPress', onBackPress);
-    };
-  });
+      return () => {
+        clearActiveChat(userId);
+        BackHandler.removeEventListener('hardwareBackPress', onBackPress);
+      };
+    }, [setActiveChat, onBackPress, userId])
+  );
 };

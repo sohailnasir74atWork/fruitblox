@@ -192,10 +192,12 @@ const PrivateChatScreen = () => {
 //     });
 // }, [chatKey, myUserId]);
 
+
+
+
 useEffect(() => {
   setActiveChat(user.id, chatKey)
 }, [user.id,chatKey]);
-
 useEffect(() => {
   const listener = messagesRef.on('child_added', (snapshot) => {
     const newMessage = { id: snapshot.key, ...snapshot.val() };
@@ -204,11 +206,13 @@ useEffect(() => {
         ? prevMessages
         : [newMessage, ...prevMessages]
     );
-    // updateLastRead(); // Update the last seen timestamp for new messages
   });
 
-  return () => messagesRef.off('child_added', listener); // Cleanup on unmount
+  return () => {
+    messagesRef.off('child_added'); // ✅ Correct cleanup
+  };
 }, [messagesRef]);
+
 
   
  

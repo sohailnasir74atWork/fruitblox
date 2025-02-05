@@ -18,10 +18,6 @@ import Icon from 'react-native-vector-icons/FontAwesome'; // Ensure FontAwesome 
 import appleAuth, { AppleButton } from '@invertase/react-native-apple-authentication';
 import { useHaptic } from '../Helper/HepticFeedBack';
 import { useGlobalState } from '../GlobelStats';
-import { get, getDatabase, ref, set } from 'firebase/database';
-import { getApps, initializeApp } from 'firebase/app';
-import { firebaseConfig } from '../Globelhelper';
-import { generateOnePieceUsername } from '../Helper/RendomNamegen';
 import ConditionalKeyboardWrapper from '../Helper/keyboardAvoidingContainer';
 
 
@@ -33,10 +29,9 @@ const SignInDrawer = ({ visible, onClose, selectedTheme, message }) => {
     const [isLoading, setIsLoading] = useState(false)
     const [isLoadingSecondary, setIsLoadingSecondary] = useState(false);
     const { triggerHapticFeedback } = useHaptic();
-    const { theme, setUser } = useGlobalState()
-    const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+    const { theme } = useGlobalState()
 
-    const appdatabase = getDatabase(app);
+    // const appdatabase = getDatabase(app);
     const isDarkMode = theme === 'dark';
     useEffect(() => {
         GoogleSignin.configure({
@@ -46,25 +41,7 @@ const SignInDrawer = ({ visible, onClose, selectedTheme, message }) => {
     }, [])
 
 
-    // Utility function to create a default user structure
-    const getDefaultUser = (overrides = {}) => ({
-        id: null,
-        email: null,
-        displayName: generateOnePieceUsername(),
-        avatar: null,
-        selectedFruits: [],
-        isAdmin: false,
-        status: null,
-        isReminderEnabled: false,
-        isSelectedReminderEnabled: false,
-        isOwner: false,
-        isPro: false,
-        points: 0,
-        lastRewardtime: null,
-        isBlock: false,
-        fcmToken: null,
-        ...overrides, // Allow overriding specific fields
-    });
+ 
 
     // Updated onAppleButtonPress function
     async function onAppleButtonPress() {
@@ -74,56 +51,24 @@ const SignInDrawer = ({ visible, onClose, selectedTheme, message }) => {
                 requestedOperation: appleAuth.Operation.LOGIN,
                 requestedScopes: [appleAuth.Scope.FULL_NAME, appleAuth.Scope.EMAIL],
             });
-
+    
             const { identityToken, nonce, fullName, email } = appleAuthRequestResponse;
-
+    
             if (!identityToken) {
                 throw new Error('Apple Sign-In failed - no identity token returned');
             }
-
+    
             const appleCredential = auth.AppleAuthProvider.credential(identityToken, nonce);
-            const userCredential = await auth().signInWithCredential(appleCredential);
-
-            const { uid, displayName: firebaseDisplayName, photoURL } = userCredential.user;
-            const displayName = fullName?.givenName || firebaseDisplayName || 'Anonymous';
-            const userRef = ref(appdatabase, `users/${uid}`);
-            const snapshot = await get(userRef);
-
-            if (snapshot.exists()) {
-                // console.log('Existing user found:', snapshot.val());
-
-                setUser({
-                    ...getDefaultUser(), // Get default user structure
-                    id: uid,
-                    ...snapshot.val(), // Merge with existing database fields
-                });
-
-                Alert.alert('Welcome Back!', `Welcome back, ${displayName || 'User'}!`);
-            } else {
-                const newUser = getDefaultUser({
-                    id: uid,
-                    email: email || null,
-                    displayName: displayName,
-                    avatar: photoURL || null,
-                });
-
-                await set(userRef, newUser); // Save new user data to the database
-                setUser(newUser);
-
-                Alert.alert('Welcome!', `Account created for ${displayName || 'User'}!`);
-            }
-
+            await auth().signInWithCredential(appleCredential);
+    
+            Alert.alert('Welcome Back!', 'You have logged in successfully!');
             onClose(); // Close the modal on success
         } catch (error) {
             console.error('Apple Sign-In Error:', error);
-
-            Alert.alert(
-                'Sign-In Error',
-                error?.message || 'An unexpected error occurred. Please try again later.'
-            );
+            Alert.alert('Sign-In Error', error?.message || 'An unexpected error occurred. Please try again later.');
         }
     }
-
+    
     const handleSignInOrRegister = async () => {
         triggerHapticFeedback('impactLight');
         if (!email || !password) {
@@ -131,70 +76,31 @@ const SignInDrawer = ({ visible, onClose, selectedTheme, message }) => {
             return;
         }
         const isValidEmail = (email) => /\S+@\S+\.\S+/.test(email);
-
+    
         if (!isValidEmail(email)) {
             Alert.alert('Input Error', 'Please enter a valid email address.');
             return;
         }
-
-
+    
         setIsLoadingSecondary(true); // Show loading indicator
-
+    
         try {
             if (isRegisterMode) {
                 // Handle user registration
-                const userCredential = await auth().createUserWithEmailAndPassword(email, password);
-                const { uid, email: userEmail } = userCredential.user;
-
-                const userRef = ref(appdatabase, `users/${uid}`);
-                const newUser = getDefaultUser({
-                    id: uid,
-                    email: userEmail,
-                    displayName: 'Anonymous', // Use default or user-inputted name if available
-                });
-
-                await set(userRef, newUser); // Save new user data to the database
-                setUser(newUser);
-
+                await auth().createUserWithEmailAndPassword(email, password);
                 Alert.alert('Success', 'Your account has been created successfully!');
             } else {
                 // Handle user login
-                const userCredential = await auth().signInWithEmailAndPassword(email, password);
-                const { uid } = userCredential.user;
-
-                const userRef = ref(appdatabase, `users/${uid}`);
-                const snapshot = await get(userRef);
-
-                if (snapshot.exists()) {
-                    // console.log('Existing user found:', snapshot.val());
-
-                    setUser({
-                        id: uid,
-                        ...snapshot.val(),
-                    });
-
-                    Alert.alert('Welcome Back!', 'You have logged in successfully!');
-                } else {
-                    // Handle case where user exists in auth but not in database
-                    const newUser = getDefaultUser({
-                        id: uid,
-                        email,
-                        displayName: generateOnePieceUsername(),
-                    });
-
-                    await set(userRef, newUser);
-                    setUser(newUser);
-
-                    Alert.alert('Account Restored', 'Your account data has been restored.');
-                }
+                await auth().signInWithEmailAndPassword(email, password);
+                Alert.alert('Welcome Back!', 'You have logged in successfully!');
             }
-
-            onClose(); // Close the modal after successful operation
+    
+            onClose(); // Close modal after successful operation
         } catch (error) {
             console.error('Authentication Error:', error);
-
+    
             let errorMessage = 'User does not exist or the credentials are invalid. Please try again.';
-
+    
             if (error?.code === 'auth/invalid-email') {
                 errorMessage = 'The email address is not valid.';
             } else if (error?.code === 'auth/user-disabled') {
@@ -208,64 +114,37 @@ const SignInDrawer = ({ visible, onClose, selectedTheme, message }) => {
             } else if (error?.code === 'auth/weak-password') {
                 errorMessage = 'The password is too weak. Please use a stronger password.';
             }
-
+    
             Alert.alert('Authentication Error', errorMessage);
         } finally {
             setIsLoadingSecondary(false); // Hide loading indicator
         }
     };
+    
     const handleGoogleSignIn = async () => {
         try {
             setIsLoading(true);
             await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
             const signInResult = await GoogleSignin.signIn();
-            // console.log('Sign-In Result:', signInResult); // Debugging
+            
             const idToken = signInResult?.idToken || signInResult?.data?.idToken;
             if (!idToken) {
                 throw new Error('No ID token found in the Google Sign-In result.');
             }
+            
             const googleCredential = auth.GoogleAuthProvider.credential(idToken);
-            const userCredential = await auth().signInWithCredential(googleCredential);
-            const { uid, email, displayName, photoURL } = userCredential.user;
-            const userRef = ref(appdatabase, `users/${uid}`);
-            const snapshot = await get(userRef);
-            if (snapshot.exists()) {
-                // console.log('Existing user found:', snapshot.val());
-                setUser({
-                    id: uid,
-                    ...snapshot.val(),
-                });
-
-                Alert.alert('Welcome Back!', `Welcome back, ${displayName || 'User'}!`);
-            } else {
-                const newUser = getDefaultUser({
-                    id: uid,
-                    email: email || null,
-                    displayName: displayName,
-                    avatar: photoURL || null,
-                });
-
-
-                await set(userRef, newUser); // Save new user data to the database
-
-                setUser(newUser);
-
-                Alert.alert('Welcome!', `Account created for ${displayName || 'User'}!`);
-            }
-
+            await auth().signInWithCredential(googleCredential);
+    
+            Alert.alert('Welcome Back!', 'You have logged in successfully!');
             onClose(); // Close the modal on success
         } catch (error) {
             console.error('Google Sign-In Error:', error);
-
-            Alert.alert(
-                'Sign-In Error',
-                error?.message || 'An unexpected error occurred. Please try again later.'
-            );
+            Alert.alert('Sign-In Error', error?.message || 'An unexpected error occurred. Please try again later.');
         } finally {
             setIsLoading(false); // Reset loading state
         }
     };
-
+    
 
     return (
         <Modal visible={visible} animationType="slide" transparent>
@@ -289,6 +168,7 @@ const SignInDrawer = ({ visible, onClose, selectedTheme, message }) => {
                         onChangeText={setEmail}
                         keyboardType="email-address"
                         autoCapitalize="none"
+                        placeholderTextColor={selectedTheme.colors.text}
                     />
 
                     <TextInput
@@ -297,6 +177,8 @@ const SignInDrawer = ({ visible, onClose, selectedTheme, message }) => {
                         value={password}
                         onChangeText={setPassword}
                         secureTextEntry
+                        placeholderTextColor={selectedTheme.colors.text}
+
                     />
 
                     <TouchableOpacity

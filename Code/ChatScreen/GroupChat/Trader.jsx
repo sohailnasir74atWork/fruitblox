@@ -195,8 +195,11 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
       }
     });
   
-    return () => chatRef.off('child_added', listener); // Cleanup listener
-  }, [chatRef, bannedUsers, validateMessage]); // Dependency updated to include bannedUsers directly
+    return () => {
+      chatRef.off('child_added'); // ✅ Correct cleanup
+    };
+  }, [chatRef, bannedUsers, validateMessage]);
+  
   
 
   const handleLoadMore = async () => {

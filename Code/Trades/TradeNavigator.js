@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { getDatabase, onValue, ref } from 'firebase/database';
+import { getDatabase, onValue, ref } from '@react-native-firebase/database';
 import TradeList from './Trades';
 import { useGlobalState } from '../GlobelStats'; // Adjust import path
 import { useHaptic } from '../Helper/HepticFeedBack'; // Adjust import path

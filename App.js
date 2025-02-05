@@ -7,7 +7,7 @@ import {
   ActivityIndicator,
   AppState,
 } from 'react-native';
-import { NavigationContainer, useFocusEffect } from '@react-navigation/native';
+import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import SettingsScreen from './Code/SettingScreen/Setting';
 import NotificationHandler from './Code/Firebase/FrontendNotificationHandling';
@@ -49,7 +49,7 @@ function App() {
     initializeAds();
 
     const { reviewCount } = localState;
-    if (reviewCount % 10 === 0 && reviewCount > 0) {
+    if (reviewCount % 6 === 0 && reviewCount > 0) {
       requestReview();
     }
 

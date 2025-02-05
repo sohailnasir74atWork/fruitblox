@@ -57,7 +57,6 @@ export default function SettingsScreen({ selectedTheme }) {
   const themes = ['system', 'light', 'dark'];
   const handleToggle = (value) => {
     updateLocalState('isHaptic', value); // Update isHaptic state globally
-    // updateLocalState('isOwner', true); // Update isHaptic state globally
   };
   const isDarkMode = theme === 'dark';
   useEffect(() => {
@@ -79,7 +78,6 @@ export default function SettingsScreen({ selectedTheme }) {
     };
 
     checkPermission();
-    updateLocalStateAndDatabase('isOwner', true)
   }, []);
 
   // Request permission
@@ -335,7 +333,6 @@ export default function SettingsScreen({ selectedTheme }) {
     if (plan.includes('yearly')) return '1 YEAR';
     return 'Unknown Plan';
   };
-
   const styles = useMemo(() => getStyles(isDarkMode), [isDarkMode]);
   return (
     <View style={styles.container}>
@@ -351,7 +348,7 @@ export default function SettingsScreen({ selectedTheme }) {
               }
               style={styles.profileImage}
             />
-            <TouchableOpacity onPress={user?.id ? () => { } : () => { setOpenSignin(true) }}>
+            <TouchableOpacity onPress={user?.id ? () => { } : () => { setOpenSignin(true) }} disabled={user?.id !== null}>
               <Text style={!user.id ? styles.userNameLogout : styles.userName}>
                 {!user?.id ? 'Login / Register' : displayName}
               </Text>

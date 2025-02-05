@@ -4,7 +4,8 @@ import { Platform } from 'react-native';
 import {  TestIds } from 'react-native-google-mobile-ads';
 import config from '../Helper/Environment';
 
-const developmentMode =false
+
+export const developmentMode = __DEV__;
 
 
 const adUnits = {

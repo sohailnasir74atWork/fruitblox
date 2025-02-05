@@ -8,7 +8,7 @@ import {
   StyleSheet,
   ActivityIndicator,
 } from 'react-native';
-import { getDatabase, ref, onValue } from 'firebase/database';
+import { getDatabase, onValue, ref } from '@react-native-firebase/database';
 import Icon from 'react-native-vector-icons/Ionicons';
 import config from '../../Helper/Environment';
 import { useGlobalState } from '../../GlobelStats';

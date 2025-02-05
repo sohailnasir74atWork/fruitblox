@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { useGlobalState } from "../GlobelStats";
 import config from "../Helper/Environment";
-import { getDatabase, ref, get, update } from "firebase/database";
+import { getDatabase, ref, get, update } from "@react-native-firebase/database";
 
 const ReportPopup = ({ visible, message, onClose }) => {
   const [selectedReason, setSelectedReason] = useState("Spam");
