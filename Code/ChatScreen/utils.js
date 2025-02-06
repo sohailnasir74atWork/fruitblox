@@ -1,5 +1,5 @@
 import { getDatabase, ref, update, get, query, orderByChild, remove, set, orderByKey, onDisconnect } from '@react-native-firebase/database';
-import { Alert, Linking, Text } from 'react-native';
+import { Alert } from 'react-native';
 
 // Initialize the database reference
 const database = getDatabase();
@@ -164,35 +164,6 @@ export const unbanUserInChat = async (currentUserId, selectedUserId) => {
 };
 
 
-
-// const deleteLast100Messages = async () => {
-//   try {
-//     const database = getDatabase(); // Initialize Firebase Realtime Database
-//     const chatsRef = ref(database, 'chat'); // Reference to the 'chat' node
-//     const last100MessagesQuery = query(chatsRef, orderByKey(), limitToLast(10));
-
-//     // Fetch the last 100 messages
-//     const snapshot = await get(last100MessagesQuery);
-//     const messages = snapshot.val();
-
-//     if (!messages) {
-//       console.log('No messages to delete.');
-//       return;
-//     }
-
-//     // Delete each message
-//     const deletePromises = Object.keys(messages).map((messageKey) =>
-//       remove(ref(database, `chat/${messageKey}`))
-//     );
-
-//     await Promise.all(deletePromises);
-
-//     console.log('Last 100 messages deleted successfully.');
-//   } catch (error) {
-//     console.error('Error deleting messages:', error);
-//   }
-// };
-// useEffect(()=>{deleteLast100Messages()}, [])
 
 
 export const deleteOldest500Messages = async () => {

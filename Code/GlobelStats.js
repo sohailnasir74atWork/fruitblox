@@ -62,13 +62,13 @@ export const GlobalStateProvider = ({ children }) => {
 
   }, [localState.theme]);
 
-  // const updateOnlineCount = (incrementValue) => {
-  //   runTransaction(onlineCountRef, (current) => {
-  //     return (current || 0) + incrementValue;
-  //   }).catch((error) => {
-  //     console.error("Error updating online count:", error);
-  //   });
-  // };
+  const updateOnlineCount = (incrementValue) => {
+    runTransaction(onlineCountRef, (current) => {
+      return (current || 0) + incrementValue;
+    }).catch((error) => {
+      console.error("Error updating online count:", error);
+    });
+  };
   useEffect(() => {
     try {
       firestoreDB = firestore();
@@ -300,8 +300,8 @@ const fetchStockData = async () => {
       data: xlsSnapshot.val() || {},
       normalStock: calcSnapshot.val()?.test || {},
       mirageStock: calcSnapshot.val()?.mirage || {},
-      prenormalStock: preSnapshot.val()?.mirageStock || {},
-      premirageStock: preSnapshot.val()?.normalStock || {},
+      prenormalStock: preSnapshot.val()?.normalStock || {},
+      premirageStock: preSnapshot.val()?.mirageStock || {},
       isAppReady: true,
     });
   } catch (error) {
@@ -329,7 +329,7 @@ useEffect(() => {
       theme,
       setUser,
       setOnlineMembersCount,
-      updateLocalStateAndDatabase, loading,
+      updateLocalStateAndDatabase, fetchStockData, loading,
       
     }),
     [state, user, onlineMembersCount, theme, fetchStockData, loading]

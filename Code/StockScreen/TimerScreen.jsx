@@ -201,7 +201,7 @@ const TimerScreen = ({ selectedTheme }) => {
 
     const timerId = setInterval(updateTimers, 1000);
     return () => clearInterval(timerId);
-  }, [state.normalStock, state.mirageStock]);
+  }, []);
 
   // Render FlatList Item
   const renderItem = ({ item, index, isLastItem }) => {
@@ -276,7 +276,7 @@ const TimerScreen = ({ selectedTheme }) => {
     }
   };
   const styles = getStyles(isDarkMode, user);
-
+console.log(state.premirageStock)
   return (
     <>
       <GestureHandlerRootView>
@@ -349,8 +349,8 @@ const TimerScreen = ({ selectedTheme }) => {
               </View>
 
               <View style={styles.stockContainer}>
-                {state.normalStock?.map((item, index) => {
-                  const isLastItem = index === state.normalStock.length - 1;
+                {state?.normalStock.length > 0 && state.normalStock?.map((item, index) => {
+                  const isLastItem = index === state?.normalStock.length - 1;
                   return (
                     <View key={item.id || index}>
                       {renderItem({ item, index, isLastItem })}
@@ -367,8 +367,8 @@ const TimerScreen = ({ selectedTheme }) => {
                 </Text>
               </View>
               <View style={styles.stockContainer}>
-                {state.mirageStock?.map((item, index) => {
-                  const isLastItem = index === state.mirageStock.length - 1;
+                {state?.mirageStock.length > 0 && state.mirageStock?.map((item, index) => {
+                  const isLastItem = index === state?.mirageStock.length - 1;
                   return (
                     <View key={item.id || index}>
                       {renderItem({ item, index, isLastItem })}
@@ -393,8 +393,8 @@ const TimerScreen = ({ selectedTheme }) => {
               </View>
 
               <View style={styles.stockContainerpre}>
-                {state.prenormalStock?.map((item, index) => {
-                  const isLastItem = index === state.normalStock.length - 1;
+                {state?.prenormalStock.length > 0 && state.prenormalStock.map((item, index) => {
+                  const isLastItem = index === state.prenormalStock.length - 1;
                   return (
                     <View key={item.id || index}>
                       {renderItem({ item, index, isLastItem })}
@@ -411,8 +411,8 @@ const TimerScreen = ({ selectedTheme }) => {
                 </Text>
               </View>
               <View style={styles.stockContainerpre}>
-                {state.premirageStock?.map((item, index) => {
-                  const isLastItem = index === state.mirageStock.length - 1;
+                {state?.premirageStock.length > 0 && state.premirageStock.map((item, index) => {
+                  const isLastItem = index === state.premirageStock.length - 1;
                   return (
                     <View key={item.id || index}>
                       {renderItem({ item, index, isLastItem })}

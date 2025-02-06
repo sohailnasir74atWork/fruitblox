@@ -69,7 +69,6 @@ function App() {
 
   const saveConsentStatus = (status) => {
     updateLocalState('consentStatus', status);
-    // updateLocalState('isOwner', true);
   };
   
   // useEffect(() => {
