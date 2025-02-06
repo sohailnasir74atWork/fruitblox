@@ -66,14 +66,15 @@ function App() {
   
   
 
+
   const saveConsentStatus = (status) => {
     updateLocalState('consentStatus', status);
     // updateLocalState('isOwner', true);
   };
   
-  useEffect(() => {
-    checkForUpdate(updateLocalState, updateCount, lastVersion);
-  }, []); // Runs once on mount
+  // useEffect(() => {
+  //   checkForUpdate(updateLocalState, updateCount, lastVersion);
+  // }, []); // Runs once on mount
 
   const handleUserConsent = async () => {
     try {

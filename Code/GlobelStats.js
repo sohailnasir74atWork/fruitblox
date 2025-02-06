@@ -62,13 +62,13 @@ export const GlobalStateProvider = ({ children }) => {
 
   }, [localState.theme]);
 
-  const updateOnlineCount = (incrementValue) => {
-    runTransaction(onlineCountRef, (current) => {
-      return (current || 0) + incrementValue;
-    }).catch((error) => {
-      console.error("Error updating online count:", error);
-    });
-  };
+  // const updateOnlineCount = (incrementValue) => {
+  //   runTransaction(onlineCountRef, (current) => {
+  //     return (current || 0) + incrementValue;
+  //   }).catch((error) => {
+  //     console.error("Error updating online count:", error);
+  //   });
+  // };
   useEffect(() => {
     try {
       firestoreDB = firestore();
@@ -329,7 +329,7 @@ useEffect(() => {
       theme,
       setUser,
       setOnlineMembersCount,
-      updateLocalStateAndDatabase, fetchStockData, loading,
+      updateLocalStateAndDatabase, loading,
       
     }),
     [state, user, onlineMembersCount, theme, fetchStockData, loading]

@@ -15,6 +15,7 @@ import config from '../../Helper/Environment';
 import {  rules } from '../utils';
 import { parseMessageText } from '../ChatHelper';
 import { Menu, MenuOption, MenuOptions, MenuTrigger, renderers } from 'react-native-popup-menu';
+import { useNavigation } from '@react-navigation/native';
 
 const AdminHeader = ({
   pinnedMessages = [], // Array of pinned messages
@@ -25,7 +26,7 @@ const AdminHeader = ({
   selectedTheme,
   onlineMembersCount,
   modalVisibleChatinfo, 
-  setModalVisibleChatinfo, navigateToInbox, navigation, unreadMessagesCount, triggerHapticFeedback
+  setModalVisibleChatinfo, unreadMessagesCount, triggerHapticFeedback
 
 }) => {
   const [expanded, setExpanded] = useState(false);
@@ -35,6 +36,7 @@ const AdminHeader = ({
   const { theme } = useGlobalState();
   const isDarkMode = theme === 'dark';
   const {user} = useGlobalState()
+  const navigation = useNavigation()
 
 
   useEffect(() => {
@@ -90,7 +92,7 @@ const AdminHeader = ({
         size={24}
         color={selectedTheme.colors.text}
         style={styles.icon2}
-        onPress={() => {navigateToInbox(navigation);  triggerHapticFeedback('impactLight');}}
+        onPress={() => {navigation.navigate('Inbox');  triggerHapticFeedback('impactLight');}}
       />
       {unreadMessagesCount > 0 && (
         <View style={styles.badge}>

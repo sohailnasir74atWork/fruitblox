@@ -34,7 +34,7 @@ const interstitial = InterstitialAd.createForAdRequest(interstitialAdUnitId);
 
 
 const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatFocused,
-  setModalVisibleChatinfo, navigateToInbox, unreadMessagesCount  }) => {
+  setModalVisibleChatinfo, unreadMessagesCount  }) => {
   const { user, theme, onlineMembersCount } = useGlobalState();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
@@ -440,8 +440,6 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
             isOwner={isOwner}
             modalVisibleChatinfo={modalVisibleChatinfo}
             setModalVisibleChatinfo={setModalVisibleChatinfo}
-            navigateToInbox={navigateToInbox}
-            navigation={navigation}
             triggerHapticFeedback={triggerHapticFeedback}
             unreadMessagesCount={unreadMessagesCount}
           />

@@ -55,7 +55,6 @@ export const ChatStack = ({ selectedTheme, setChatFocused, modalVisibleChatinfo,
         {() => (
           <ChatScreen
             {...{ selectedTheme, setChatFocused, modalVisibleChatinfo, setModalVisibleChatinfo, bannedUsers, setBannedUsers, triggerHapticFeedback, unreadMessagesCount }}
-            navigateToInbox={(nav) => nav.navigate('Inbox')}
           />
         )}
       </Stack.Screen>

@@ -83,7 +83,7 @@ export const LocalStateProvider = ({ children }) => {
     };
 
     initRevenueCat();
-  }, [mySubscriptions]);
+  }, []);
 // console.log(isPro)
   // Fetch available subscriptions
   const fetchOfferings = async () => {

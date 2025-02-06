@@ -13,6 +13,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import config from '../../Helper/Environment';
 import { useGlobalState } from '../../GlobelStats';
 import { unbanUserInChat } from '../utils';
+import { useNavigation } from '@react-navigation/native';
 
 const BlockedUsersScreen = ({ route }) => {
   const { user, theme } = useGlobalState();
@@ -21,7 +22,7 @@ const BlockedUsersScreen = ({ route }) => {
   const styles = getStyles(isDarkMode)
   const [blockedUsers, setBlockedUsers] = useState(route.params?.bannedUsers || []);
   const [loading, setLoading] = useState(!route.params?.bannedUsers);
-
+  const navigation = useNavigation()
 
   const handleUnblockUser = async (userId, selectedUserId) => {
     const success = await unbanUserInChat(userId, selectedUserId);
