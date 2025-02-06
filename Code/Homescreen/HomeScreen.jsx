@@ -16,7 +16,6 @@ import { useLocalState } from '../LocalGlobelStats';
 import { submitTrade } from './HomeScreenHelper';
 import SignInDrawer from '../Firebase/SigninDrawer';
 import { useNavigation } from '@react-navigation/native';
-import AppUpdateChecker from '../AppHelper/UpdateChecker';
 const bannerAdUnitId = getAdUnitId('banner');
 const interstitialAdUnitId = getAdUnitId('interstitial');
 const interstitial = InterstitialAd.createForAdRequest(interstitialAdUnitId);
@@ -593,7 +592,6 @@ const HomeScreen = ({ selectedTheme }) => {
 
           />
         </View>
-        <AppUpdateChecker />
       </GestureHandlerRootView>
 
       {!isPro && <View style={{ alignSelf: 'center' }}>

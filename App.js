@@ -17,6 +17,7 @@ import { MenuProvider } from 'react-native-popup-menu';
 import { AdsConsent, AdsConsentStatus } from 'react-native-google-mobile-ads';
 import MainTabs from './Code/AppHelper/MainTabs';
 import {
+  checkForUpdate,
   initializeAds,
   loadAppOpenAd,
   MyDarkTheme,
@@ -42,7 +43,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [lastAdShownTime, setLastAdShownTime] = useState(0);
   const [isAdLoaded, setIsAdLoaded] = useState(false);
-  const { localState, updateLocalState, isPro } = useLocalState();
+  const { localState, updateLocalState, isPro, updateCount, lastVersion } = useLocalState();
   const [chatFocused,setChatFocused] = useState(true);
   const [modalVisibleChatinfo, setModalVisibleChatinfo ] = useState(false)
   useEffect(() => {
@@ -70,7 +71,9 @@ function App() {
     // updateLocalState('isOwner', true);
   };
   
-
+  useEffect(() => {
+    checkForUpdate(updateLocalState, updateCount, lastVersion);
+  }, []); // Runs once on mount
 
   const handleUserConsent = async () => {
     try {
