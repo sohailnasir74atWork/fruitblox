@@ -23,16 +23,24 @@ export const ChatStack = ({ selectedTheme, setChatFocused, modalVisibleChatinfo,
     const unsubscribe = onValue(
       bannedRef,
       (snapshot) => {
-        setBannedUsers(Object.entries(snapshot.val() || {}).map(([id, details]) => ({
+        if (!snapshot.exists()) {
+          setBannedUsers([]);
+          return;
+        }
+        
+        setBannedUsers(Object.entries(snapshot.val()).map(([id, details]) => ({
           id,
-          displayName: details.displayName,
-          avatar: details.avatar,
+          displayName: details.displayName || 'Unknown',
+          avatar: details.avatar || '',
         })));
       },
       (error) => console.error('Error in banned users listener:', error)
     );
 
-    return unsubscribe;
+    return () => {
+      console.log('Cleaning up banned users listener');
+      unsubscribe();
+    };
   }, [user?.id]);
 
   const headerOptions = useMemo(() => ({
