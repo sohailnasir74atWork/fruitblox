@@ -83,8 +83,10 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
   const toggleDrawer = (userData = null) => {
     setSelectedUser(userData);
     setIsDrawerVisible(!isDrawerVisible);
+    console.log('clikcked')
   };
   const startPrivateChat = () => {
+    console.log('clikcked')
     showInterstitialAd(() => {
       toggleDrawer();
       navigation.navigate('PrivateChat', { selectedUser, selectedTheme, isOnline });
@@ -93,7 +95,7 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
   
   };
 
-  const chatRef = useMemo(() => database().ref('chat'), []);
+  const chatRef = useMemo(() => database().ref('chat_new'), []);
   const pinnedMessagesRef = useMemo(() => database().ref('pinnedMessages'), []);
 
   const isAdmin = user?.isAdmin || false;
@@ -177,28 +179,27 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
     setChatFocused(false)
   }, []);
   
+    // const bannedUserIds = bannedUsers.map((user) => user.id); // Extract IDs from bannedUsers
 
-
-  useEffect(() => {
-    const bannedUserIds = bannedUsers.map((user) => user.id); // Extract IDs from bannedUsers
-  
-    const listener = chatRef.limitToLast(1).on('child_added', (snapshot) => {
-      const newMessage = validateMessage({ id: `chat-${snapshot.key}`, ...snapshot.val() });
-      if (!bannedUserIds.includes(newMessage.senderId)) { // Check if senderId is not banned
+    useEffect(() => {
+      const listener = chatRef.limitToLast(1).on('child_added', (snapshot) => {
+        const newMessage = validateMessage({ id: snapshot.key, ...snapshot.val() });
+    
         setMessages((prev) => {
           const seenKeys = new Set(prev.map((msg) => msg.id));
+    
           if (!seenKeys.has(newMessage.id)) {
-            return [newMessage, ...prev];
+            return [newMessage, ...prev]; // Ensure no duplicates
           }
           return prev;
         });
-      }
-    });
-  
-    return () => {
-      chatRef.off('child_added'); // ✅ Correct cleanup
-    };
-  }, [chatRef, bannedUsers, validateMessage]);
+      });
+    
+      return () => {
+        chatRef.off('child_added'); // ✅ Correct cleanup
+      };
+    }, [chatRef]);
+    
   
   
 
@@ -354,33 +355,39 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
   };
 
   const handleSendMessage = () => {
-    const MAX_WORDS = 100; 
-    const MESSAGE_COOLDOWN = 10000; 
-
+    const MAX_WORDS = 100;
+    const MESSAGE_COOLDOWN = 10000;
+    const LINK_REGEX = /(https?:\/\/[^\s]+)/g;
+  
+    console.log("handleSendMessage triggered", input);
+  
     if (!user?.id) {
       Alert.alert('Error', 'You must be logged in to send messages.');
       return;
     }
-
+  
     if (user?.isBlock) {
       Alert.alert('You are blocked by an Admin');
       return;
     }
-
+  
     const trimmedInput = input.trim();
-
+    
     if (!trimmedInput) {
       Alert.alert('Error', 'Message cannot be empty.');
       return;
     }
-
+  
     // Check for profane content
     if (leoProfanity.check(trimmedInput)) {
       Alert.alert('Error', 'Your message contains inappropriate language.');
       return;
     }
-
-    const wordCount = trimmedInput.split(/\s+/).length;
+  
+    // 🛠️ Fix: Ensure word count is accurate
+    const wordCount = trimmedInput.split(/\s+/).filter(word => word.length > 0).length;
+    console.log(`Word Count: ${wordCount}, Max Allowed: ${MAX_WORDS}`);
+  
     if (wordCount > MAX_WORDS) {
       Alert.alert(
         'Error',
@@ -388,14 +395,21 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
       );
       return;
     }
-
+  
     if (isCooldown) {
       Alert.alert('Error', 'You are sending messages too quickly. Please wait a moment.');
       return;
     }
-
+  
+    // 🔍 Check if the message contains a link
+    const containsLink = LINK_REGEX.test(trimmedInput);
+  
+    if (containsLink && !user?.isPro) {
+      Alert.alert('Error', 'Only Pro users can send links.');
+      return;
+    }
+  
     try {
-      // Prepare the message
       const newMessage = {
         text: trimmedInput,
         timestamp: Date.now(),
@@ -405,25 +419,25 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
         replyTo: replyTo ? { id: replyTo.id, text: replyTo.text } : null,
         isAdmin: user.isAdmin || user.isOwner,
         reportCount: 0,
+        containsLink: containsLink,
       };
-
+  
       // Push the message to Firebase
-      database()
-        .ref('chat')
-        .push(newMessage);
-
+      database().ref('chat_new').push(newMessage);
+  
       // Clear the input and reply context
       setInput('');
       setReplyTo(null);
-
+  
       // Activate the cooldown
       setIsCooldown(true);
-      setTimeout(() => setIsCooldown(false), MESSAGE_COOLDOWN); // Reset cooldown after MESSAGE_COOLDOWN
+      setTimeout(() => setIsCooldown(false), MESSAGE_COOLDOWN);
     } catch (error) {
       console.error('Error sending message:', error);
       Alert.alert('Error', 'Could not send your message. Please try again.');
     }
   };
+  
 
   return (
     <>
@@ -453,7 +467,7 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
               user={user}
               isDarkMode={theme === 'dark'}
               onPinMessage={handlePinMessage}
-              onDeleteMessage={(messageId) => chatRef.child(messageId.replace('chat-', '')).remove()}
+              onDeleteMessage={(messageId) => chatRef.child(messageId.replace('chat_new-', '')).remove()}
               isAdmin={isAdmin}
               refreshing={refreshing}
               onRefresh={handleRefresh}

@@ -51,7 +51,9 @@ const SubscriptionScreen = ({ visible, onClose }) => {
     { icon: 'swap-horizontal', label: 'Unlimited Trade Creation', color: '#FF9800' }, // Orange
     { icon: 'chatbubbles', label: 'Unlimited P2P Chat (Direct Messages)', color: '#2196F3' }, // Blue
     { icon: 'notifications', label: 'Unlimited Stock Alerts & Notifications', color: '#9C27B0' }, // Purple
-    { icon: 'trending-up', label: 'Priority Listing', color: '#E91E63' } // Pink
+    { icon: 'trending-up', label: 'Priority Listing', color: '#E91E63' }, // Pink
+    { icon: 'checkmark-done-circle', label: 'Get a Pro Tag with your User Name', color: config.colors.hasBlockGreen } // Pink
+
   ];
   const calculateDiscount = (monthlyPrice, quarterlyPrice, annualPrice) => {
     if (!monthlyPrice || !quarterlyPrice || !annualPrice) return {};
@@ -177,7 +179,8 @@ StyleSheet.create({
       fontSize: 16,
       color: isDarkMode ? 'lightgrey' : '#333',
       fontFamily: 'Lato-Bold', // Corrected
-      paddingVertical:5
+      paddingVertical:5,
+      lineHeight:24
     },
     plansContainer: {
       flexDirection: 'row',

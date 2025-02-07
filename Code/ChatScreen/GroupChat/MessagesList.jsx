@@ -14,11 +14,13 @@ import {
 import { getStyles } from './../Style';
 import { Menu, MenuOptions, MenuOption, MenuTrigger } from 'react-native-popup-menu';
 import ReportPopup from './../ReportPopUp';
-import Icon from 'react-native-vector-icons/Ionicons'; // Import Icon
-import config from '../../Helper/Environment';
 import { parseMessageText } from '../ChatHelper';
 import { useGlobalState } from '../../GlobelStats';
 import { useHaptic } from '../../Helper/HepticFeedBack';
+import { useLocalState } from '../../LocalGlobelStats';
+import Icon from 'react-native-vector-icons/Ionicons';
+import config from '../../Helper/Environment';
+
 
 
 const MessagesList = ({
@@ -43,8 +45,8 @@ const MessagesList = ({
   const styles = getStyles(isDarkMode);
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [showReportPopup, setShowReportPopup] = useState(false);
-  const {updateLocalStateAndDatabase} = useGlobalState()
   const { triggerHapticFeedback } = useHaptic();
+  const {isPro} = useLocalState()
 
   const handleLongPress = (item) => {
     if (!user?.id) return;
@@ -144,9 +146,17 @@ const MessagesList = ({
                       : styles.otherMessageText
                   }
                 >
-                  <Text style={styles.userName}>{item.sender}</Text>
-                  {item.isAdmin && <Text style={styles.dot}> • </Text>}
-                  {item.isAdmin && <Text style={styles.admin}>Admin</Text>}
+                  <Text style={styles.userName}>{item.sender} 
+                   {isPro &&  <Icon
+            name="checkmark-done-circle"
+            size={16}
+            color={config.colors.hasBlockGreen}
+          />}
+          </Text>
+                 
+                  {/* {item.isAdmin && <Text style={styles.dot}> • </Text>} */}
+                  <View style={styles.adminContainer}>
+                  <Text style={styles.admin}>Admin</Text></View>
                   {'\n'}
                  {parseMessageText(item?.text)}
 

@@ -31,7 +31,7 @@ export const LocalStateProvider = ({ children }) => {
 
   // RevenueCat states
   const [customerId, setCustomerId] = useState(null);
-  const [isPro, setIsPro] = useState(localState.isPro); // Sync with MMKV storage
+  const [isPro, setIsPro] = useState(false); // Sync with MMKV storage
   const [packages, setPackages] = useState([]);
   const [mySubscriptions, setMySubscriptions] = useState([]);
 

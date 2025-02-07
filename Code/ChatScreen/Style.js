@@ -140,11 +140,17 @@ export const getStyles = (isDarkMode) =>
       textAlign: 'center',
       marginVertical: 10,
     },
+    adminContainer :{
+      backgroundColor: config.colors.hasBlockGreen,
+      paddingHorizontal:5,
+      paddingVertical:1,
+      borderRadius:3
+    },
     admin: {
       // alignSelf: 'flex-start',
-      color: config.colors.hasBlockGreen,
+      color: 'white',
       fontSize: 12,
-      fontFamily: 'Lato-Bold'
+      fontFamily: 'Lato-Bold',
 
     },
     adminText: {
@@ -255,7 +261,7 @@ export const getStyles = (isDarkMode) =>
 
     userName: {
       color: '#bbb',
-      fontSize: 10
+      fontSize: 10,
 
     },
     adminActions: {

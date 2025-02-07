@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
-import { firebase } from '@react-native-firebase/app';
+import { firebase, getApp, getApps } from '@react-native-firebase/app';
 import auth from '@react-native-firebase/auth';
 import database, { ref, set, update, get, onDisconnect, remove, increment } from '@react-native-firebase/database';
 import firestore from '@react-native-firebase/firestore';
@@ -8,9 +8,7 @@ import { useLocalState } from './LocalGlobelStats';
 import { requestPermission } from './Helper/PermissionCheck';
 
 // Ensure Firebase is initialized only once
-if (!firebase.apps.length) {
-  firebase.initializeApp(firebaseConfig);
-}
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
 const appdatabase = database();
 let firestoreDB = firestore();
@@ -37,13 +35,13 @@ export const GlobalStateProvider = ({ children }) => {
   const [user, setUser] = useState({
       id: localState.userId,
       selectedFruits: [],
-      isAdmin: false,
+      admin: false,
       status: null,
       isReminderEnabled: false,
       isSelectedReminderEnabled: false,
       displayname: '',
       avatar: null,
-      isOwner: false,
+      owner: false,
       isPro: false,
       points: 0, 
       lastRewardtime:null,
@@ -69,14 +67,7 @@ export const GlobalStateProvider = ({ children }) => {
       console.error("Error updating online count:", error);
     });
   };
-  useEffect(() => {
-    try {
-      firestoreDB = firestore();
-      // console.log("🔥 Firestore initialized:", firestoreDB);
-    } catch (error) {
-      // console.error("🚨 Firestore initialization error:", error);
-    }
-  }, []);
+ 
 
   useEffect(() => {
     if (!user?.id) return;
@@ -200,13 +191,13 @@ export const GlobalStateProvider = ({ children }) => {
     setUser({
       id: null,
       selectedFruits: [],
-      isAdmin: false,
+      admin: false,
       status: null,
       isReminderEnabled: false,
       isSelectedReminderEnabled: false,
       displayname: '',
       avatar: null,
-      isOwner: false,
+      owner: false,
       isPro: false,
       points: 0, 
       lastRewardtime:null,

@@ -4,9 +4,11 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import config from '../../Helper/Environment';
 import { banUserInChat, unbanUserInChat } from '../utils';
 import { useGlobalState } from '../../GlobelStats';
+import { useLocalState } from '../../LocalGlobelStats';
 
 const PrivateChatHeader = React.memo(({ selectedUser, isOnline, selectedTheme, bannedUsers }) => {
   const { user } = useGlobalState();
+  const {isPro} = useLocalState()
 
   const avatarUri = selectedUser?.avatar || 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png';
   const userName = selectedUser?.sender || 'User';
@@ -37,7 +39,11 @@ const PrivateChatHeader = React.memo(({ selectedUser, isOnline, selectedTheme, b
     <View style={styles.container}>
       <Image source={{ uri: avatarUri }} style={styles.avatar} />
       <View style={styles.infoContainer}>
-        <Text style={[styles.userName, { color: selectedTheme.colors.text }]}>{userName}</Text>
+        <Text style={[styles.userName, { color: selectedTheme.colors.text }]}>{userName} {isPro &&  <Icon
+            name="checkmark-done-circle"
+            size={16}
+            color={config.colors.hasBlockGreen}
+          />}</Text>
         <Text style={[styles.userStatus, { color: onlineStatusColor }]}>
           {isBanned ? 'Blocked' : isOnline ? 'Online' : 'Offline'}
         </Text>

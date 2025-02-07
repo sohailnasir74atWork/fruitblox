@@ -12,9 +12,13 @@ import config from '../../Helper/Environment';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { banUserInChat, unbanUserInChat } from './../utils';
 import { getStyles } from '../../SettingScreen/settingstyle';
+import { useLocalState } from '../../LocalGlobelStats';
+
 
 const ProfileBottomDrawer = ({ isVisible, toggleModal, startChat, selectedUser, isOnline, bannedUsers }) => {
   const { theme, user } = useGlobalState();
+  console.log(isVisible)
+  const {isPro} = useLocalState()
   const userName = selectedUser?.sender || null;
   const avatar = selectedUser?.avatar || null;
 
@@ -89,7 +93,11 @@ const ProfileBottomDrawer = ({ isVisible, toggleModal, startChat, selectedUser, 
                 style={styles.profileImage2}
               />
               <View style={{ justifyContent: 'center' }}>
-                <Text style={styles.drawerSubtitleUser}>{userName}</Text>
+                <Text style={styles.drawerSubtitleUser}>{userName} {isPro &&  <Icon
+            name="checkmark-done-circle"
+            size={16}
+            color={config.colors.hasBlockGreen}
+          />}</Text>
                 <Text
                   style={[
                     styles.drawerSubtitleUser,

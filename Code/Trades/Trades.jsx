@@ -384,7 +384,11 @@ const TradeList = ({ route }) => {
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Image source={{ uri: item.avatar }} style={styles.itemImageUser} />
             <View style={{ justifyContent: 'center' }}>
-              <Text style={styles.traderName}>{item.traderName}</Text>
+              <Text style={styles.traderName}>{item.traderName} {isPro &&  <Icon
+            name="checkmark-done-circle"
+            size={16}
+            color={config.colors.hasBlockGreen}
+          />}</Text>
               <Text style={styles.tradeTime}>{formattedTime}</Text>
             </View>
           </View>
