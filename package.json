@@ -27,7 +27,7 @@
     "lodash": "^4.17.21",
     "moment": "^2.30.1",
     "react": "^18.3.1",
-    "react-native": "^0.76.5",
+    "react-native": "^0.77.0",
     "react-native-fs": "^2.20.0",
     "react-native-gesture-handler": "^2.21.2",
     "react-native-google-mobile-ads": "^14.8.0",
