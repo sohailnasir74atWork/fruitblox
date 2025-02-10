@@ -52,9 +52,19 @@ const HomeScreen = ({ selectedTheme }) => {
     setWantsTotal({ price: 0, value: 0 });
     setIsAdLoaded(false);
     setIsShowingAd(false);
-    setHasItems([...initialItems]); // Use a new array to avoid mutating the original reference
-    setWantsItems([...initialItems]); // Use a new array to avoid mutating the original reference
+    setHasItems([null, null]); 
+    setWantsItems([null, null]);
   };
+  const resetTradeState = () => {
+    setHasItems([null, null]); 
+    setWantsItems([null, null]);
+    setHasTotal({ price: 0, value: 0 });
+    setWantsTotal({ price: 0, value: 0 });
+    setDescription("");  // ✅ Reset description field
+    setSelectedSection(null);
+    setModalVisible(false); // ✅ Close modal after successful trade
+  };
+  
   const navigation = useNavigation()
 
   const handleCreateTradePress = async () => {
@@ -76,7 +86,8 @@ const HomeScreen = ({ selectedTheme }) => {
 
 
   const handleCreateTrade = async () => {
-    const userPoints = !developmentMode ? user?.points || 0 : 600// Fetch user points
+    const userPoints =  user?.points || 0 ;
+    // console.log(userPoints)
     const userId = user?.id; // User ID
     const database = getDatabase();
     const freeTradeRef = ref(database, `freeTradeUsed/${userId}`);
@@ -87,18 +98,18 @@ const HomeScreen = ({ selectedTheme }) => {
       const hasUsedFreeTrade = snapshot.exists() && snapshot.val();
 
       // Define a function to reset trade state
-      const resetTradeState = () => {
-        setHasItems(initialItems);
-        setWantsItems(initialItems);
-        setHasTotal({ price: 0, value: 0 });
-        setWantsTotal({ price: 0, value: 0 });
-      };
+      // const resetTradeState = () => {
+      //   setHasItems(initialItems);
+      //   setWantsItems(initialItems);
+      //   setHasTotal({ price: 0, value: 0 });
+      //   setWantsTotal({ price: 0, value: 0 });
+      // };
 
       if (isPro) {
 
         setModalVisible(false); // Close modal
-        submitTrade(user, hasItems, wantsItems, hasTotal, wantsTotal, message, description, resetState, firestoreDB);
-        resetTradeState(); // Clear trade state
+        submitTrade(user, hasItems, wantsItems, hasTotal, wantsTotal, description, firestoreDB, resetTradeState);
+        // resetTradeState(); // Clear trade state
       }
 
       else
@@ -108,8 +119,8 @@ const HomeScreen = ({ selectedTheme }) => {
           showInterstitialAd(() => {
 
             setModalVisible(false); // Close modal
-            submitTrade(user, hasItems, wantsItems, hasTotal, wantsTotal, message, description, resetState, firestoreDB);
-            resetTradeState(); // Clear trade state
+            submitTrade(user, hasItems, wantsItems, hasTotal, wantsTotal, description, firestoreDB, resetTradeState);
+            // resetTradeState(); // Clear trade state
           });
           Alert.alert('Success', 'Your free trade has been posted!');
         } else if (userPoints >= 200) {
@@ -119,8 +130,8 @@ const HomeScreen = ({ selectedTheme }) => {
           showInterstitialAd(() => {
 
             setModalVisible(false); // Close modal
-            submitTrade(user, hasItems, wantsItems, hasTotal, wantsTotal, message, description, resetState, firestoreDB);
-            resetTradeState(); // Clear trade state
+            submitTrade(user, hasItems, wantsItems, hasTotal, wantsTotal, description, firestoreDB, resetTradeState);
+            // resetTradeState(); // Clear trade state
           });
           Alert.alert(
             'Success',
@@ -135,7 +146,7 @@ const HomeScreen = ({ selectedTheme }) => {
               {
                 text: 'Get Points',
                 onPress: () => {
-                  resetTradeState(); // Clear trade state
+                  // resetTradeState(); // Clear trade state
                   setModalVisible(false); // Close modal
                   navigation.navigate('Setting'); // Navigate to settings screen
                 },
@@ -498,7 +509,7 @@ const HomeScreen = ({ selectedTheme }) => {
               <View>
 
                 <View style={[styles.drawerContainer, { backgroundColor: isDarkMode ? '#3B404C' : 'white' }]}>
-                  <Text style={[styles.titleText, { color: selectedTheme.colors.text }]}>You can search fruite and select it</Text>
+                 
                   <View style={{
                     flexDirection: 'row', justifyContent: 'space-between', marginVertical: 10,
                   }}
@@ -556,11 +567,14 @@ const HomeScreen = ({ selectedTheme }) => {
               <View>
                 <View style={[styles.drawerContainer, { backgroundColor: isDarkMode ? '#3B404C' : 'white' }]}>
                   <Text style={styles.modalMessage}>
-                    Do you want to add a description (optional)?
+                    Do you want to add a short description (optional)?
+                  </Text>
+                  <Text style={styles.modalMessagefooter}>
+                    You can write username like @username? (It cab be copied)
                   </Text>
                   <TextInput
                     style={styles.input}
-                    placeholder="Enter description (optional, max 40 characters)"
+                    placeholder="Write a description"
                     maxLength={40}
                     value={description}
                     onChangeText={setDescription}
@@ -731,7 +745,7 @@ const getStyles = (isDarkMode) =>
       flex: 1,
     },
     searchInput: {
-      width: '78%',
+      width: '75%',
       borderColor: 'grey',
       borderWidth: 1,
       borderRadius: 5,
@@ -857,8 +871,14 @@ const getStyles = (isDarkMode) =>
 
     modalMessage: {
       fontSize: 12,
-      marginBottom: 10,
+      marginBottom: 4,
       color: isDarkMode ? 'white' : 'black',
+      fontFamily: 'Lato-Regular'
+    },
+    modalMessagefooter:{
+      fontSize: 10,
+      marginBottom: 10,
+      color: isDarkMode ? 'grey' : 'grey',
       fontFamily: 'Lato-Regular'
     },
     input: {

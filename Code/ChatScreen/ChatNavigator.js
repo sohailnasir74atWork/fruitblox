@@ -38,7 +38,7 @@ export const ChatStack = ({ selectedTheme, setChatFocused, modalVisibleChatinfo,
     );
 
     return () => {
-      console.log('Cleaning up banned users listener');
+      // console.log('Cleaning up banned users listener');
       unsubscribe();
     };
   }, [user?.id]);

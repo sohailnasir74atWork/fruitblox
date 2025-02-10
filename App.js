@@ -15,11 +15,14 @@ import { GlobalStateProvider, useGlobalState } from './Code/GlobelStats';
 import { LocalStateProvider, useLocalState } from './Code/LocalGlobelStats';
 import { MenuProvider } from 'react-native-popup-menu';
 import { AdsConsent, AdsConsentStatus } from 'react-native-google-mobile-ads';
+import { AppOpenAd, AdEventType } from 'react-native-google-mobile-ads';
+import mobileAds from 'react-native-google-mobile-ads';
+
+
+
+
 import MainTabs from './Code/AppHelper/MainTabs';
 import {
-  checkForUpdate,
-  initializeAds,
-  loadAppOpenAd,
   MyDarkTheme,
   MyLightTheme,
   requestReview,
@@ -27,7 +30,6 @@ import {
 import getAdUnitId from './Code/Ads/ads';
 
 const Stack = createNativeStackNavigator();
-const adCooldown = 120000;
 const adUnitId = getAdUnitId('openapp');
 
 
@@ -41,13 +43,26 @@ function App() {
   }, [theme]);
   
   const [loading, setLoading] = useState(false);
-  const [lastAdShownTime, setLastAdShownTime] = useState(0);
   const [isAdLoaded, setIsAdLoaded] = useState(false);
   const { localState, updateLocalState, isPro, updateCount, lastVersion } = useLocalState();
   const [chatFocused,setChatFocused] = useState(true);
   const [modalVisibleChatinfo, setModalVisibleChatinfo ] = useState(false)
+  const adCooldown = 120000; // 2 minutes in milliseconds
+  const [lastAdShownTime, setLastAdShownTime] = useState(0);
+
+
+
   useEffect(() => {
-    initializeAds();
+    mobileAds()
+      .initialize()
+      .then(adapterStatuses => {
+        // console.log('AdMob initialized', adapterStatuses);
+      })
+      .catch(error => {
+        console.error('AdMob failed to initialize:', error);
+      });
+  }, []);
+  useEffect(() => {
 
     const { reviewCount } = localState;
     if (reviewCount % 6 === 0 && reviewCount > 0) {
@@ -63,7 +78,7 @@ function App() {
       // console.log('Consent status already determined:', localState.consentStatus);
     }
   }, [localState.consentStatus]);
-  
+  // console.log(isPro)
   
 
 
@@ -102,19 +117,57 @@ function App() {
   useEffect(() => {
     handleUserConsent();
   }, []);
-
+  const loadAppOpenAd = async () => {
+    if (isPro) {
+      // console.log('Skipping ad: User is Pro');
+      return;
+    }
+  
+    const now = Date.now();
+    if (now - lastAdShownTime < adCooldown) {
+      // console.log(`Skipping ad: Cooldown active (${((adCooldown - (now - lastAdShownTime)) / 1000).toFixed(0)}s remaining)`);
+      return;
+    }
+  
+    // console.log('Attempting to load App Open Ad...');
+  
+    try {
+      const appOpenAd = AppOpenAd.createForAdRequest(adUnitId, {
+        requestNonPersonalizedAdsOnly: true, // Change based on consent
+      });
+  
+      appOpenAd.addAdEventListener(AdEventType.LOADED, () => {
+        // console.log('Ad Loaded! Showing Ad...');
+        setIsAdLoaded(true);
+        appOpenAd.show();
+        setLastAdShownTime(Date.now()); // Save last shown time
+        setIsAdLoaded(false);
+      });
+  
+      appOpenAd.addAdEventListener(AdEventType.ERROR, (error) => {
+        console.error('App Open Ad Error:', error);
+        setIsAdLoaded(false);
+      });
+  
+      await appOpenAd.load();
+    } catch (error) {
+      console.error('Error loading App Open Ad:', error);
+      setIsAdLoaded(false);
+    }
+  };
+  
   // Handle App State Changes for Ads
   useEffect(() => {
-    
     const handleAppStateChange = (state) => {
       if (state === 'active') {
-        loadAppOpenAd(adUnitId, lastAdShownTime, adCooldown, setLastAdShownTime, setIsAdLoaded, isPro);
+        loadAppOpenAd();
       }
     };
-
+  
     const subscription = AppState.addEventListener('change', handleAppStateChange);
     return () => subscription.remove();
-  }, [lastAdShownTime, isAdLoaded]);
+  }, [lastAdShownTime]); // Depend on lastAdShownTime to enforce cooldown
+  
 
   // Loading Indicator
   if (loading) {

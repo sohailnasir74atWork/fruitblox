@@ -83,10 +83,10 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
   const toggleDrawer = (userData = null) => {
     setSelectedUser(userData);
     setIsDrawerVisible(!isDrawerVisible);
-    console.log('clikcked')
+    // console.log('clikcked')
   };
   const startPrivateChat = () => {
-    console.log('clikcked')
+    // console.log('clikcked')
     showInterstitialAd(() => {
       toggleDrawer();
       navigation.navigate('PrivateChat', { selectedUser, selectedTheme, isOnline });
@@ -98,8 +98,8 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
   const chatRef = useMemo(() => database().ref('chat_new'), []);
   const pinnedMessagesRef = useMemo(() => database().ref('pinnedMessages'), []);
 
-  const isAdmin = user?.isAdmin || false;
-  const isOwner = user?.isOwner || false;
+  const isAdmin = user?.admin || false;
+  const isOwner = user?.owner || false;
   const styles = useMemo(() => getStyles(theme === 'dark'), [theme]);
 
 
@@ -348,18 +348,18 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
 
 
 
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    await loadMessages(true);
-    setRefreshing(false);
-  };
+  // const handleRefresh = async () => {
+  //   setRefreshing(true);
+  //   await loadMessages(true);
+  //   setRefreshing(false);
+  // };
 
   const handleSendMessage = () => {
     const MAX_WORDS = 100;
-    const MESSAGE_COOLDOWN = 10000;
+    const MESSAGE_COOLDOWN = 1000;
     const LINK_REGEX = /(https?:\/\/[^\s]+)/g;
   
-    console.log("handleSendMessage triggered", input);
+    // console.log("handleSendMessage triggered", input);
   
     if (!user?.id) {
       Alert.alert('Error', 'You must be logged in to send messages.');
@@ -386,7 +386,7 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
   
     // 🛠️ Fix: Ensure word count is accurate
     const wordCount = trimmedInput.split(/\s+/).filter(word => word.length > 0).length;
-    console.log(`Word Count: ${wordCount}, Max Allowed: ${MAX_WORDS}`);
+    // console.log(`Word Count: ${wordCount}, Max Allowed: ${MAX_WORDS}`);
   
     if (wordCount > MAX_WORDS) {
       Alert.alert(
@@ -417,7 +417,7 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
         senderId: user.id,
         avatar: user.avatar || 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png',
         replyTo: replyTo ? { id: replyTo.id, text: replyTo.text } : null,
-        isAdmin: user.isAdmin || user.isOwner,
+        isAdmin: user.admin || user.owner,
         reportCount: 0,
         containsLink: containsLink,
       };
@@ -437,8 +437,7 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
       Alert.alert('Error', 'Could not send your message. Please try again.');
     }
   };
-  
-
+// console.log(isPro)
   return (
     <>
     <GestureHandlerRootView>
@@ -470,7 +469,7 @@ const ChatScreen = ({ selectedTheme, bannedUsers, modalVisibleChatinfo, setChatF
               onDeleteMessage={(messageId) => chatRef.child(messageId.replace('chat_new-', '')).remove()}
               isAdmin={isAdmin}
               refreshing={refreshing}
-              onRefresh={handleRefresh}
+              // onRefresh={handleRefresh}
               handleLoadMore={handleLoadMore}
               onReply={(message) => {setReplyTo(message); triggerHapticFeedback('impactLight');}} // Pass selected message to MessageInput
               banUser={banUser}

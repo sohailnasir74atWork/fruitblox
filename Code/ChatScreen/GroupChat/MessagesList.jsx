@@ -32,7 +32,7 @@ const MessagesList = ({
   onDeleteMessage,
   onReply,
   isAdmin,
-  refreshing,
+  // refreshing,
   onRefresh,
   banUser,
   makeadmin,
@@ -74,7 +74,7 @@ const MessagesList = ({
     else return
 
   };
-
+// console.log(user)
   const renderMessage = useCallback(({ item, index }) => {
     const previousMessage = messages[index + 1];
     const currentDate = new Date(item.timestamp).toDateString();
@@ -151,12 +151,13 @@ const MessagesList = ({
             name="checkmark-done-circle"
             size={16}
             color={config.colors.hasBlockGreen}
-          />}
+          />}{'    '}
           </Text>
                  
-                  {/* {item.isAdmin && <Text style={styles.dot}> • </Text>} */}
+          {(!!item.isAdmin) && 
                   <View style={styles.adminContainer}>
-                  <Text style={styles.admin}>Admin</Text></View>
+                  <Text style={styles.admin}>Admin</Text>
+                  </View> }
                   {'\n'}
                  {parseMessageText(item?.text)}
 
@@ -262,13 +263,13 @@ const MessagesList = ({
         initialNumToRender={20} // Render the first 20 messages upfront
         maxToRenderPerBatch={10} // Render 10 items per batch for smoother performance
         windowSize={5} // Adjust the window size for rendering nearby items
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={isDarkMode ? '#FFF' : '#000'}
-          />
-        }
+        // refreshControl={
+        //   <RefreshControl
+        //     refreshing={refreshing}
+        //     onRefresh={onRefresh}
+        //     tintColor={isDarkMode ? '#FFF' : '#000'}
+        //   />
+        // }
         onScroll={() => Keyboard.dismiss()}
         onTouchStart={() => Keyboard.dismiss()}
         keyboardShouldPersistTaps="handled" // Ensures taps o

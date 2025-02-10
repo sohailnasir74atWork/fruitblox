@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { firebase, getApp, getApps } from '@react-native-firebase/app';
 import auth from '@react-native-firebase/auth';
-import database, { ref, set, update, get, onDisconnect, remove, increment } from '@react-native-firebase/database';
+import database, { ref, set, update, get, onDisconnect } from '@react-native-firebase/database';
 import firestore from '@react-native-firebase/firestore';
 import { createNewUser, firebaseConfig, registerForNotifications } from './Globelhelper';
 import { useLocalState } from './LocalGlobelStats';
@@ -69,73 +69,33 @@ export const GlobalStateProvider = ({ children }) => {
   };
  
 
+  
   useEffect(() => {
     if (!user?.id) return;
   
     const userOnlineRef = ref(appdatabase, `onlineUsers/${user.id}`);
-    const onlineCountRef = ref(appdatabase, `onlineUsersCount`);
     const timestamp = Date.now();
   
-    // Fetch the initial count
-    const fetchOnlineCount = async () => {
-      try {
-        const snapshot = await get(onlineCountRef);
-        const count = snapshot.exists() ? snapshot.val().count || 0 : 0;
-        setOnlineMembersCount(count);
-      } catch (error) {
-        console.error("Error fetching online users count:", error);
-      }
-    };
-  
-    fetchOnlineCount();
-  
-    // Set the user as online with status and timestamp
-    set(userOnlineRef, {
+    // Mark user as online (efficient update)
+    update(userOnlineRef, {
       status: true,
-      timestamp: timestamp,
+      timestamp,
     })
-      .then(() => {
-        // Increment the online users count
-        update(onlineCountRef, { count: increment(1) });
-        // console.log("User set as online and counter updated");
-      })
-      .catch((error) => {
-        console.error("Error setting user online:", error);
-      });
+      .then(() => console.log('User marked as online.'))
+      .catch((error) => console.error('Error setting user online:', error));
   
-    // Handle disconnection to remove the user and decrement the counter
+    // Handle disconnection - Mark user as offline instead of removing
     onDisconnect(userOnlineRef)
-      .remove()
-      .then(() => {
-        get(onlineCountRef).then((snapshot) => {
-          const currentCount = snapshot.exists() ? snapshot.val().count || 0 : 0;
-          if (currentCount > 0) {
-            onDisconnect(onlineCountRef).update({ count: increment(-1) });
-            // console.log("User will be removed and counter decremented on disconnect");
-          }
-        });
-      })
-      .catch((error) => {
-        // console.error("Error setting onDisconnect handler:", error);
-      });
+      .update({ status: false, timestamp: Date.now() })
+      .catch((error) => console.error('Error setting onDisconnect:', error));
   
     return () => {
-      // Cleanup: Remove the user and decrement the online users count
-      remove(userOnlineRef)
-        .then(() => {
-          get(onlineCountRef).then((snapshot) => {
-            const currentCount = snapshot.exists() ? snapshot.val().count || 0 : 0;
-            if (currentCount > 0) {
-              update(onlineCountRef, { count: increment(-1) });
-              // console.log("User removed and counter decremented");
-            }
-          });
-        })
-        .catch((error) => {
-          console.error("Error removing user or updating counter:", error);
-        });
+      // Cleanup: Mark user offline when component unmounts
+      update(userOnlineRef, { status: false, timestamp: Date.now() })
+        .catch((error) => console.error('Error updating user status on cleanup:', error));
     };
   }, [user?.id]);
+  
   
 
 

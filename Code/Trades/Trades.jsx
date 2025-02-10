@@ -13,6 +13,7 @@ import ReportTradePopup from './ReportTradePopUp';
 import SignInDrawer from '../Firebase/SigninDrawer';
 import { useLocalState } from '../LocalGlobelStats';
 import firestore from '@react-native-firebase/firestore';
+import Clipboard from '@react-native-clipboard/clipboard';
 
 
 const bannerAdUnitId = getAdUnitId('banner');
@@ -33,7 +34,7 @@ const TradeList = ({ route }) => {
   const [isAdLoaded, setIsAdLoaded] = useState(false);
   const [isShowingAd, setIsShowingAd] = useState(false);
   const [isReportPopupVisible, setReportPopupVisible] = useState(false);
-  const PAGE_SIZE = 200;
+  const PAGE_SIZE = 500;
   const [isSigninDrawerVisible, setIsSigninDrawerVisible] = useState(false);
   const { isPro } = useLocalState()
   const [selectedTrade, setSelectedTrade] = useState(null);
@@ -304,22 +305,44 @@ const TradeList = ({ route }) => {
   }, [user?.id]);
 
 
-
+  const renderTextWithUsername = (description) => {
+    const parts = description.split(/(@\w+)/g); // Split text by @username pattern
+  
+    return parts.map((part, index) => {
+      if (part.startsWith('@')) {
+        const username = part.slice(1); // Remove @
+        return (
+          <TouchableOpacity
+          style={styles.descriptionclick}
+            key={index}
+            onPress={() => {
+              Clipboard.setString(username); 
+              Alert.alert("Copied!", `Username "${username}" copied.`);
+            }}
+          >
+            <Text style={styles.descriptionclick}>{part}</Text> 
+          </TouchableOpacity>
+        );
+      } else {
+        return <Text key={index} style={styles.description}>{part}</Text>;
+      }
+    });
+  };
 
 
   const styles = useMemo(() => getStyles(isDarkMode), [isDarkMode]);
-  const searchText = useMemo(() => {
-    switch (filterType) {
-      case 'wantsItems':
-        return 'Search by Wants Item';
-      case 'hasItems':
-        return 'Search by Has Item';
-      case 'myTrades':
-        return 'My Trades';
-      default:
-        return 'Search by Wants Item';
-    }
-  }, [filterType]);
+  // const searchText = useMemo(() => {
+  //   switch (filterType) {
+  //     case 'wantsItems':
+  //       return 'Search by Wants Item';
+  //     case 'hasItems':
+  //       return 'Search by Has Item';
+  //     case 'myTrades':
+  //       return 'My Trades';
+  //     default:
+  //       return 'Search by Wants Item';
+  //   }
+  // }, [filterType]);
 
 
 
@@ -381,7 +404,7 @@ const TradeList = ({ route }) => {
       <View style={styles.tradeItem}>
         {/* Trader Info */}
         <View style={styles.tradeHeader}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center' }} onPress={handleChatNavigation}>
             <Image source={{ uri: item.avatar }} style={styles.itemImageUser} />
             <View style={{ justifyContent: 'center' }}>
               <Text style={styles.traderName}>{item.traderName} {isPro &&  <Icon
@@ -391,17 +414,23 @@ const TradeList = ({ route }) => {
           />}</Text>
               <Text style={styles.tradeTime}>{formattedTime}</Text>
             </View>
+          </TouchableOpacity>
+          <View style={{flexDirection:'row'}}>
+          <View style={[styles.dealContainer, { backgroundColor: getTradeDeal(item.hasTotal, item.wantsTotal).color }]}>
+            <Text style={styles.dealText}>{getTradeDeal(item.hasTotal, item.wantsTotal).label}</Text>
           </View>
+          
           <Icon
-            name="flag-outline"
+            name="chatbox-outline"
             size={18}
             color={'grey'}
-            onPress={() => handleReportTrade(item)}
+            onPress={handleChatNavigation}
           />
+          </View>
         </View>
 
         {/* Trade Totals */}
-        <View style={styles.tradeTotals}>
+        {/* <View style={styles.tradeTotals}>
           <Text style={[styles.priceText, styles.hasBackground]}>
             Has: {formatValue(item.hasTotal.price)}
           </Text>
@@ -418,7 +447,7 @@ const TradeList = ({ route }) => {
           <Text style={[styles.priceText, styles.wantBackground]}>
             Want: {formatValue(item.wantsTotal.price)}
           </Text>
-        </View>
+        </View> */}
 
         {/* Trade Items */}
         <View style={styles.tradeDetails}>
@@ -455,19 +484,39 @@ const TradeList = ({ route }) => {
                   }}
                   style={[styles.itemImage, { backgroundColor: wantsItem.type === 'p' ? '#FFCC00' : '' }]}
                 />
-                <Text style={styles.names}>
-                  {wantsItem.name}{wantsItem.type === 'p' && " (P)"} {wantsItem.count > 1 ? `x${wantsItem.count}` : ""}
+               <Text style={styles.names}>
+                  {wantsItem.name}{wantsItem.type === 'p' && " (P)"}
                 </Text>
+                {wantsItem.count > 1 && <View style={styles.tagcount}><Text style={styles.tagcounttext}>{wantsItem.count}</Text></View>}
               </View>
             ))}
           </View>
         </View>
+        <View style={styles.tradeTotals}>
+          <Text style={[styles.priceText, styles.hasBackground]}>
+            Has: {formatValue(item.hasTotal.price)}
+          </Text>
+          <View style={styles.transfer}>
+            {item.userId === user.id && (
+              <Icon
+                name="trash-outline"
+                size={18}
+                color={config.colors.wantBlockRed}
+                onPress={() => handleDelete(item)}
+              />
+            )}
+          </View>
+          <Text style={[styles.priceText, styles.wantBackground]}>
+            Want: {formatValue(item.wantsTotal.price)}
+          </Text>
+        </View>
 
         {/* Description */}
-        {item.description && <Text style={styles.description}>Note: {item.description}</Text>}
+        {item.description && <Text style={styles.description}>{renderTextWithUsername(item.description)}
+        </Text>}
 
         {/* Action Buttons */}
-        <View style={styles.actionButtons}>
+        {/* <View style={styles.actionButtons}>
           <TouchableOpacity onPress={handleChatNavigation}>
             <View style={styles.tradeActions}>
               <Icon name="chatbox-outline" size={14} color={config.colors.hasBlockGreen} style={{
@@ -478,10 +527,7 @@ const TradeList = ({ route }) => {
               <Text style={[styles.actionText]}>Send Message</Text>
             </View>
           </TouchableOpacity>
-          <View style={[styles.dealContainer, { backgroundColor: getTradeDeal(item.hasTotal, item.wantsTotal).color }]}>
-            <Text style={styles.dealText}>{getTradeDeal(item.hasTotal, item.wantsTotal).label}</Text>
-          </View>
-        </View>
+        </View> */}
       </View>
     );
   };
@@ -496,7 +542,7 @@ const TradeList = ({ route }) => {
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
         <TextInput
           style={styles.searchInput}
-          placeholder={searchText}
+          placeholder={'Search'}
           value={searchQuery}
           onChangeText={setSearchQuery}
           placeholderTextColor={isDarkMode ? 'white' : '#aaa'}
@@ -565,7 +611,7 @@ const getStyles = (isDarkMode) =>
       borderRadius: 10, // Ensure smooth corners
       shadowColor: '#000', // Shadow color for iOS
       shadowOffset: { width: 0, height: 0 }, // Positioning of the shadow
-      shadowOpacity: 0.2, // Opacity for iOS shadow
+      shadowOpacity: 0.3, // Opacity for iOS shadow
       shadowRadius: 2, // Spread of the shadow
       elevation: 2, // Elevation for Android (4-sided shadow)
     },
@@ -591,20 +637,20 @@ const getStyles = (isDarkMode) =>
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      marginBottom: 10,
-      paddingBottom: 10,
+      // marginBottom: 10,
+      // paddingBottom: 10,
       // borderBottomWidth: 1,
       borderColor: 'lightgrey',
       color: isDarkMode ? 'white' : "black",
     },
     traderName: {
       fontFamily: 'Lato-Bold',
-      fontSize: 12,
+      fontSize: 10,
       color: isDarkMode ? 'white' : "black",
 
     },
     tradeTime: {
-      fontSize: 10,
+      fontSize: 8,
       color: '#666',
       color: 'lightgrey'
 
@@ -624,8 +670,8 @@ const getStyles = (isDarkMode) =>
       paddingVertical: 15,
     },
     itemImage: {
-      width: 45,
-      height: 45,
+      width: 40,
+      height: 40,
       // marginRight: 5,
       // borderRadius: 25,
       marginVertical: 5,
@@ -650,22 +696,22 @@ const getStyles = (isDarkMode) =>
     tradeTotals: {
       flexDirection: 'row',
       justifyContent: 'center',
-      marginTop: 10,
+      // marginTop: 10,
       width: '100%'
 
     },
     priceText: {
-      fontSize: 14,
-      fontFamily: 'Lato-Bold',
+      fontSize: 10,
+      fontFamily: 'Lato-Regular',
       color: '#007BFF',
       // width: '40%',
       textAlign: 'center', // Centers text within its own width
       alignSelf: 'center', // Centers within the parent container
       color: isDarkMode ? 'white' : "white",
       marginHorizontal: 'auto',
-      paddingHorizontal: 7,
-      paddingVertical: 3,
-      borderRadius: 3
+      paddingHorizontal: 4,
+      paddingVertical: 2,
+      borderRadius: 6
     },
     hasBackground: {
       backgroundColor: config.colors.hasBlockGreen,
@@ -677,15 +723,15 @@ const getStyles = (isDarkMode) =>
       flexDirection: 'row',
       alignItems: 'center',
     },
-    actionText: {
-      marginLeft: 5,
-      fontSize: 14,
-      color: config.colors.hasBlockGreen,
-      textShadowColor: isDarkMode ? '#000000AA' : '#FFFFFFAA', // Dark Mode: Black shadow, Light Mode: White shadow
-      textShadowOffset: { width: 1, height: 1 }, // Offset the shadow slightly
-      textShadowRadius: 3, // Blur effect for the shadow
+    // actionText: {
+    //   marginLeft: 5,
+    //   fontSize: 10,
+    //   color: config.colors.hasBlockGreen,
+    //   textShadowColor: isDarkMode ? '#000000AA' : '#FFFFFFAA', // Dark Mode: Black shadow, Light Mode: White shadow
+    //   textShadowOffset: { width: 1, height: 1 }, // Offset the shadow slightly
+    //   textShadowRadius: 3, // Blur effect for the shadow
 
-    },
+    // },
     transfer: {
       width: '20%',
       justifyContent: 'center',
@@ -698,7 +744,17 @@ const getStyles = (isDarkMode) =>
     description: {
       color: isDarkMode ? 'lightgrey' : "grey",
       fontFamily: 'Lato-Regular',
-      fontSize: 10
+      fontSize: 10,
+      marginTop:5,
+      lineHeight:12
+    },
+    descriptionclick: {
+      color: config.colors.secondary,
+      fontFamily: 'Lato-Regular',
+      fontSize: 10,
+      marginTop:5,
+      // lineHeight:12
+
     },
     loader: {
       flex: 1
@@ -708,22 +764,23 @@ const getStyles = (isDarkMode) =>
       paddingHorizontal: 6,
       borderRadius: 6,
       alignSelf: 'center',
+      marginRight:10
     },
     dealText: {
       color: 'white',
       fontWeight: 'Lato-Bold',
-      fontSize: 12,
+      fontSize: 10,
       textAlign: 'center',
     },
     names: {
       fontFamily: 'Lato-Bold',
-      fontSize: 10,
+      fontSize: 8,
       color: isDarkMode ? 'white' : "black",
-      marginTop: -5
+      marginTop: -3
     },
     tagcount: {
       position: 'absolute',
-      backgroundColor: config.colors.wantBlockRed,
+      backgroundColor: 'purple',
       top: -1,
       left: -1,
       borderRadius: 50,
@@ -733,7 +790,7 @@ const getStyles = (isDarkMode) =>
     },
     tagcounttext: {
       color: 'white',
-      fontFamily: 'Lato-Regular',
+      fontFamily: 'Lato-Bold',
       fontSize: 10
     }
   });

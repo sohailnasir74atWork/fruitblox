@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, Image, Switch, TouchableOpacity, Alert, RefreshControl } from 'react-native';
 import { useGlobalState } from '../GlobelStats';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -11,14 +11,13 @@ import config from '../Helper/Environment';
 import { useHaptic } from '../Helper/HepticFeedBack';
 import { useLocalState } from '../LocalGlobelStats';
 import { requestPermission } from '../Helper/PermissionCheck';
+import { useIsFocused } from '@react-navigation/native';
 const bannerAdUnitId = getAdUnitId('banner');
 const interstitialAdUnitId = getAdUnitId('interstitial');
 const interstitial = InterstitialAd.createForAdRequest(interstitialAdUnitId);
 
 const TimerScreen = ({ selectedTheme }) => {
-  const [normalTimer, setNormalTimer] = useState('');
-  const [mirageTimer, setMirageTimer] = useState('');
-  const { state, setState, user, updateLocalStateAndDatabase, theme, fetchStockData } = useGlobalState();
+  const { state, user, updateLocalStateAndDatabase, theme, fetchStockData } = useGlobalState();
   const [hasAdBeenShown, setHasAdBeenShown] = useState(false);
   const [isAdLoaded, setIsAdLoaded] = useState(false);
   const [isShowingAd, setIsShowingAd] = useState(false);
@@ -27,8 +26,12 @@ const TimerScreen = ({ selectedTheme }) => {
   const [refreshing, setRefreshing] = useState(false); // State for pull-to-refresh
   const [isSigninDrawerVisible, setisSigninDrawerVisible] = useState(false);
   const [isAdVisible, setIsAdVisible] = useState(true);
+  const isFocused = useIsFocused();
+  const [currentTime, setCurrentTime] = useState(Date.now()); 
   const { triggerHapticFeedback } = useHaptic();
   const { isPro } = useLocalState()
+  const intervalRef = useRef(null); // Store interval reference
+  
 
   const isDarkMode = theme === 'dark';
   useEffect(() => {
@@ -136,7 +139,6 @@ const TimerScreen = ({ selectedTheme }) => {
 
         // Optimistically update the UI
         updateLocalStateAndDatabase('isReminderEnabled', !currentValue);
-
       }
     } catch (error) {
       console.error('Error handling notification permission or sign-in:', error);
@@ -176,32 +178,36 @@ const TimerScreen = ({ selectedTheme }) => {
 
   // Calculate time left for stock resets
   const calculateTimeLeft = (intervalHours) => {
-    // console.log(intervalHours)
-    const now = new Date();
+    const now = currentTime;
     let nextReset = new Date();
     nextReset.setHours(1, 0, 0, 0); // Base reset at 1 AM
 
     while (nextReset <= now) {
       nextReset.setHours(nextReset.getHours() + intervalHours);
     }
-    const secondsLeft = Math.floor((nextReset - now) / 1000);
-    return secondsLeft;
+    return Math.floor((nextReset - now) / 1000);
   };
 
+  const normalInterval = 4; // Normal stock resets every 4 hours
+const mirageInterval = 2; // Mirage stock resets every 2 hours
+
+const normalTimer = useMemo(() => formatTime(calculateTimeLeft(normalInterval)), []);
+const mirageTimer = useMemo(() => formatTime(calculateTimeLeft(mirageInterval)), []);
+
+
+
   useEffect(() => {
-    const updateTimers = () => {
-      const normalSecondsLeft = calculateTimeLeft(4);
-      const mirageSecondsLeft = calculateTimeLeft(2);
+    if (!isFocused) return; // Only run when the screen is focused
+  
+    intervalRef.current = setInterval(() => {
+      setCurrentTime(Date.now()); // Update time without forcing full re-render
+    }, 1000);
+  
+    return () => clearInterval(intervalRef.current); // Cleanup interval on unmount
+  }, [isFocused]); // Depend only on focus
 
-      setNormalTimer(formatTime(normalSecondsLeft));
-      setMirageTimer(formatTime(mirageSecondsLeft));
-    };
-
-    updateTimers();
-
-    const timerId = setInterval(updateTimers, 1000);
-    return () => clearInterval(timerId);
-  }, []);
+//   return { normalTimer, mirageTimer };
+// };
 
   // Render FlatList Item
   const renderItem = ({ item, index, isLastItem }) => {
@@ -231,52 +237,51 @@ const TimerScreen = ({ selectedTheme }) => {
 
   ///////////////
 
+// console.log(state.mirageStock)
 
 
+useEffect(() => {
+  interstitial.load();
 
-  useEffect(() => {
-    interstitial.load();
-
-    const onAdLoaded = () => setIsAdLoaded(true);
-    const onAdClosed = () => {
-      setIsAdLoaded(false);
-      setIsShowingAd(false);
-      interstitial.load(); // Reload ad for the next use
-    };
-    const onAdError = (error) => {
-      setIsAdLoaded(false);
-      setIsShowingAd(false);
-      console.error('Ad Error:', error);
-    };
-
-    const loadedListener = interstitial.addAdEventListener(AdEventType.LOADED, onAdLoaded);
-    const closedListener = interstitial.addAdEventListener(AdEventType.CLOSED, onAdClosed);
-    const errorListener = interstitial.addAdEventListener(AdEventType.ERROR, onAdError);
-
-    return () => {
-      loadedListener();
-      closedListener();
-      errorListener();
-    };
-  }, []);
-
-  const showInterstitialAd = (callback) => {
-    if (isAdLoaded && !isShowingAd && !isPro) {
-      setIsShowingAd(true);
-      try {
-        interstitial.show();
-        interstitial.addAdEventListener(AdEventType.CLOSED, callback);
-      } catch (error) {
-        console.error('Error showing interstitial ad:', error);
-        setIsShowingAd(false);
-        callback(); // Proceed with fallback in case of error
-      }
-    } else {
-      callback(); // If ad is not loaded, proceed immediately
-    }
+  const onAdLoaded = () => setIsAdLoaded(true);
+  const onAdClosed = () => {
+    setIsAdLoaded(false);
+    setIsShowingAd(false);
+    interstitial.load(); 
   };
+  const onAdError = (error) => {
+    setIsAdLoaded(false);
+    setIsShowingAd(false);
+    console.error('Ad Error:', error);
+  };
+
+  interstitial.addAdEventListener(AdEventType.LOADED, onAdLoaded);
+  interstitial.addAdEventListener(AdEventType.CLOSED, onAdClosed);
+  interstitial.addAdEventListener(AdEventType.ERROR, onAdError);
+
+  return () => {
+    interstitial.removeAllListeners(); // Prevent memory leaks
+  };
+}, []);
+
+const showInterstitialAd = useCallback((callback) => {
+  if (isAdLoaded && !isShowingAd && !isPro) {
+    setIsShowingAd(true);
+    try {
+      interstitial.show();
+      callback(); // Call the function after the ad
+    } catch (error) {
+      console.error('Error showing interstitial ad:', error);
+      setIsShowingAd(false);
+      callback();
+    }
+  } else {
+    callback();
+  }
+}, [isAdLoaded, isShowingAd, isPro]);
+
   const styles = getStyles(isDarkMode, user);
-console.log(state.premirageStock)
+// console.log(state.premirageStock)
   return (
     <>
       <GestureHandlerRootView>
@@ -306,7 +311,11 @@ console.log(state.premirageStock)
               </View>
 
               <View style={styles.row2}>
-                <Text style={[styles.title]}>Selected Fruit Notification</Text>
+                <Text style={[styles.title]}>Selected Fruit Notification {'\n'}
+                  <Text style={styles.footer}>
+                  You will be notified when selected fruit is available in stock
+                  </Text>
+                </Text>
                 <View style={styles.rightSide}>
                   <Switch value={user.isSelectedReminderEnabled} onValueChange={toggleSwitch2} />
                   <TouchableOpacity
@@ -585,6 +594,11 @@ const getStyles = (isDarkMode, user) =>
       color: 'white',
       alignSelf: 'center',
       fontFamily: 'Lato-Bold'
+    },
+    footer:{
+      fontFamily:'Lato-Regular',
+      fontSize:8,
+      lineHeight:12
     }
   });
 

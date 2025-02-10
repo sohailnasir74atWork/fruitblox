@@ -107,11 +107,11 @@ const ValueScreen = ({ selectedTheme }) => {
         <Text style={styles.beliPrice}>Beli Price: ${item.Biliprice.toLocaleString()}</Text>
         <Text style={styles.robuxPrice}>Robux Price: ${item.Robuxprice}</Text>
       </View>
-      <View style={styles.statusContainer}>
+      {/* <View style={styles.statusContainer}>
         <Text style={[styles.status, { backgroundColor: item.Stability === 'Stable' ? config.colors.hasBlockGreen : config.colors.wantBlockRed }]}>
           {item.Stability}
         </Text>
-      </View>
+      </View> */}
     </View>
   ));
 
@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
   robuxPrice: {
     fontSize: 12, fontFamily: 'Lato-Regular', color: 'white'
   },
-  statusContainer: { alignItems: 'left', alignSelf: 'flex-end', position: 'absolute', bottom: 0 },
+  // statusContainer: { alignItems: 'left', alignSelf: 'flex-end', position: 'absolute', bottom: 0 },
   status: {
     paddingHorizontal: 8, paddingVertical: 4, borderTopLeftRadius: 10, borderBottomRightRadius: 10, color: '#FFF', fontSize: 12, fontFamily: 'Lato-Bold'
   },

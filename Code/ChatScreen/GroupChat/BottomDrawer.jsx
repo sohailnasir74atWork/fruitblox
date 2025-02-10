@@ -17,7 +17,7 @@ import { useLocalState } from '../../LocalGlobelStats';
 
 const ProfileBottomDrawer = ({ isVisible, toggleModal, startChat, selectedUser, isOnline, bannedUsers }) => {
   const { theme, user } = useGlobalState();
-  console.log(isVisible)
+  // console.log(isVisible)
   const {isPro} = useLocalState()
   const userName = selectedUser?.sender || null;
   const avatar = selectedUser?.avatar || null;

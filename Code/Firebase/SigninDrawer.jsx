@@ -147,7 +147,8 @@ const SignInDrawer = ({ visible, onClose, selectedTheme, message }) => {
     
 
     return (
-        <Modal visible={visible} animationType="slide" transparent>
+        <Modal visible={visible} animationType="slide" transparent             onRequestClose={onClose}
+>
             <Pressable style={styles.modalOverlay} onPress={onClose} />
             <ConditionalKeyboardWrapper>
 

@@ -51,7 +51,7 @@ export const getStyles = (isDarkMode) =>
       marginHorizontal: 5,
     },
     senderNameText: {
-      fontSize: 14,
+      fontSize: 10,
       fontWeight: 'bold',
       color: '#fff',
     },
@@ -65,18 +65,18 @@ export const getStyles = (isDarkMode) =>
 
     },
     myMessageText: {
-      fontSize: 14,
+      fontSize: 12,
       color: isDarkMode ? 'white' : 'black',
       backgroundColor: isDarkMode ? config.colors.primary : 'lightgreen',
       paddingVertical: 5,
       paddingHorizontal: 10,
       borderRadius: 10,
       fontFamily: 'Lato-Regular',
-      lineHeight:18
+      lineHeight:14
 
     },
     otherMessageText: {
-      fontSize: 14,
+      fontSize: 12,
       color: isDarkMode ? 'white' : 'black',
       backgroundColor: isDarkMode ? config.colors.primary : 'white',
       paddingHorizontal: 10,
@@ -85,7 +85,7 @@ export const getStyles = (isDarkMode) =>
       paddingVertical: 5,
       fontFamily: 'Lato-Regular',
       paddingRight:20,
-      lineHeight:18
+      lineHeight:14
 
     },
     timestamp: {
@@ -144,14 +144,16 @@ export const getStyles = (isDarkMode) =>
       backgroundColor: config.colors.hasBlockGreen,
       paddingHorizontal:5,
       paddingVertical:1,
-      borderRadius:3
+      borderRadius:3,
+      // marginHorizontal:5
     },
     admin: {
       // alignSelf: 'flex-start',
       color: 'white',
-      fontSize: 12,
+      fontSize: 10,
       fontFamily: 'Lato-Bold',
 
+      
     },
     adminText: {
       fontSize: 12,
@@ -261,7 +263,7 @@ export const getStyles = (isDarkMode) =>
 
     userName: {
       color: '#bbb',
-      fontSize: 10,
+      fontSize: 8,
 
     },
     adminActions: {

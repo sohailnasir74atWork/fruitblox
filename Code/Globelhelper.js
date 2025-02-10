@@ -112,7 +112,7 @@ export const firebaseConfig = {
       status: 'active',
       isReminderEnabled: false,
       isSelectedReminderEnabled: false,
-      displayname: loggedInUser.displayName || generateOnePieceUsername() || 'Anonymous',
+      displayname: loggedInUser.displayName || loggedInUser.displayname || generateOnePieceUsername() || 'Anonymous',
       avatar: loggedInUser.photoURL || 'https://bloxfruitscalc.com/wp-content/uploads/2025/display-pic.png',
       isOwner: false,
       isPro: false,

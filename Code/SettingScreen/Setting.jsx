@@ -33,6 +33,7 @@ import { useLocalState } from '../LocalGlobelStats';
 import config from '../Helper/Environment';
 import notifee, { AuthorizationStatus } from '@notifee/react-native';
 import SubscriptionScreen from './OfferWall';
+import { getDatabase, ref, remove, set, get, update } from '@react-native-firebase/database';
 
 const adUnitId = getAdUnitId('rewarded')
 
@@ -144,7 +145,7 @@ export default function SettingsScreen({ selectedTheme }) {
       });
 
       setDrawerVisible(false);
-      Alert.alert('Success', 'Profile updated successfully!');
+      // Alert.alert('Success', 'Profile updated successfully!');
     } catch (error) {
       console.error('Error updating profile:', error);
       Alert.alert('Error', 'Failed to update profile. Please try again.');
@@ -246,34 +247,91 @@ export default function SettingsScreen({ selectedTheme }) {
     }
   };
 
-  useEffect(() => {
-    const unsubscribeLoaded = rewarded.addAdEventListener(RewardedAdEventType.LOADED, () => {
-      setLoaded(true);
-    });
-    const unsubscribeEarned = rewarded.addAdEventListener(
-      RewardedAdEventType.EARNED_REWARD,
-      reward => {
-        // console.log('User earned reward of ', reward);
-        const newPoints = (user?.points || 0) + 100;
-        // console.log(newPoints)
-        updateLocalStateAndDatabase('points', newPoints);
-        const now = new Date().getTime(); // Current time in milliseconds
-        updateLocalStateAndDatabase('lastRewardtime', now);
 
-        Alert.alert('Reward Granted', `You earned ${reward.amount} points!`);
-      },
-    );
+// 🔥 Completely delete the `points` field from the database
+// 🔥 Update user points safely
+const updateUserPoints = async (userId, pointsToAdd, updateLocalStateAndDatabase) => {
+  if (!userId) {
+    console.error("updateUserPoints: User ID is undefined");
+    return;
+  }
 
-    // Start loading the rewarded ad straight away
-    rewarded.load();
+  try {
+    const db = getDatabase();
+    const userPointsRef = ref(db, `/users/${userId}`);
 
-    // Unsubscribe from events on unmount
-    return () => {
-      unsubscribeLoaded();
-      unsubscribeEarned();
-    };
-  }, []);
+    // Fetch latest points first
+    const latestPoints = await getUserPoints(user?.id);
+    const newPoints = latestPoints + pointsToAdd;
 
+    // 🔥 Correcting the .update() call by using an object
+    await update(userPointsRef, { points: newPoints });
+    // console.log(`✅ User points updated in Firebase: ${newPoints}`);
+
+    // Update local & global state after Firebase update
+    updateLocalStateAndDatabase('points', newPoints);
+  } catch (error) {
+    console.error("❌ Error updating user points:", error);
+  }
+};
+
+// 🔥 Fetch latest user points from Firebase
+const getUserPoints = async (userId) => {
+  if (!userId) {
+    // console.error("getUserPoints: User ID is undefined");
+    return 0;
+  }
+
+  try {
+    const db = getDatabase();
+    const snapshot = await get(ref(db, `/users/${userId}/points`));
+
+    if (snapshot.exists()) {
+      // console.log(`Fetched user points: ${snapshot.val()}`);
+      return snapshot.val(); // Returns the points
+    } else {
+      console.warn("User points not found, defaulting to 0");
+      return 0;
+    }
+  } catch (error) {
+    console.error("Error fetching user points:", error);
+    return 0;
+  }
+};
+
+
+
+useEffect(() => {
+  const fetchUserPoints = async () => {
+    const latestPoints = await getUserPoints(user?.id);
+    // console.log("Setting user points in state:", latestPoints);
+    updateLocalStateAndDatabase('points', latestPoints); // Store latest points
+  };
+
+  fetchUserPoints(); // Fetch points when component mounts
+
+  const unsubscribeLoaded = rewarded.addAdEventListener(RewardedAdEventType.LOADED, () => {
+    setLoaded(true);
+  });
+
+  const unsubscribeEarned = rewarded.addAdEventListener(
+    RewardedAdEventType.EARNED_REWARD,
+    async (reward) => {
+      // console.log("Ad shown, User earned reward:", reward.amount);
+
+      // 🔥 Fetch latest points, add reward, update Firebase
+      await updateUserPoints(user?.id, reward.amount, updateLocalStateAndDatabase);
+
+      updateLocalStateAndDatabase('lastRewardtime', new Date().getTime());
+      Alert.alert('Reward Granted', `You earned ${reward.amount} points!`);
+    }
+  );
+
+  return () => {
+    unsubscribeLoaded();
+    unsubscribeEarned();
+  };
+}, [user?.id]);
 
 
 
@@ -288,35 +346,35 @@ export default function SettingsScreen({ selectedTheme }) {
     if (!lastRewardTime) return true;
 
     const timeDifference = now - lastRewardTime;
-    return timeDifference >=   1 * 60 * 1000; // 30 seconds as defined
+    return timeDifference >=   10 * 1000; 
   };
   // console.log(user)
   const showAd = async () => {
+    setIsAdsDrawerVisible(false);
     try {
       if (!canClaimReward()) {
         const remainingTime = 1 - Math.floor((new Date().getTime() - user?.lastRewardtime) / 60000);
-        Alert.alert('Not Eligible', `Please wait ${remainingTime} minutes to claim the next reward.`);
+        Alert.alert('Not Eligible', `Please wait at least 10 seconds to claim the next reward.`);
         return;
       }
-
+  
       if (loaded) {
-        await rewarded.show(); // Attempt to show the ad
-        setLoaded(false); // Reset ad availability
-        // console.log('Ad displayed successfully.');
+        await rewarded.show();
+        setLoaded(false);
       } else {
-
-        const newPoints = (user?.points || 0) + 100;
-        // console.log(newPoints)
-        updateLocalStateAndDatabase('points', newPoints);
-        const now = new Date().getTime(); // Current time in milliseconds
-        updateLocalStateAndDatabase('lastRewardtime', now);
-
-        Alert.alert('Ad not ready', 'However reward granted');
+        // console.log("No ad available, granting fallback reward...");
+  
+        // 🔥 Fetch latest points, add fallback reward (50 points)
+        await updateUserPoints(user?.id, 50, updateLocalStateAndDatabase);
+  
+        updateLocalStateAndDatabase('lastRewardtime', new Date().getTime());
+        Alert.alert('Ad not ready', 'However, you got 50 points.');
       }
     } catch (error) {
       console.error('Error displaying ad:', error);
     }
   };
+  
 
 
   const handleGetPoints = () => {
@@ -325,6 +383,7 @@ export default function SettingsScreen({ selectedTheme }) {
       setOpenSignin(true);
     } else {
       setIsAdsDrawerVisible(true)
+      rewarded.load()
     }
   };
   const formatPlanName = (plan) => {

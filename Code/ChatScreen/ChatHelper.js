@@ -1,10 +1,10 @@
+import { Text, Alert } from 'react-native';
 import Clipboard from '@react-native-clipboard/clipboard';
-import { Linking, Alert, Text } from 'react-native';
+import { Linking } from 'react-native';
 
-// Helper function to parse text for links and mentions
 export const parseMessageText = (text) => {
   return text.split(/(\s+)/).map((part, index) => {
-    // Check if part is a link
+    // ✅ Check if part is a URL (starts with http:// or https://)
     if (/^https?:\/\/\S+$/.test(part)) {
       return (
         <Text
@@ -20,22 +20,24 @@ export const parseMessageText = (text) => {
         </Text>
       );
     }
-    // Check if part is a mention (e.g., @username)
+
+    // ✅ Check if part is a mention (starts with @username)
     if (/^@\w+/.test(part)) {
       return (
         <Text
           key={`mention-${index}`}
           style={{ color: '#007BFF', fontWeight: 'bold' }}
           onPress={() => {
-            Clipboard.setString(part);
-            Alert.alert('Copied', `${part} has been copied to clipboard.`);
+            Clipboard.setString(part.replace('@', '')); // Copy without '@'
+            Alert.alert('Copied', `${part.replace('@', '')} has been copied.`);
           }}
         >
           {part}
         </Text>
       );
     }
-    // Return normal text
+
+    // ✅ Return normal text
     return part;
   });
 };

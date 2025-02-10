@@ -179,9 +179,9 @@ const AdminHeader = ({
     onPress={() => setModalVisibleChatinfo(true)}
   >
 </TouchableOpacity>
-      <View style={styles.topRow}>
+      {/* <View style={styles.topRow}>
         <Text style={[styles.onlineText, { color: config.colors.hasBlockGreen }]}>Online {onlineMembersCount + 5}</Text>
-      </View>
+      </View> */}
 
       {pinnedMessages.length > 0 ? (
         <View style={styles.pinnedContainer} onLayout={onContentLayout}>
